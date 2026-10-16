@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  recruiter
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(student)
+  fullName     String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Quan hệ 1-1 Profiles
+  studentProfile   StudentProfile?
+  recruiterProfile RecruiterProfile?
+
+  // Quan hệ 1-N dành cho Sinh viên
+  workExperiences WorkExperience[]
+  educations      Education[]
+  skills          UserSkill[]
+  cvs             Cv[]
+  applications    Application[]
+
+  // Quan hệ 1-N dành cho Nhà tuyển dụng
+  postedJobs Job[]
+
+  @@map("users")
+}
+
+model StudentProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  headline       String?
+  about          String?
+  location       String?
+  school         String?
+  major          String?
+  graduationYear Int?
+  githubUrl      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model RecruiterProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  companyName    String
+  companyLogoUrl String?
+  position       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("recruiter_profiles")
+}
+
+model WorkExperience {
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  company     String
+  startDate   DateTime
+  endDate     DateTime? // Null = Hiện tại vẫn đang làm việc tại đây
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("work_experiences")
+}
+
+model Education {
+  id        String   @id @default(uuid())
+  userId    String
+  school    String
+  degree    String?
+  major     String?
+  startYear Int?
+  endYear   Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("educations")
+}
+
+model UserSkill {
+  id        String   @id @default(uuid())
+  userId    String
+  skillName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_skills")
+}
+
+model Cv {
+  id              String   @id @default(uuid())
+  userId          String
+  fileUrl         String
+  fileName        String
+  extractedSkills Json?    // Lưu kết quả JSON kỹ năng phân tích từ AI service
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("cvs")
+}
+
+model Job {
+  id             String   @id @default(uuid())
+  recruiterId    String
+  title          String
+  companyName    String
+  companyLogoUrl String?
+  location       String
+  workMode       String   // onsite | hybrid | remote
+  level          String   // intern | fresher | junior
+  salaryMin      Int?
+  salaryMax      Int?
+  description    String
+  requiredSkills String[] // PostgreSQL text[]
+  niceToHave     String[] // PostgreSQL text[]
+  status         String   @default("open") // open | closed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@map("jobs")
+}
+
+model Application {
+  id            String   @id @default(uuid())
+  jobId         String
+  studentId     String
+  cvId          String
+  matchScore    Float?
+  matchedSkills String[]
+  missingSkills String[]
+  status        String   @default("submitted") // submitted | viewed | shortlisted | accepted | rejected | withdrawn
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  job     Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  cv      Cv   @relation(fields: [cvId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, studentId]) // Một sinh viên chỉ ứng tuyển 1 lần vào mỗi Job
+  @@map("applications")
+}
+
