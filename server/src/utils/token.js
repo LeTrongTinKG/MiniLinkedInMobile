@@ -13,7 +13,7 @@ function generateAccessToken(user) {
   return jwt.sign(
     { userId: user.id, email: user.email, role: user.role },
     getJwtSecret(),
-    { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m" }
+    { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "1h" }
   );
 }
 
