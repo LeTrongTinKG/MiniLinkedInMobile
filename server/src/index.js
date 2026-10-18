@@ -43,13 +43,9 @@ app.get("/api/v1", (_req, res) => {
   });
 });
 
-app.use((error, _req, res, next) => {
-  console.error("Unhandled server error:", error);
-  if (res.headersSent) {
-    return next(error);
-  }
-  return res.status(500).json({ error: "Internal server error" });
-});
+// Centralized Error Handler (đặt ở cuối cùng các routes)
+const { errorHandler } = require("./middleware/error");
+app.use(errorHandler);
 
 // Khởi chạy server
 app.listen(PORT, async () => {
