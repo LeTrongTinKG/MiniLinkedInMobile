@@ -23,6 +23,11 @@ model User {
   role         Role     @default(student)
   fullName     String
   avatarUrl    String?
+
+  // Rate Limiting
+  loginAttempts    Int       @default(0)
+  loginLockedUntil DateTime?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
