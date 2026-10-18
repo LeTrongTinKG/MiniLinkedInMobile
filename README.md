@@ -62,6 +62,11 @@ npm run dev
 ```
 > Server sẽ chạy tại địa chỉ: `http://localhost:5000`
 
+API xác thực được mount tại `/api/v1/auth` (`register`, `login`, `google`,
+`refresh`, `logout` và `me`). Cấu hình `JWT_SECRET` bằng một chuỗi ngẫu nhiên
+riêng dài ít nhất 32 ký tự; thêm `GOOGLE_CLIENT_ID` để bật Google Login.
+Tham khảo `server/.env.example` để xem các biến cấu hình.
+
 ---
 
 ### 2. 📱 Cài đặt & Khởi chạy Mobile App (`app/`)
