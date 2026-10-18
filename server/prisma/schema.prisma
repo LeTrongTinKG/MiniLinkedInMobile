@@ -18,7 +18,8 @@ enum Role {
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
-  passwordHash String
+  passwordHash String?
+  googleId     String?  @unique
   role         Role     @default(student)
   fullName     String
   avatarUrl    String?
@@ -39,7 +40,21 @@ model User {
   // Quan hệ 1-N dành cho Nhà tuyển dụng
   postedJobs Job[]
 
+  refreshTokens RefreshToken[]
+
   @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }
 
 model StudentProfile {
@@ -177,4 +192,3 @@ model Application {
   @@unique([jobId, studentId]) // Một sinh viên chỉ ứng tuyển 1 lần vào mỗi Job
   @@map("applications")
 }
-
