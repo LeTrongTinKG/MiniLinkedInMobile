@@ -60,14 +60,11 @@ async function updateUser(id, data, db = prisma) {
   });
 }
 
-async function incrementLoginAttempts(id, currentAttempts = 0, db = prisma) {
-  const attempts = currentAttempts + 1;
-  const lockedUntil = attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null;
-  return db.user.update({
+async function incrementLoginAttempts(id, db = prisma) {
+  const updated = await db.user.update({
     where: { id },
     data: {
-      loginAttempts: attempts,
-      loginLockedUntil: lockedUntil,
+      loginAttempts: { increment: 1 },
     },
     select: {
       id: true,
@@ -75,6 +72,23 @@ async function incrementLoginAttempts(id, currentAttempts = 0, db = prisma) {
       loginLockedUntil: true,
     },
   });
+
+  if (updated.loginAttempts >= 5) {
+    const lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+    return db.user.update({
+      where: { id },
+      data: {
+        loginLockedUntil: lockedUntil,
+      },
+      select: {
+        id: true,
+        loginAttempts: true,
+        loginLockedUntil: true,
+      },
+    });
+  }
+
+  return updated;
 }
 
 async function resetLoginAttempts(id, db = prisma) {

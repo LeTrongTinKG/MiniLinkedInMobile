@@ -112,10 +112,7 @@ async function login({ email, password }) {
     : false;
 
   if (!isMatch) {
-    const updated = await userRepository.incrementLoginAttempts(
-      user.id,
-      user.loginAttempts || 0
-    );
+    const updated = await userRepository.incrementLoginAttempts(user.id);
     if (updated.loginLockedUntil) {
       throw new ApiError(
         429,
@@ -233,20 +230,26 @@ async function refresh({ refreshToken }) {
     );
   }
 
-  // Token Rotation: Xóa token cũ, sinh cặp token mới và lưu DB
-  await tokenRepository.deleteRefreshToken(refreshToken);
-  const newAccessToken = generateAccessToken(tokenRecord.user);
-  const newRefreshToken = generateRefreshToken();
-  await tokenRepository.createRefreshToken({
-    token: newRefreshToken,
-    userId: tokenRecord.user.id,
-    expiresAt: getRefreshTokenExpiry(),
+  // Token Rotation: Xóa token cũ, sinh cặp token mới và lưu DB trong cùng 1 Transaction an toàn
+  const newTokens = await prisma.$transaction(async (tx) => {
+    await tokenRepository.deleteRefreshToken(refreshToken, tx);
+    const newAccessToken = generateAccessToken(tokenRecord.user);
+    const newRefreshToken = generateRefreshToken();
+    await tokenRepository.createRefreshToken(
+      {
+        token: newRefreshToken,
+        userId: tokenRecord.user.id,
+        expiresAt: getRefreshTokenExpiry(),
+      },
+      tx
+    );
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   });
 
-  return {
-    accessToken: newAccessToken,
-    refreshToken: newRefreshToken,
-  };
+  return newTokens;
 }
 
 async function logout({ refreshToken }) {
