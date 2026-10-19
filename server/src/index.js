@@ -4,8 +4,7 @@ const dotenv = require("dotenv");
 const { prisma } = require("./lib/prisma");
 const authRoutes = require("./routes/auth.routes");
 const jobRoutes = require("./routes/job.routes");
-const jobController = require("./controllers/job.controller");
-const { authenticate, authorize } = require("./middleware/auth");
+const recruiterRoutes = require("./routes/recruiter.routes");
 
 dotenv.config();
 
@@ -19,12 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", jobRoutes);
-app.get(
-  "/api/v1/recruiter/jobs",
-  authenticate,
-  authorize("recruiter"),
-  jobController.getRecruiterJobs
-);
+app.use("/api/v1/recruiter", recruiterRoutes);
 
 // Health check endpoint
 app.get("/health", async (_req, res) => {

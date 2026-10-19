@@ -5,9 +5,12 @@ const VALID_WORK_MODES = ["onsite", "hybrid", "remote"];
 const VALID_JOB_LEVELS = ["intern", "fresher", "junior"];
 const VALID_JOB_STATUSES = ["open", "closed"];
 
+
+
 /**
  * Chuẩn hóa danh sách kỹ năng từ query string
  * Hỗ trợ chuỗi phẩy "React,Node.js" hoặc mảng query ["React", "Node.js"]
+ * Tất cả kỹ năng được lowercase để so sánh không phân biệt hoa/thường
  */
 function parseSkills(skillsQuery) {
   if (!skillsQuery) return [];
@@ -15,14 +18,14 @@ function parseSkills(skillsQuery) {
   if (Array.isArray(skillsQuery)) {
     return skillsQuery
       .flatMap((item) => (typeof item === "string" ? item.split(",") : []))
-      .map((s) => s.trim())
+      .map((s) => s.trim().toLowerCase())
       .filter((s) => s.length > 0);
   }
 
   if (typeof skillsQuery === "string") {
     return skillsQuery
       .split(",")
-      .map((s) => s.trim())
+      .map((s) => s.trim().toLowerCase())
       .filter((s) => s.length > 0);
   }
 
@@ -48,6 +51,18 @@ function parsePagination(query, defaultLimit = 10, maxLimit = 50) {
   const skip = (page - 1) * limit;
 
   return { page, limit, skip };
+}
+
+/**
+ * Format dữ liệu job trước khi trả về client
+ * Chỉ giữ 1 field duy nhất applicationsCount (không trùng lặp)
+ */
+function formatJob(job) {
+  const { _count, ...rest } = job;
+  return {
+    ...rest,
+    applicationsCount: _count?.applications ?? 0,
+  };
 }
 
 /**
@@ -94,26 +109,12 @@ async function getPublicJobs(query = {}, repo = jobRepository) {
 
   const totalPages = Math.ceil(totalItems / limit) || 1;
 
-  // Chuẩn hóa format trả về kèm applicationsCount
-  const formattedItems = items.map((job) => {
-    const applicationsCount = job._count?.applications ?? 0;
-    return {
-      ...job,
-      applicationsCount,
-      totalApplications: applicationsCount,
-      _count: {
-        applications: applicationsCount,
-      },
-    };
-  });
-
   return {
-    items: formattedItems,
+    items: items.map(formatJob),
     meta: {
       page,
       limit,
       total: totalItems,
-      totalItems,
       totalPages,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1,
@@ -129,28 +130,23 @@ async function getJobDetail(id, repo = jobRepository) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
+  // Không nuốt lỗi DB — chỉ catch PrismaClientKnownRequestError mã P2023 (sai định dạng ID)
   let job;
   try {
     job = await repo.findJobById(id.trim());
-  } catch (_error) {
-    // Trường hợp ID sai định dạng gây lỗi truy vấn DB -> coi như sai ID trả về 404
-    throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
+  } catch (error) {
+    if (error?.code === "P2023") {
+      throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
+    }
+    // Lỗi hệ thống khác (mất kết nối DB, timeout, ...) -> để nổi lên cho errorHandler trả về 500
+    throw error;
   }
 
   if (!job) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
-  const applicationsCount = job._count?.applications ?? 0;
-
-  return {
-    ...job,
-    applicationsCount,
-    totalApplications: applicationsCount,
-    _count: {
-      applications: applicationsCount,
-    },
-  };
+  return formatJob(job);
 }
 
 /**
@@ -180,25 +176,12 @@ async function getRecruiterJobs(recruiterId, query = {}, repo = jobRepository) {
 
   const totalPages = Math.ceil(totalItems / limit) || 1;
 
-  const formattedItems = items.map((job) => {
-    const applicationsCount = job._count?.applications ?? 0;
-    return {
-      ...job,
-      applicationsCount,
-      totalApplications: applicationsCount,
-      _count: {
-        applications: applicationsCount,
-      },
-    };
-  });
-
   return {
-    items: formattedItems,
+    items: items.map(formatJob),
     meta: {
       page,
       limit,
       total: totalItems,
-      totalItems,
       totalPages,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1,
