@@ -75,14 +75,19 @@ async function register({ email, password, fullName, role }) {
 async function login({ email, password }) {
   if (
     typeof email !== "string" ||
-    !isValidEmail(email.trim()) ||
     typeof password !== "string" ||
+    email.trim().length === 0 ||
     password.length === 0
   ) {
     throw new ApiError(400, "VALIDATION_ERROR", "Email và mật khẩu là bắt buộc");
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+  // Chống User Enumeration: Nếu định dạng email không hợp lệ, trả chung lỗi 401
+  if (!isValidEmail(normalizedEmail)) {
+    throw new ApiError(401, "INVALID_CREDENTIALS", "Email hoặc mật khẩu không chính xác");
+  }
+
   const user = await userRepository.findByEmail(normalizedEmail, true);
   if (!user) {
     throw new ApiError(401, "INVALID_CREDENTIALS", "Email hoặc mật khẩu không chính xác");
@@ -126,9 +131,16 @@ async function login({ email, password }) {
     await userRepository.resetLoginAttempts(user.id);
   }
 
-  const { passwordHash, ...publicUser } = user;
-  const tokens = await createSession(publicUser);
-  return { user: publicUser, ...tokens };
+  const clientUser = {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt,
+  };
+  const tokens = await createSession(user);
+  return { user: clientUser, ...tokens };
 }
 
 async function googleLogin({ idToken }) {

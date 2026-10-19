@@ -1,23 +1,29 @@
 const { prisma } = require("../lib/prisma");
 
-const publicUserSelect = {
+// Danh sách trường trả ra ngoài cho Client (KHÔNG chứa loginAttempts, loginLockedUntil, passwordHash, googleId, tokenVersion)
+const clientUserSelect = {
   id: true,
   email: true,
   fullName: true,
   role: true,
   avatarUrl: true,
-  loginAttempts: true,
-  loginLockedUntil: true,
   createdAt: true,
 };
 
-async function findByEmail(email, includePassword = false, db = prisma) {
+// Danh sách trường dùng nội bộ trong Server
+const internalUserSelect = {
+  ...clientUserSelect,
+  passwordHash: true,
+  googleId: true,
+  tokenVersion: true,
+  loginAttempts: true,
+  loginLockedUntil: true,
+};
+
+async function findByEmail(email, isInternal = false, db = prisma) {
   return db.user.findUnique({
     where: { email: email.trim().toLowerCase() },
-    select: {
-      ...publicUserSelect,
-      ...(includePassword ? { passwordHash: true, googleId: true } : {}),
-    },
+    select: isInternal ? internalUserSelect : clientUserSelect,
   });
 }
 
@@ -25,7 +31,7 @@ async function findById(id, db = prisma) {
   return db.user.findUnique({
     where: { id },
     select: {
-      ...publicUserSelect,
+      ...clientUserSelect,
       studentProfile: true,
       recruiterProfile: true,
     },
@@ -35,14 +41,14 @@ async function findById(id, db = prisma) {
 async function findByGoogleId(googleId, db = prisma) {
   return db.user.findUnique({
     where: { googleId },
-    select: publicUserSelect,
+    select: clientUserSelect,
   });
 }
 
 async function createUser(data, db = prisma) {
   return db.user.create({
     data,
-    select: publicUserSelect,
+    select: clientUserSelect,
   });
 }
 
@@ -50,7 +56,7 @@ async function updateUser(id, data, db = prisma) {
   return db.user.update({
     where: { id },
     data,
-    select: publicUserSelect,
+    select: clientUserSelect,
   });
 }
 
@@ -63,7 +69,11 @@ async function incrementLoginAttempts(id, currentAttempts = 0, db = prisma) {
       loginAttempts: attempts,
       loginLockedUntil: lockedUntil,
     },
-    select: publicUserSelect,
+    select: {
+      id: true,
+      loginAttempts: true,
+      loginLockedUntil: true,
+    },
   });
 }
 
@@ -74,7 +84,11 @@ async function resetLoginAttempts(id, db = prisma) {
       loginAttempts: 0,
       loginLockedUntil: null,
     },
-    select: publicUserSelect,
+    select: {
+      id: true,
+      loginAttempts: true,
+      loginLockedUntil: true,
+    },
   });
 }
 
@@ -86,5 +100,6 @@ module.exports = {
   updateUser,
   incrementLoginAttempts,
   resetLoginAttempts,
-  publicUserSelect,
+  clientUserSelect,
+  internalUserSelect,
 };
