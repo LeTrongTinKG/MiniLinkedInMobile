@@ -86,4 +86,19 @@ async function authenticate(req, res, next) {
   return next();
 }
 
-module.exports = { authenticate };
+function authorize(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Bạn không có quyền thực hiện hành động này",
+        },
+      });
+    }
+    return next();
+  };
+}
+
+module.exports = { authenticate, authorize };
+
