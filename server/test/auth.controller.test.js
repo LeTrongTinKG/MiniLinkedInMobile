@@ -51,7 +51,6 @@ const prisma = {
         fullName: data.fullName,
         role: data.role,
         avatarUrl: data.avatarUrl ?? null,
-        tokenVersion: data.tokenVersion ?? 0,
         loginAttempts: data.loginAttempts ?? 0,
         loginLockedUntil: data.loginLockedUntil ?? null,
         createdAt: new Date(),
@@ -85,7 +84,7 @@ const prisma = {
       refreshTokens.push(data);
       return data;
     },
-    async findUnique({ where, select, include }) {
+    async findUnique({ where, include }) {
       const token = refreshTokens.find((record) => record.token === where.token);
       if (!token) {
         return null;
@@ -187,7 +186,7 @@ test("register validates input and creates a student session with standardized r
   assert.ok(registerRes.body.data);
   const returnedUser = registerRes.body.data.user;
   assert.equal(returnedUser.email, "student@example.com");
-  // Kiểm tra không bị lộ thông tin nội bộ
+  // Kiểm tra không bị lộ thông tin nội bộ (bao gồm tokenVersion đã bị xóa)
   assert.equal("passwordHash" in returnedUser, false);
   assert.equal("loginAttempts" in returnedUser, false);
   assert.equal("loginLockedUntil" in returnedUser, false);
@@ -358,7 +357,7 @@ test("refresh performs token rotation in a transaction (deletes old token and is
   assert.equal(reuseRes.body.error.code, "INVALID_REFRESH_TOKEN");
 });
 
-test("logout revokes refresh token and invalidates access token via tokenVersion", async () => {
+test("logout revokes refresh token so it cannot be used again", async () => {
   await dispatch(authController.register, { body: registerBody() });
   const loginRes = await dispatch(authController.login, {
     body: { email: "student@example.com", password: "password123" },
@@ -381,10 +380,11 @@ test("logout revokes refresh token and invalidates access token via tokenVersion
     body: { refreshToken: activeRefreshToken },
   });
   assert.equal(logoutRes.statusCode, 200);
-  assert.equal(users[0].tokenVersion, 1); // tokenVersion đã tăng lên 1
+  // Refresh token đã bị xóa khỏi DB
   assert.equal(refreshTokens.some((t) => t.token === activeRefreshToken), false);
 
-  // Sau khi logout: access token cũ bị từ chối ngay lập tức (mặc dù JWT chưa hết hạn 1h)
+  // Sau khi logout: access token cũ VẪN hợp lệ (stateless JWT) nhưng refresh token đã bị xóa
+  // => Khi access token hết hạn (1h), không refresh được nữa
   const postAuthRes = createMockRes();
   let postAuthCalled = false;
   await authenticate(
@@ -392,9 +392,14 @@ test("logout revokes refresh token and invalidates access token via tokenVersion
     postAuthRes,
     () => { postAuthCalled = true; }
   );
-  assert.equal(postAuthCalled, false);
-  assert.equal(postAuthRes.statusCode, 401);
-  assert.equal(postAuthRes.body.error.code, "TOKEN_REVOKED");
+  assert.equal(postAuthCalled, true); // Stateless JWT vẫn valid (chưa hết 1h)
+
+  // Nhưng refresh token đã không còn trong DB
+  const refreshAfterLogout = await dispatch(authController.refresh, {
+    body: { refreshToken: activeRefreshToken },
+  });
+  assert.equal(refreshAfterLogout.statusCode, 401);
+  assert.equal(refreshAfterLogout.body.error.code, "INVALID_REFRESH_TOKEN");
 });
 
 test("getMe returns public user data and profile fields only", async () => {

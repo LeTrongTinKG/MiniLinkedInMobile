@@ -259,10 +259,7 @@ async function logout({ refreshToken }) {
 
   const tokenRecord = await tokenRepository.findRefreshToken(refreshToken);
   if (tokenRecord) {
-    await prisma.$transaction(async (tx) => {
-      await tokenRepository.deleteRefreshToken(refreshToken, tx);
-      await userRepository.incrementTokenVersion(tokenRecord.userId, tx);
-    });
+    await tokenRepository.deleteRefreshToken(refreshToken);
   }
   return { message: "Đăng xuất thành công" };
 }

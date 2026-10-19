@@ -50,9 +50,6 @@ model User {
   fullName     String
   avatarUrl    String?
 
-  // Token Version (vô hiệu hóa token khi đăng xuất)
-  tokenVersion     Int       @default(0)
-
   // Rate Limiting
   loginAttempts    Int       @default(0)
   loginLockedUntil DateTime?
