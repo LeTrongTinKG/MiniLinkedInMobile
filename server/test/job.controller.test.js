@@ -6,7 +6,6 @@ process.env.JWT_SECRET = "test-secret-with-more-than-thirty-two-characters";
 
 let jobs = [];
 let users = [];
-let idCounter = 0;
 
 const prisma = {
   job: {
@@ -104,23 +103,11 @@ const prisma = {
       };
     },
   },
-  user: {
-    async findUnique({ where: { id } }) {
-      const u = users.find((item) => item.id === id);
-      return u ? { tokenVersion: u.tokenVersion } : null;
-    },
-  },
 };
 
 // Mock prisma dependency trong repository
 require.cache[require.resolve("../src/lib/prisma")] = {
   exports: { prisma },
-};
-
-const userRepository = require("../src/repositories/user.repository");
-userRepository.findTokenVersion = async (userId) => {
-  const u = users.find((item) => item.id === userId);
-  return u ? { tokenVersion: u.tokenVersion } : null;
 };
 
 const jobController = require("../src/controllers/job.controller");
@@ -173,7 +160,6 @@ async function dispatch(handler, req, middlewares = []) {
 }
 
 function resetDb() {
-  idCounter = 0;
   users = [
     {
       id: "recruiter-1",
@@ -181,7 +167,6 @@ function resetDb() {
       role: "recruiter",
       fullName: "Nguyễn Văn Tuyển",
       avatarUrl: "https://example.com/avatar1.png",
-      tokenVersion: 0,
       recruiterProfile: {
         companyName: "Tech Corp",
         companyLogoUrl: "https://example.com/logo.png",
@@ -194,7 +179,6 @@ function resetDb() {
       role: "recruiter",
       fullName: "Trần Tuyển Dụng",
       avatarUrl: null,
-      tokenVersion: 0,
       recruiterProfile: {
         companyName: "Dev Studio",
         companyLogoUrl: null,
@@ -207,7 +191,6 @@ function resetDb() {
       role: "student",
       fullName: "Lê Sinh Viên",
       avatarUrl: null,
-      tokenVersion: 0,
     },
   ];
 
@@ -295,7 +278,7 @@ test.beforeEach(() => {
   resetDb();
 });
 
-test("GET /api/v1/jobs trả về danh sách job đang open kèm pagination meta chuẩn", async () => {
+test("GET /api/v1/jobs trả về danh sách job đang open kèm pagination meta chuẩn (chỉ có total)", async () => {
   const req = { query: { page: "1", limit: "10" } };
   const res = await dispatch(jobController.getPublicJobs, req);
 
@@ -303,16 +286,18 @@ test("GET /api/v1/jobs trả về danh sách job đang open kèm pagination meta
   assert.ok(Array.isArray(res.body.data));
   // Chỉ 3 job open, job-4 closed bị loại bỏ
   assert.equal(res.body.data.length, 3);
-  assert.equal(res.body.meta.totalItems, 3);
   assert.equal(res.body.meta.total, 3);
+  assert.equal("totalItems" in res.body.meta, false); // Đã loại bỏ field trùng
   assert.equal(res.body.meta.page, 1);
   assert.equal(res.body.meta.limit, 10);
   assert.equal(res.body.meta.totalPages, 1);
   assert.equal(res.body.meta.hasNextPage, false);
   assert.equal(res.body.meta.hasPrevPage, false);
 
-  // Kiểm tra thuộc tính applicationsCount
+  // Kiểm tra duy nhất thuộc tính applicationsCount (không trùng lặp)
   assert.equal(res.body.data[0].applicationsCount, 3); // job-3 mới nhất
+  assert.equal("totalApplications" in res.body.data[0], false);
+  assert.equal("_count" in res.body.data[0], false);
 });
 
 test("GET /api/v1/jobs lọc chính xác theo từ khóa q (title, description, companyName)", async () => {
@@ -324,9 +309,9 @@ test("GET /api/v1/jobs lọc chính xác theo từ khóa q (title, description, 
   assert.equal(res.body.data[0].id, "job-1");
 });
 
-test("GET /api/v1/jobs lọc chính xác theo skills (dấu phẩy và mảng query)", async () => {
-  // 1. Dạng chuỗi phân tách dấu phẩy
-  const reqString = { query: { skills: "Dart,PostgreSQL" } };
+test("GET /api/v1/jobs lọc chính xác theo skills không phân biệt chữ hoa/thường", async () => {
+  // 1. Dạng chuỗi phân tách dấu phẩy chữ thường ("dart,postgresql") vẫn tìm ra job có skill "Dart" và "PostgreSQL"
+  const reqString = { query: { skills: "dart,postgresql" } };
   const resString = await dispatch(jobController.getPublicJobs, reqString);
 
   assert.equal(resString.statusCode, 200);
@@ -335,8 +320,8 @@ test("GET /api/v1/jobs lọc chính xác theo skills (dấu phẩy và mảng qu
   assert.ok(ids.includes("job-1"));
   assert.ok(ids.includes("job-2"));
 
-  // 2. Dạng mảng query
-  const reqArray = { query: { skills: ["TypeScript"] } };
+  // 2. Dạng mảng query chữ thường ["typescript"] khớp "TypeScript"
+  const reqArray = { query: { skills: ["typescript"] } };
   const resArray = await dispatch(jobController.getPublicJobs, reqArray);
 
   assert.equal(resArray.statusCode, 200);
@@ -368,6 +353,8 @@ test("GET /api/v1/jobs/:id trả về chi tiết job kèm thông tin recruiter v
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.data.id, "job-1");
   assert.equal(res.body.data.applicationsCount, 5);
+  assert.equal("totalApplications" in res.body.data, false);
+  assert.equal("_count" in res.body.data, false);
   assert.ok(res.body.data.recruiter);
   assert.equal(res.body.data.recruiter.fullName, "Nguyễn Văn Tuyển");
   assert.equal(res.body.data.recruiter.recruiterProfile.companyName, "Tech Corp");
@@ -380,6 +367,24 @@ test("GET /api/v1/jobs/:id trả về 404 khi ID không tồn tại", async () =
   assert.equal(res.statusCode, 404);
   assert.equal(res.body.error.code, "JOB_NOT_FOUND");
   assert.equal(res.body.error.message, "Không tìm thấy job");
+});
+
+test("GET /api/v1/jobs/:id ném lỗi 500 khi DB gặp lỗi kết nối (không nuốt lỗi thành 404)", async () => {
+  const originalFindJobById = prisma.job.findUnique;
+  prisma.job.findUnique = async () => {
+    const dbErr = new Error("Connection lost");
+    dbErr.code = "P1001"; // Không phải P2023
+    throw dbErr;
+  };
+
+  try {
+    const req = { params: { id: "job-1" } };
+    const res = await dispatch(jobController.getJobDetail, req);
+    assert.equal(res.statusCode, 500);
+    assert.equal(res.body.error.code, "INTERNAL_SERVER_ERROR");
+  } finally {
+    prisma.job.findUnique = originalFindJobById;
+  }
 });
 
 test("GET /api/v1/recruiter/jobs từ chối khi không có Access Token (401)", async () => {
@@ -398,7 +403,6 @@ test("GET /api/v1/recruiter/jobs từ chối khi user có role student (403 FORB
     id: "student-1",
     email: "student1@school.edu.vn",
     role: "student",
-    tokenVersion: 0,
   });
 
   const req = {
@@ -414,12 +418,11 @@ test("GET /api/v1/recruiter/jobs từ chối khi user có role student (403 FORB
   assert.equal(res.body.error.code, "FORBIDDEN");
 });
 
-test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh sách job của chính họ kèm số ứng viên", async () => {
+test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh sách job của chính họ kèm số ứng viên (không trùng field)", async () => {
   const recruiterToken = generateAccessToken({
     id: "recruiter-1",
     email: "recruiter1@company.com",
     role: "recruiter",
-    tokenVersion: 0,
   });
 
   // 1. Lấy tất cả job của recruiter-1 (cả open và closed) kèm số ứng viên
@@ -434,19 +437,19 @@ test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh 
 
   assert.equal(resAll.statusCode, 200);
   assert.equal(resAll.body.data.length, 3); // job-1, job-2, job-4
-  assert.equal(resAll.body.meta.totalItems, 3);
   assert.equal(resAll.body.meta.total, 3);
+  assert.equal("totalItems" in resAll.body.meta, false);
   const ids = resAll.body.data.map((j) => j.id);
   assert.ok(ids.includes("job-1"));
   assert.ok(ids.includes("job-2"));
   assert.ok(ids.includes("job-4"));
   assert.ok(!ids.includes("job-3")); // job-3 thuộc về recruiter-2
 
-  // Xác nhận trả về kèm số ứng viên (đáp ứng tiêu chí nghiệm thu)
+  // Xác nhận chỉ có applicationsCount duy nhất
   const job1 = resAll.body.data.find((j) => j.id === "job-1");
   assert.equal(job1.applicationsCount, 5);
-  assert.equal(job1.totalApplications, 5);
-  assert.equal(job1._count.applications, 5);
+  assert.equal("totalApplications" in job1, false);
+  assert.equal("_count" in job1, false);
 
   // 2. Lọc theo status = closed
   const reqClosed = {
@@ -462,5 +465,6 @@ test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh 
   assert.equal(resClosed.body.data.length, 1);
   assert.equal(resClosed.body.data[0].id, "job-4");
   assert.equal(resClosed.body.data[0].applicationsCount, 8);
-  assert.equal(resClosed.body.data[0]._count.applications, 8);
+  assert.equal("totalApplications" in resClosed.body.data[0], false);
+  assert.equal("_count" in resClosed.body.data[0], false);
 });

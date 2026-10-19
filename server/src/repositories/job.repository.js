@@ -23,11 +23,21 @@ function buildPublicJobWhere(filters = {}) {
     });
   }
 
-  // 2. Lọc theo kỹ năng (skills) - hasSome
+  // 2. Lọc theo kỹ năng (skills) - hasSome, không phân biệt hoa/thường
+  // Mở rộng query sang các dạng phổ biến: lowercase, Capitalize, UPPERCASE
+  // (PostgreSQL array hasSome phân biệt hoa thường)
   if (Array.isArray(filters.skills) && filters.skills.length > 0) {
+    const skillVariants = filters.skills.flatMap((s) => {
+      const lower = s.toLowerCase();
+      const upper = s.toUpperCase();
+      const capitalized = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+      return [lower, upper, capitalized, s];
+    });
+    // Loại trùng
+    const uniqueVariants = [...new Set(skillVariants)];
     conditions.push({
       requiredSkills: {
-        hasSome: filters.skills,
+        hasSome: uniqueVariants,
       },
     });
   }
