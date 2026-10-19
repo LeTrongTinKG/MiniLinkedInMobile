@@ -15,7 +15,6 @@ function generateAccessToken(user) {
       userId: user.id,
       email: user.email,
       role: user.role,
-      tokenVersion: typeof user.tokenVersion === "number" ? user.tokenVersion : 0,
     },
     getJwtSecret(),
     { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "1h" }
