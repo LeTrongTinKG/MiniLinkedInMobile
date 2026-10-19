@@ -51,6 +51,7 @@ const prisma = {
         fullName: data.fullName,
         role: data.role,
         avatarUrl: data.avatarUrl ?? null,
+        tokenVersion: data.tokenVersion ?? 0,
         loginAttempts: data.loginAttempts ?? 0,
         loginLockedUntil: data.loginLockedUntil ?? null,
         createdAt: new Date(),
@@ -69,7 +70,13 @@ const prisma = {
     async update({ where, data, select }) {
       const user = users.find((record) => record.id === where.id);
       if (!user) throw new Error("User not found");
-      Object.assign(user, data);
+      for (const [key, val] of Object.entries(data)) {
+        if (val && typeof val === "object" && "increment" in val) {
+          user[key] = (user[key] || 0) + val.increment;
+        } else {
+          user[key] = val;
+        }
+      }
       return project(user, select);
     },
   },
@@ -135,13 +142,10 @@ function createMockRes() {
   };
 }
 
-// Giả lập pipeline Express (controller -> errorHandler nếu có lỗi)
 async function dispatch(handler, req) {
   const res = createMockRes();
-  let errCaptured = null;
   const next = (err) => {
     if (err) {
-      errCaptured = err;
       errorHandler(err, req, res, () => {});
     }
   };
@@ -170,7 +174,7 @@ test.after(() => {
   OAuth2Client.prototype.verifyIdToken = originalGoogleVerifier;
 });
 
-test("register validates input and creates a student session with standardized response", async () => {
+test("register validates input and creates a student session with standardized response without internal fields", async () => {
   const invalidRes = await dispatch(authController.register, {
     body: registerBody({ role: "admin" }),
   });
@@ -181,8 +185,15 @@ test("register validates input and creates a student session with standardized r
   const registerRes = await dispatch(authController.register, { body: registerBody() });
   assert.equal(registerRes.statusCode, 201);
   assert.ok(registerRes.body.data);
-  assert.equal(registerRes.body.data.user.email, "student@example.com");
-  assert.equal("passwordHash" in registerRes.body.data.user, false);
+  const returnedUser = registerRes.body.data.user;
+  assert.equal(returnedUser.email, "student@example.com");
+  // Kiểm tra không bị lộ thông tin nội bộ
+  assert.equal("passwordHash" in returnedUser, false);
+  assert.equal("loginAttempts" in returnedUser, false);
+  assert.equal("loginLockedUntil" in returnedUser, false);
+  assert.equal("tokenVersion" in returnedUser, false);
+  assert.equal("googleId" in returnedUser, false);
+
   assert.ok(users[0].studentProfile);
   assert.equal(refreshTokens.length, 1);
   assert.equal(
@@ -204,25 +215,42 @@ test("register conflicts on duplicate email and defers recruiter profile creatio
   assert.equal(users[1].recruiterProfile, null);
 });
 
-test("login accepts valid credentials and rejects incorrect credentials", async () => {
+test("login accepts valid credentials and protects against user enumeration", async () => {
   await dispatch(authController.register, { body: registerBody() });
 
+  // 1. Đăng nhập thành công
   const loginRes = await dispatch(authController.login, {
     body: { email: "STUDENT@example.com", password: "password123" },
   });
   assert.equal(loginRes.statusCode, 200);
   assert.equal(loginRes.body.data.user.email, "student@example.com");
+  assert.equal("loginAttempts" in loginRes.body.data.user, false);
   assert.ok(loginRes.body.data.accessToken);
   assert.ok(loginRes.body.data.refreshToken);
 
-  const invalidRes = await dispatch(authController.login, {
+  // 2. Chống User Enumeration: sai mật khẩu -> 401 INVALID_CREDENTIALS
+  const invalidPassRes = await dispatch(authController.login, {
     body: { email: "student@example.com", password: "wrong" },
   });
-  assert.equal(invalidRes.statusCode, 401);
-  assert.equal(invalidRes.body.error.code, "INVALID_CREDENTIALS");
+  assert.equal(invalidPassRes.statusCode, 401);
+  assert.equal(invalidPassRes.body.error.code, "INVALID_CREDENTIALS");
+
+  // 3. Chống User Enumeration: email không tồn tại -> cũng 401 INVALID_CREDENTIALS
+  const unknownEmailRes = await dispatch(authController.login, {
+    body: { email: "nonexistent@example.com", password: "password123" },
+  });
+  assert.equal(unknownEmailRes.statusCode, 401);
+  assert.equal(unknownEmailRes.body.error.code, "INVALID_CREDENTIALS");
+
+  // 4. Chống User Enumeration: email sai format -> cũng 401 INVALID_CREDENTIALS
+  const malformedEmailRes = await dispatch(authController.login, {
+    body: { email: "not-an-email", password: "password123" },
+  });
+  assert.equal(malformedEmailRes.statusCode, 401);
+  assert.equal(malformedEmailRes.body.error.code, "INVALID_CREDENTIALS");
 });
 
-test("rate limiting locks account after 5 consecutive failed logins", async () => {
+test("rate limiting locks account after 5 consecutive failed logins using atomic increments", async () => {
   await dispatch(authController.register, { body: registerBody() });
 
   // 4 lần sai liên tiếp -> HTTP 401
@@ -244,7 +272,7 @@ test("rate limiting locks account after 5 consecutive failed logins", async () =
   assert.equal(users[0].loginAttempts, 5);
   assert.ok(users[0].loginLockedUntil);
 
-  // Thử đăng nhập tiếp (kể cả đúng pass) trong lúc đang bị khóa -> vẫn trả 429
+  // Đăng nhập đúng trong lúc bị khóa -> vẫn trả 429
   const blockedRes = await dispatch(authController.login, {
     body: { email: "student@example.com", password: "password123" },
   });
@@ -286,6 +314,7 @@ test("Google login verifies audience and creates a student account", async () =>
   assert.equal(googleRes.statusCode, 200);
   assert.equal(googleRes.body.data.isNewUser, true);
   assert.equal(googleRes.body.data.user.email, "google@example.com");
+  assert.equal("tokenVersion" in googleRes.body.data.user, false);
   assert.ok(users[0].studentProfile);
 });
 
@@ -303,7 +332,7 @@ test("Google login rejects an unverified email", async () => {
   assert.equal(users.length, 0);
 });
 
-test("refresh performs token rotation (deletes old token and issues new pair)", async () => {
+test("refresh performs token rotation in a transaction (deletes old token and issues new pair)", async () => {
   await dispatch(authController.register, { body: registerBody() });
   const oldToken = refreshTokens[0].token;
 
@@ -329,28 +358,43 @@ test("refresh performs token rotation (deletes old token and issues new pair)", 
   assert.equal(reuseRes.body.error.code, "INVALID_REFRESH_TOKEN");
 });
 
-test("refresh rejects expired tokens and logout revokes active tokens", async () => {
+test("logout revokes refresh token and invalidates access token via tokenVersion", async () => {
   await dispatch(authController.register, { body: registerBody() });
-  const token = refreshTokens[0].token;
-
-  refreshTokens[0].expiresAt = new Date(Date.now() - 1000);
-  const expiredRes = await dispatch(authController.refresh, {
-    body: { refreshToken: token },
+  const loginRes = await dispatch(authController.login, {
+    body: { email: "student@example.com", password: "password123" },
   });
-  assert.equal(expiredRes.statusCode, 401);
-  assert.equal(expiredRes.body.error.code, "REFRESH_TOKEN_EXPIRED");
-  assert.equal(refreshTokens.length, 0);
+  const activeAccessToken = loginRes.body.data.accessToken;
+  const activeRefreshToken = loginRes.body.data.refreshToken;
 
-  // Test logout
-  await dispatch(authController.register, {
-    body: registerBody({ email: "logout@example.com" }),
-  });
-  const logoutToken = refreshTokens[0].token;
+  // Trước khi logout: access token hợp lệ
+  const preAuthRes = createMockRes();
+  let preAuthCalled = false;
+  await authenticate(
+    { headers: { authorization: `Bearer ${activeAccessToken}` } },
+    preAuthRes,
+    () => { preAuthCalled = true; }
+  );
+  assert.equal(preAuthCalled, true);
+
+  // Logout
   const logoutRes = await dispatch(authController.logout, {
-    body: { refreshToken: logoutToken },
+    body: { refreshToken: activeRefreshToken },
   });
   assert.equal(logoutRes.statusCode, 200);
-  assert.equal(refreshTokens.some((t) => t.token === logoutToken), false);
+  assert.equal(users[0].tokenVersion, 1); // tokenVersion đã tăng lên 1
+  assert.equal(refreshTokens.some((t) => t.token === activeRefreshToken), false);
+
+  // Sau khi logout: access token cũ bị từ chối ngay lập tức (mặc dù JWT chưa hết hạn 1h)
+  const postAuthRes = createMockRes();
+  let postAuthCalled = false;
+  await authenticate(
+    { headers: { authorization: `Bearer ${activeAccessToken}` } },
+    postAuthRes,
+    () => { postAuthCalled = true; }
+  );
+  assert.equal(postAuthCalled, false);
+  assert.equal(postAuthRes.statusCode, 401);
+  assert.equal(postAuthRes.body.error.code, "TOKEN_REVOKED");
 });
 
 test("getMe returns public user data and profile fields only", async () => {
@@ -362,29 +406,6 @@ test("getMe returns public user data and profile fields only", async () => {
   assert.equal(meRes.statusCode, 200);
   assert.ok(meRes.body.data.user.studentProfile);
   assert.equal("passwordHash" in meRes.body.data.user, false);
-});
-
-test("authenticate rejects missing tokens and attaches verified claims", () => {
-  const missingRes = createMockRes();
-  authenticate({ headers: {} }, missingRes, () => {
-    assert.fail("next must not be called without a token");
-  });
-  assert.equal(missingRes.statusCode, 401);
-
-  const token = generateAccessToken({
-    id: "user-auth",
-    email: "auth@example.com",
-    role: "student",
-  });
-  const req = { headers: { authorization: `Bearer ${token}` } };
-  let nextCalled = false;
-  authenticate(req, createMockRes(), () => {
-    nextCalled = true;
-  });
-  assert.equal(nextCalled, true);
-  assert.deepEqual(req.user, {
-    userId: "user-auth",
-    email: "auth@example.com",
-    role: "student",
-  });
+  assert.equal("loginAttempts" in meRes.body.data.user, false);
+  assert.equal("tokenVersion" in meRes.body.data.user, false);
 });

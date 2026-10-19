@@ -104,6 +104,8 @@ async function resetLoginAttempts(id, db = prisma) {
       loginLockedUntil: true,
     },
   });
+}
+
 async function findTokenVersion(id, db = prisma) {
   return db.user.findUnique({
     where: { id },
