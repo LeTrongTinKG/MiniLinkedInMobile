@@ -95,17 +95,24 @@ async function getPublicJobs(query = {}, repo = jobRepository) {
   const totalPages = Math.ceil(totalItems / limit) || 1;
 
   // Chuẩn hóa format trả về kèm applicationsCount
-  const formattedItems = items.map((job) => ({
-    ...job,
-    applicationsCount: job._count?.applications ?? 0,
-    _count: undefined,
-  }));
+  const formattedItems = items.map((job) => {
+    const applicationsCount = job._count?.applications ?? 0;
+    return {
+      ...job,
+      applicationsCount,
+      totalApplications: applicationsCount,
+      _count: {
+        applications: applicationsCount,
+      },
+    };
+  });
 
   return {
     items: formattedItems,
     meta: {
       page,
       limit,
+      total: totalItems,
       totalItems,
       totalPages,
       hasNextPage: page < totalPages,
@@ -119,18 +126,30 @@ async function getPublicJobs(query = {}, repo = jobRepository) {
  */
 async function getJobDetail(id, repo = jobRepository) {
   if (typeof id !== "string" || id.trim().length === 0) {
-    throw new ApiError(400, "INVALID_JOB_ID", "ID công việc không hợp lệ");
+    throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
-  const job = await repo.findJobById(id.trim());
-  if (!job) {
-    throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy thông tin công việc");
+  let job;
+  try {
+    job = await repo.findJobById(id.trim());
+  } catch (_error) {
+    // Trường hợp ID sai định dạng gây lỗi truy vấn DB -> coi như sai ID trả về 404
+    throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
+
+  if (!job) {
+    throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
+  }
+
+  const applicationsCount = job._count?.applications ?? 0;
 
   return {
     ...job,
-    applicationsCount: job._count?.applications ?? 0,
-    _count: undefined,
+    applicationsCount,
+    totalApplications: applicationsCount,
+    _count: {
+      applications: applicationsCount,
+    },
   };
 }
 
@@ -161,17 +180,24 @@ async function getRecruiterJobs(recruiterId, query = {}, repo = jobRepository) {
 
   const totalPages = Math.ceil(totalItems / limit) || 1;
 
-  const formattedItems = items.map((job) => ({
-    ...job,
-    applicationsCount: job._count?.applications ?? 0,
-    _count: undefined,
-  }));
+  const formattedItems = items.map((job) => {
+    const applicationsCount = job._count?.applications ?? 0;
+    return {
+      ...job,
+      applicationsCount,
+      totalApplications: applicationsCount,
+      _count: {
+        applications: applicationsCount,
+      },
+    };
+  });
 
   return {
     items: formattedItems,
     meta: {
       page,
       limit,
+      total: totalItems,
       totalItems,
       totalPages,
       hasNextPage: page < totalPages,

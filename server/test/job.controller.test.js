@@ -304,6 +304,7 @@ test("GET /api/v1/jobs trả về danh sách job đang open kèm pagination meta
   // Chỉ 3 job open, job-4 closed bị loại bỏ
   assert.equal(res.body.data.length, 3);
   assert.equal(res.body.meta.totalItems, 3);
+  assert.equal(res.body.meta.total, 3);
   assert.equal(res.body.meta.page, 1);
   assert.equal(res.body.meta.limit, 10);
   assert.equal(res.body.meta.totalPages, 1);
@@ -378,6 +379,7 @@ test("GET /api/v1/jobs/:id trả về 404 khi ID không tồn tại", async () =
 
   assert.equal(res.statusCode, 404);
   assert.equal(res.body.error.code, "JOB_NOT_FOUND");
+  assert.equal(res.body.error.message, "Không tìm thấy job");
 });
 
 test("GET /api/v1/recruiter/jobs từ chối khi không có Access Token (401)", async () => {
@@ -412,7 +414,7 @@ test("GET /api/v1/recruiter/jobs từ chối khi user có role student (403 FORB
   assert.equal(res.body.error.code, "FORBIDDEN");
 });
 
-test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh sách job của chính họ", async () => {
+test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh sách job của chính họ kèm số ứng viên", async () => {
   const recruiterToken = generateAccessToken({
     id: "recruiter-1",
     email: "recruiter1@company.com",
@@ -420,7 +422,7 @@ test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh 
     tokenVersion: 0,
   });
 
-  // 1. Lấy tất cả job của recruiter-1 (cả open và closed)
+  // 1. Lấy tất cả job của recruiter-1 (cả open và closed) kèm số ứng viên
   const reqAll = {
     headers: { authorization: `Bearer ${recruiterToken}` },
     query: { page: "1", limit: "10" },
@@ -433,11 +435,18 @@ test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh 
   assert.equal(resAll.statusCode, 200);
   assert.equal(resAll.body.data.length, 3); // job-1, job-2, job-4
   assert.equal(resAll.body.meta.totalItems, 3);
+  assert.equal(resAll.body.meta.total, 3);
   const ids = resAll.body.data.map((j) => j.id);
   assert.ok(ids.includes("job-1"));
   assert.ok(ids.includes("job-2"));
   assert.ok(ids.includes("job-4"));
   assert.ok(!ids.includes("job-3")); // job-3 thuộc về recruiter-2
+
+  // Xác nhận trả về kèm số ứng viên (đáp ứng tiêu chí nghiệm thu)
+  const job1 = resAll.body.data.find((j) => j.id === "job-1");
+  assert.equal(job1.applicationsCount, 5);
+  assert.equal(job1.totalApplications, 5);
+  assert.equal(job1._count.applications, 5);
 
   // 2. Lọc theo status = closed
   const reqClosed = {
@@ -452,4 +461,6 @@ test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh 
   assert.equal(resClosed.statusCode, 200);
   assert.equal(resClosed.body.data.length, 1);
   assert.equal(resClosed.body.data[0].id, "job-4");
+  assert.equal(resClosed.body.data[0].applicationsCount, 8);
+  assert.equal(resClosed.body.data[0]._count.applications, 8);
 });
