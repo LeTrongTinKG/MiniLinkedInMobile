@@ -1,5 +1,4 @@
 const { verifyAccessToken } = require("../utils/token");
-const userRepository = require("../repositories/user.repository");
 
 async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -60,24 +59,6 @@ async function authenticate(req, res, next) {
     });
   }
 
-  // Kiểm tra tokenVersion đối chiếu với DB (thu hồi token nếu đã logout)
-  try {
-    const userRecord = await userRepository.findTokenVersion(payload.userId);
-    const expectedVersion = userRecord?.tokenVersion ?? 0;
-    const tokenVersion = typeof payload.tokenVersion === "number" ? payload.tokenVersion : 0;
-
-    if (!userRecord || expectedVersion !== tokenVersion) {
-      return res.status(401).json({
-        error: {
-          code: "TOKEN_REVOKED",
-          message: "Phiên đăng nhập đã bị thu hồi hoặc đã đăng xuất",
-        },
-      });
-    }
-  } catch (dbError) {
-    return next(dbError);
-  }
-
   req.user = {
     userId: payload.userId,
     email: payload.email,
@@ -101,4 +82,3 @@ function authorize(...allowedRoles) {
 }
 
 module.exports = { authenticate, authorize };
-

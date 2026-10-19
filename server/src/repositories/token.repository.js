@@ -30,15 +30,8 @@ async function deleteRefreshToken(token, db = prisma) {
   });
 }
 
-async function deleteUserRefreshTokens(userId, db = prisma) {
-  return db.refreshToken.deleteMany({
-    where: { userId },
-  });
-}
-
 module.exports = {
   createRefreshToken,
   findRefreshToken,
   deleteRefreshToken,
-  deleteUserRefreshTokens,
 };
