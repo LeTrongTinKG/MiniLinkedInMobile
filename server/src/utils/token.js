@@ -11,7 +11,12 @@ function getJwtSecret() {
 
 function generateAccessToken(user) {
   return jwt.sign(
-    { userId: user.id, email: user.email, role: user.role },
+    {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      tokenVersion: typeof user.tokenVersion === "number" ? user.tokenVersion : 0,
+    },
     getJwtSecret(),
     { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "1h" }
   );

@@ -104,6 +104,24 @@ async function resetLoginAttempts(id, db = prisma) {
       loginLockedUntil: true,
     },
   });
+async function findTokenVersion(id, db = prisma) {
+  return db.user.findUnique({
+    where: { id },
+    select: { tokenVersion: true },
+  });
+}
+
+async function incrementTokenVersion(id, db = prisma) {
+  return db.user.update({
+    where: { id },
+    data: {
+      tokenVersion: { increment: 1 },
+    },
+    select: {
+      id: true,
+      tokenVersion: true,
+    },
+  });
 }
 
 module.exports = {
@@ -114,6 +132,8 @@ module.exports = {
   updateUser,
   incrementLoginAttempts,
   resetLoginAttempts,
+  findTokenVersion,
+  incrementTokenVersion,
   clientUserSelect,
   internalUserSelect,
 };

@@ -257,7 +257,13 @@ async function logout({ refreshToken }) {
     throw new ApiError(400, "VALIDATION_ERROR", "refreshToken là bắt buộc");
   }
 
-  await tokenRepository.deleteRefreshToken(refreshToken);
+  const tokenRecord = await tokenRepository.findRefreshToken(refreshToken);
+  if (tokenRecord) {
+    await prisma.$transaction(async (tx) => {
+      await tokenRepository.deleteRefreshToken(refreshToken, tx);
+      await userRepository.incrementTokenVersion(tokenRecord.userId, tx);
+    });
+  }
   return { message: "Đăng xuất thành công" };
 }
 
