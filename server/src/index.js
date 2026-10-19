@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { prisma } = require("./lib/prisma");
+const authRoutes = require("./routes/auth.routes");
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api/v1/auth", authRoutes);
 
 // Health check endpoint
 app.get("/health", async (_req, res) => {
@@ -40,6 +43,10 @@ app.get("/api/v1", (_req, res) => {
   });
 });
 
+// Centralized Error Handler (đặt ở cuối cùng các routes)
+const { errorHandler } = require("./middleware/error");
+app.use(errorHandler);
+
 // Khởi chạy server
 app.listen(PORT, async () => {
   console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
@@ -52,4 +59,3 @@ app.listen(PORT, async () => {
 });
 
 module.exports = app;
-
