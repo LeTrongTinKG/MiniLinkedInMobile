@@ -27,8 +27,8 @@ import 'features/jobs/domain/usecases/job_usecases.dart';
 import 'features/jobs/presentation/providers/job_provider.dart';
 
 // Home Features
-import 'features/student_home/presentation/screens/student_home_screen.dart';
-import 'features/recruiter_home/presentation/screens/recruiter_home_screen.dart';
+import 'features/student_home/student_home_screen.dart';
+import 'features/recruiter_home/recruiter_home_screen.dart';
 
 void main() async {
   // Đảm bảo Flutter binding đã khởi tạo trước khi dùng plugin

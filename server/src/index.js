@@ -38,12 +38,38 @@ app.get("/health", async (_req, res) => {
   }
 });
 
-// Root API endpoint
-app.get("/api/v1", (_req, res) => {
+// Root endpoint
+app.get("/", (_req, res) => {
   res.json({
     message: "Welcome to Mini LinkedIn REST API",
     version: "1.0.0",
     docs: "/api/v1/docs",
+    endpoints: {
+      health: "/health",
+      apiV1: "/api/v1",
+      auth: "/api/v1/auth",
+      jobs: "/api/v1/jobs",
+      recruiter: "/api/v1/recruiter",
+    },
+  });
+});
+
+// Root API endpoint
+app.get("/api/v1", (_req, res) => {
+  res.json({
+    message: "Welcome to Mini LinkedIn REST API v1",
+    version: "1.0.0",
+    docs: "/api/v1/docs",
+  });
+});
+
+// 404 Handler cho các route không tồn tại (trả JSON thay vì HTML lỗi mặc định)
+app.use((_req, res) => {
+  res.status(404).json({
+    error: {
+      code: "NOT_FOUND",
+      message: "Route không tồn tại",
+    },
   });
 });
 
@@ -51,15 +77,17 @@ app.get("/api/v1", (_req, res) => {
 const { errorHandler } = require("./middleware/error");
 app.use(errorHandler);
 
-// Khởi chạy server
-app.listen(PORT, async () => {
-  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
-  try {
-    await prisma.$connect();
-    console.log("✅ Đã kết nối cơ sở dữ liệu Supabase thành công!");
-  } catch (error) {
-    console.error("❌ Lỗi kết nối Supabase:", error);
-  }
-});
+// Khởi chạy server khi chạy trực tiếp file này (không chạy khi được require trong test)
+if (require.main === module) {
+  app.listen(PORT, async () => {
+    console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
+    try {
+      await prisma.$connect();
+      console.log("✅ Đã kết nối cơ sở dữ liệu Supabase thành công!");
+    } catch (error) {
+      console.error("❌ Lỗi kết nối Supabase:", error);
+    }
+  });
+}
 
 module.exports = app;
