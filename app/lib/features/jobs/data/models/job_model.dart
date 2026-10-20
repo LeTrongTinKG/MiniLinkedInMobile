@@ -1,0 +1,108 @@
+import '../../domain/entities/job_entity.dart';
+
+/// DTO parse dữ liệu công việc từ JSON API / Mock
+class JobModel {
+  final String id;
+  final String recruiterId;
+  final String title;
+  final String companyName;
+  final String? companyLogoUrl;
+  final String location;
+  final String workMode;
+  final String level;
+  final int? salaryMin;
+  final int? salaryMax;
+  final String description;
+  final List<String> requiredSkills;
+  final List<String> niceToHave;
+  final String status;
+  final DateTime createdAt;
+
+  const JobModel({
+    required this.id,
+    required this.recruiterId,
+    required this.title,
+    required this.companyName,
+    this.companyLogoUrl,
+    required this.location,
+    required this.workMode,
+    required this.level,
+    this.salaryMin,
+    this.salaryMax,
+    required this.description,
+    required this.requiredSkills,
+    required this.niceToHave,
+    required this.status,
+    required this.createdAt,
+  });
+
+  factory JobModel.fromJson(Map<String, dynamic> json) {
+    return JobModel(
+      id: json['id'] as String,
+      recruiterId: json['recruiterId'] as String? ?? '',
+      title: json['title'] as String,
+      companyName: json['companyName'] as String,
+      companyLogoUrl: json['companyLogoUrl'] as String?,
+      location: json['location'] as String,
+      workMode: json['workMode'] as String? ?? 'onsite',
+      level: json['level'] as String? ?? 'intern',
+      salaryMin: json['salaryMin'] as int?,
+      salaryMax: json['salaryMax'] as int?,
+      description: json['description'] as String? ?? '',
+      requiredSkills: (json['requiredSkills'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      niceToHave: (json['niceToHave'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      status: json['status'] as String? ?? 'open',
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'recruiterId': recruiterId,
+      'title': title,
+      'companyName': companyName,
+      'companyLogoUrl': companyLogoUrl,
+      'location': location,
+      'workMode': workMode,
+      'level': level,
+      'salaryMin': salaryMin,
+      'salaryMax': salaryMax,
+      'description': description,
+      'requiredSkills': requiredSkills,
+      'niceToHave': niceToHave,
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  /// Ánh xạ sang Entity nghiệp vụ
+  JobEntity toEntity() {
+    return JobEntity(
+      id: id,
+      recruiterId: recruiterId,
+      title: title,
+      companyName: companyName,
+      companyLogoUrl: companyLogoUrl,
+      location: location,
+      workMode: WorkMode.fromString(workMode),
+      level: JobLevel.fromString(level),
+      salaryMin: salaryMin,
+      salaryMax: salaryMax,
+      description: description,
+      requiredSkills: requiredSkills,
+      niceToHave: niceToHave,
+      status: status,
+      createdAt: createdAt,
+    );
+  }
+}
+

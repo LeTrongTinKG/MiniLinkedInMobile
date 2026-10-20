@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 
 /// Màn hình chính của sinh viên với thanh điều hướng dưới gồm 5 tab
 class StudentHomeScreen extends StatefulWidget {
@@ -27,11 +28,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         title: 'Đầu trang',
         subtitle: 'Các bài viết sẽ xuất hiện ở đây',
       ),
-      _buildPlaceholderPage(
-        icon: Icons.work_outline,
-        title: 'Tìm việc',
-        subtitle: 'Khám phá các cơ hội việc làm',
-      ),
+      // Tab 1: Màn danh sách việc làm IT kèm tìm kiếm và lọc (Task F5)
+      const JobListScreen(),
       _buildPlaceholderPage(
         icon: Icons.post_add,
         title: 'Đăng bài',
