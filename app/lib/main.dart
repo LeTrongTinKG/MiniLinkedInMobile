@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 // Core
 import 'core/network/dio_client.dart';
+import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
 
@@ -19,6 +20,12 @@ import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 
+// Jobs Feature - Data & Domain Layers
+import 'features/jobs/data/datasources/job_mock_datasource.dart';
+import 'features/jobs/data/repositories/job_repository_impl.dart';
+import 'features/jobs/domain/usecases/job_usecases.dart';
+import 'features/jobs/presentation/providers/job_provider.dart';
+
 // Home Features
 import 'features/student_home/student_home_screen.dart';
 import 'features/recruiter_home/recruiter_home_screen.dart';
@@ -31,24 +38,29 @@ void main() async {
 
   // 1. Infrastructure
   final tokenStorage = SecureTokenStorage.defaultStorage();
+  final preferencesStorage = AppPreferencesStorage.defaultStorage();
   final dioClient = DioClient.create(tokenStorage);
 
-  // 2. Data Layer
+  // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);
   final authRepository = AuthRepositoryImpl(
     dataSource: authDataSource,
     tokenStorage: tokenStorage,
   );
-
-  // 3. Domain Layer - UseCases
   final loginUseCase = LoginUseCase(authRepository);
   final registerUseCase = RegisterUseCase(authRepository);
   final getMeUseCase = GetMeUseCase(authRepository);
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
+  // 3. Jobs Feature (Sử dụng JobMockDataSource theo Task F5, kèm lưu trữ bộ lọc bền vững)
+  final jobDataSource = JobMockDataSource();
+  final jobRepository = JobRepositoryImpl(jobDataSource);
+  final getJobsUseCase = GetJobsUseCase(jobRepository);
+  final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
+
   runApp(
-    // 4. Cung cấp AuthProvider cho toàn bộ widget tree
+    // 4. Cung cấp Providers cho toàn bộ widget tree
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -58,6 +70,13 @@ void main() async {
             getMeUseCase: getMeUseCase,
             googleLoginUseCase: googleLoginUseCase,
             logoutUseCase: logoutUseCase,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => JobProvider(
+            getJobsUseCase: getJobsUseCase,
+            getAvailableSkillsUseCase: getAvailableSkillsUseCase,
+            preferences: preferencesStorage,
           ),
         ),
       ],

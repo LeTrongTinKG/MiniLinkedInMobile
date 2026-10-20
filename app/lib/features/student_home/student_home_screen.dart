@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/jobs/jobs_page.dart';
+import 'package:app/core/storage/preferences_storage.dart';
+import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/profile/profile_page.dart';
 
@@ -13,12 +14,36 @@ class StudentHomeScreen extends StatefulWidget {
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
   int _selectedIndex = 0;
+  late final IAppPreferences _preferences;
 
   static const _pages = <Widget>[
-    JobsPage(),
+    JobListScreen(), // Tích hợp Màn danh sách việc làm IT kèm tìm kiếm và lọc (Task F5)
     ApplicationsPage(),
     ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _preferences = AppPreferencesStorage.defaultStorage();
+    _restoreSavedTab();
+  }
+
+  Future<void> _restoreSavedTab() async {
+    try {
+      final savedTab = await _preferences.getSelectedTab();
+      if (savedTab != null && savedTab >= 0 && savedTab < _pages.length) {
+        if (mounted) {
+          setState(() => _selectedIndex = savedTab);
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _onItemTapped(int index) {
+    setState(() => _selectedIndex = index);
+    _preferences.saveSelectedTab(index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +57,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         selectedItemColor: AppTheme.primaryBlue,
         unselectedItemColor: AppTheme.textSecondary,
         currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.work_outline),
