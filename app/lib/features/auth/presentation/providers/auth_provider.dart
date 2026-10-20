@@ -33,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.initial;
   UserEntity? _currentUser;
   String? _errorMessage;
+  AppException? _lastException;
 
   AuthProvider({
     required LoginUseCase loginUseCase,
@@ -50,24 +51,38 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus get status => _status;
   UserEntity? get currentUser => _currentUser;
   String? get errorMessage => _errorMessage;
+  AppException? get lastException => _lastException;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.loading;
   bool get isStudent => _currentUser?.isStudent ?? false;
   bool get isRecruiter => _currentUser?.isRecruiter ?? false;
+  bool get isNetworkError => _lastException is NetworkException;
 
   /// Kiểm tra xác thực khi mở app: gọi GET /auth/me
+  /// Tách biệt rõ ràng:
+  /// - UnauthorizedException (401 / hết token): chuyển unauthenticated → về màn login
+  /// - NetworkException (mất mạng / không kết nối server): giữ trạng thái error → KHÔNG kick ra login
   Future<void> checkAuth() async {
     _setLoading();
     try {
       _currentUser = await _getMeUseCase();
       _status = AuthStatus.authenticated;
-    } on UnauthorizedException {
+      _errorMessage = null;
+      _lastException = null;
+    } on UnauthorizedException catch (e) {
       _status = AuthStatus.unauthenticated;
       _currentUser = null;
-    } on AppException {
-      // Lỗi mạng hoặc khác → coi như chưa xác thực
-      _status = AuthStatus.unauthenticated;
-      _currentUser = null;
+      _errorMessage = null;
+      _lastException = e;
+    } on NetworkException catch (e) {
+      // Lỗi kết nối mạng: không coi là unauthenticated, tránh bị kick ra login khi F5/mở lại app
+      _status = AuthStatus.error;
+      _errorMessage = e.message;
+      _lastException = e;
+    } on AppException catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e.message;
+      _lastException = e;
     } finally {
       notifyListeners();
     }
@@ -80,9 +95,11 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = await _loginUseCase(email, password);
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      _lastException = null;
     } on AppException catch (e) {
       _status = AuthStatus.error;
       _errorMessage = e.message;
+      _lastException = e;
     } finally {
       notifyListeners();
     }
@@ -95,9 +112,11 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = await _registerUseCase(email, password, fullName);
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      _lastException = null;
     } on AppException catch (e) {
       _status = AuthStatus.error;
       _errorMessage = e.message;
+      _lastException = e;
     } finally {
       notifyListeners();
     }
@@ -110,9 +129,11 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = await _googleLoginUseCase(idToken);
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      _lastException = null;
     } on AppException catch (e) {
       _status = AuthStatus.error;
       _errorMessage = e.message;
+      _lastException = e;
     } finally {
       notifyListeners();
     }
@@ -128,14 +149,16 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _currentUser = null;
       _status = AuthStatus.unauthenticated;
+      _lastException = null;
       notifyListeners();
     }
   }
 
   /// Xóa thông báo lỗi (gọi khi user bắt đầu nhập lại)
   void clearError() {
-    if (_errorMessage != null) {
+    if (_errorMessage != null || _lastException != null) {
       _errorMessage = null;
+      _lastException = null;
       notifyListeners();
     }
   }
@@ -143,6 +166,7 @@ class AuthProvider extends ChangeNotifier {
   void _setLoading() {
     _status = AuthStatus.loading;
     _errorMessage = null;
+    _lastException = null;
     notifyListeners();
   }
 }
