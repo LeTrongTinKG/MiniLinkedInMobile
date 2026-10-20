@@ -36,7 +36,7 @@ void main() {
       expect(entity.requiredSkills, contains('Flutter'));
     });
 
-    test('JobFilter detection & reset works accurately', () {
+    test('JobFilter detection, reset & serialization works accurately', () {
       var filter = const JobFilter();
       expect(filter.hasFilter, false);
       expect(filter.activeFilterCount, 0);
@@ -49,7 +49,17 @@ void main() {
       );
 
       expect(filter.hasFilter, true);
-      expect(filter.activeFilterCount, 4); // workMode (1) + level (1) + 2 skills = 4
+      expect(filter.activeFilterCount, 4);
+
+      // Kiểm tra chuyển đổi JSON sang - về bảo toàn dữ liệu
+      final json = filter.toJson();
+      final restoredFilter = JobFilter.fromJson(json);
+
+      expect(restoredFilter.keyword, 'Flutter');
+      expect(restoredFilter.workMode, WorkMode.remote);
+      expect(restoredFilter.level, JobLevel.fresher);
+      expect(restoredFilter.selectedSkills, contains('Dart'));
+      expect(restoredFilter.selectedSkills, contains('Git'));
 
       final resetFilter = filter.reset();
       expect(resetFilter.hasFilter, false);
@@ -84,4 +94,3 @@ void main() {
     });
   });
 }
-

@@ -1,6 +1,7 @@
 // Màn hình chính dành cho sinh viên trong ứng dụng MiniLinkedIn
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app/core/storage/preferences_storage.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 
@@ -19,9 +20,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   /// Danh sách các trang tương ứng với từng tab
   late final List<Widget> _pages;
 
+  /// Storage lưu trạng thái tab đang xem
+  late final IAppPreferences _preferences;
+
   @override
   void initState() {
     super.initState();
+    _preferences = AppPreferencesStorage.defaultStorage();
+
     _pages = [
       _buildPlaceholderPage(
         icon: Icons.dynamic_feed,
@@ -43,6 +49,22 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       // Trang hồ sơ sẽ đọc dữ liệu từ AuthProvider
       const _ProfilePage(roleLabel: 'Sinh viên'),
     ];
+
+    // Khôi phục tab đã lưu khi reload trang web hoặc mở lại app
+    _restoreSavedTab();
+  }
+
+  Future<void> _restoreSavedTab() async {
+    try {
+      final savedTab = await _preferences.getSelectedTab();
+      if (savedTab != null && savedTab >= 0 && savedTab < _pages.length) {
+        if (mounted) {
+          setState(() {
+            _selectedIndex = savedTab;
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   /// Xử lý khi người dùng chọn tab
@@ -50,6 +72,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     setState(() {
       _selectedIndex = index;
     });
+    _preferences.saveSelectedTab(index);
   }
 
   @override
@@ -92,7 +115,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           IconButton(
             icon: const Icon(Icons.search, color: Colors.black54),
             onPressed: () {
-              // TODO: Mở màn hình tìm kiếm
+              // Chuyển sang Tab 1 (Tìm việc)
+              _onItemTapped(1);
             },
           ),
         ],
@@ -263,6 +287,7 @@ class _ProfilePage extends StatelessWidget {
                   onPressed: () async {
                     // Đăng xuất và chuyển về màn hình đăng nhập
                     await authProvider.logout();
+                    await AppPreferencesStorage.defaultStorage().saveSelectedTab(0);
                     if (context.mounted) {
                       Navigator.pushReplacementNamed(context, '/login');
                     }

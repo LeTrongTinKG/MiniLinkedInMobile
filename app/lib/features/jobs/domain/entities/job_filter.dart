@@ -49,5 +49,43 @@ class JobFilter {
   JobFilter reset() {
     return const JobFilter();
   }
-}
 
+  /// Chuyển đổi sang JSON Map để lưu trữ bền vững (Persistence)
+  Map<String, dynamic> toJson() {
+    return {
+      'keyword': keyword,
+      'workMode': workMode?.name,
+      'level': level?.name,
+      'selectedSkills': selectedSkills.toList(),
+    };
+  }
+
+  /// Khôi phục từ JSON Map sau khi reload ứng dụng/trang web
+  factory JobFilter.fromJson(Map<String, dynamic> json) {
+    WorkMode? parsedWorkMode;
+    if (json['workMode'] != null) {
+      try {
+        parsedWorkMode = WorkMode.fromString(json['workMode'].toString());
+      } catch (_) {}
+    }
+
+    JobLevel? parsedLevel;
+    if (json['level'] != null) {
+      try {
+        parsedLevel = JobLevel.fromString(json['level'].toString());
+      } catch (_) {}
+    }
+
+    final rawSkills = json['selectedSkills'] as List<dynamic>?;
+    final skills = rawSkills != null
+        ? rawSkills.map((e) => e.toString()).toSet()
+        : <String>{};
+
+    return JobFilter(
+      keyword: json['keyword'] as String? ?? '',
+      workMode: parsedWorkMode,
+      level: parsedLevel,
+      selectedSkills: skills,
+    );
+  }
+}

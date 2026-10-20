@@ -31,4 +31,8 @@ class AppConfig {
   // Tên key lưu token trong SecureStorage
   static const String keyAccessToken = 'access_token';
   static const String keyRefreshToken = 'refresh_token';
+
+  // Tên key lưu trạng thái UI (tab, bộ lọc tìm kiếm)
+  static const String keySelectedTab = 'selected_tab_index';
+  static const String keyJobFilter = 'saved_job_filter';
 }
