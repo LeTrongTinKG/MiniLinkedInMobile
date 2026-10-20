@@ -120,9 +120,32 @@ class DioClient {
         return const NetworkException();
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode ?? 0;
-        final body = e.response?.data;
-        final errorCode = body?['errorCode'] as String? ?? 'UNKNOWN_ERROR';
-        final message = body?['message'] as String? ?? 'Đã có lỗi xảy ra';
+        final data = e.response?.data;
+
+        String errorCode = 'UNKNOWN_ERROR';
+        String message = 'Đã có lỗi xảy ra';
+
+        if (data is Map) {
+          final errorObj = data['error'];
+          if (errorObj is Map) {
+            errorCode = errorObj['code']?.toString() ?? 'UNKNOWN_ERROR';
+            message = errorObj['message']?.toString() ?? message;
+          } else if (errorObj is String && errorObj.isNotEmpty) {
+            message = errorObj;
+          }
+
+          if (message == 'Đã có lỗi xảy ra' && data['message'] != null) {
+            message = data['message'].toString();
+          }
+          if (errorCode == 'UNKNOWN_ERROR') {
+            errorCode = data['errorCode']?.toString() ??
+                data['code']?.toString() ??
+                errorCode;
+          }
+        } else if (data is String && data.isNotEmpty) {
+          message = data;
+        }
+
         if (statusCode == 401) {
           return UnauthorizedException(message: message);
         }
