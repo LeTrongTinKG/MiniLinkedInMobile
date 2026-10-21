@@ -9,6 +9,45 @@ const { ApiError } = require("../middleware/error");
  */
 
 /**
+ * Helper tìm CV và xác thực quyền sở hữu của user
+ * Tránh lặp code giữa setDefaultCv và deleteCv
+ * @param {string} userId - ID người dùng đang đăng nhập
+ * @param {string} cvId - ID CV cần truy vấn
+ * @param {Object} repo - CV repository
+ * @returns {Promise<Object>} Bản ghi CV hợp lệ
+ */
+async function fetchOwnedCv(userId, cvId, repo = cvRepository) {
+  if (!userId) {
+    throw new ApiError(401, "UNAUTHORIZED", "Yêu cầu đăng nhập");
+  }
+
+  if (typeof cvId !== "string" || cvId.trim().length === 0) {
+    throw new ApiError(400, "INVALID_CV_ID", "ID CV không hợp lệ");
+  }
+
+  let cv;
+  try {
+    cv = await repo.findById(cvId.trim());
+  } catch (error) {
+    if (error?.code === "P2023") {
+      throw new ApiError(404, "CV_NOT_FOUND", "Không tìm thấy CV");
+    }
+    throw error;
+  }
+
+  if (!cv) {
+    throw new ApiError(404, "CV_NOT_FOUND", "Không tìm thấy CV");
+  }
+
+  // Kiểm tra quyền sở hữu
+  if (cv.userId !== userId) {
+    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền thao tác trên CV này");
+  }
+
+  return cv;
+}
+
+/**
  * Upload CV mới
  */
 async function uploadCv(
@@ -17,6 +56,10 @@ async function uploadCv(
   storage = storageService,
   ai = { analyzeCv }
 ) {
+  if (!userId) {
+    throw new ApiError(401, "UNAUTHORIZED", "Yêu cầu đăng nhập");
+  }
+
   if (!file || !file.buffer) {
     throw new ApiError(400, "FILE_REQUIRED", "File CV là bắt buộc");
   }
@@ -74,29 +117,7 @@ async function getMyCvs(userId, repo = cvRepository) {
  * Đặt một CV làm CV mặc định duy nhất
  */
 async function setDefaultCv(userId, cvId, repo = cvRepository) {
-  if (typeof cvId !== "string" || cvId.trim().length === 0) {
-    throw new ApiError(400, "INVALID_CV_ID", "ID CV không hợp lệ");
-  }
-
-  let cv;
-  try {
-    cv = await repo.findById(cvId.trim());
-  } catch (error) {
-    if (error?.code === "P2023") {
-      throw new ApiError(404, "CV_NOT_FOUND", "Không tìm thấy CV");
-    }
-    throw error;
-  }
-
-  if (!cv) {
-    throw new ApiError(404, "CV_NOT_FOUND", "Không tìm thấy CV");
-  }
-
-  // Kiểm tra quyền sở hữu
-  if (cv.userId !== userId) {
-    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền thao tác trên CV này");
-  }
-
+  const cv = await fetchOwnedCv(userId, cvId, repo);
   return repo.setDefaultCv(userId, cv.id);
 }
 
@@ -109,28 +130,7 @@ async function deleteCv(
   repo = cvRepository,
   storage = storageService
 ) {
-  if (typeof cvId !== "string" || cvId.trim().length === 0) {
-    throw new ApiError(400, "INVALID_CV_ID", "ID CV không hợp lệ");
-  }
-
-  let cv;
-  try {
-    cv = await repo.findById(cvId.trim());
-  } catch (error) {
-    if (error?.code === "P2023") {
-      throw new ApiError(404, "CV_NOT_FOUND", "Không tìm thấy CV");
-    }
-    throw error;
-  }
-
-  if (!cv) {
-    throw new ApiError(404, "CV_NOT_FOUND", "Không tìm thấy CV");
-  }
-
-  // Kiểm tra quyền sở hữu
-  if (cv.userId !== userId) {
-    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền xóa CV này");
-  }
+  const cv = await fetchOwnedCv(userId, cvId, repo);
 
   // Kiểm tra CV đã được dùng trong đơn ứng tuyển chưa (bảo toàn lịch sử ứng tuyển)
   const applicationsCount = cv._count?.applications ?? 0;
@@ -142,18 +142,22 @@ async function deleteCv(
     );
   }
 
-  // Xóa file trên Storage
-  await storage.deleteFile(cv.fileUrl);
-
-  // Xóa bản ghi trong Database
+  // 1. Xóa bản ghi trong Database trước (DB có thể rollback hoặc ném lỗi nếu vi phạm ràng buộc)
   await repo.deleteCv(cv.id);
 
-  // Nếu CV vừa xóa là CV mặc định, tự động gán CV gần nhất còn lại làm mặc định
+  // 2. Nếu CV vừa xóa là CV mặc định, tự động gán CV gần nhất còn lại làm mặc định
   if (cv.isDefault) {
     const nextDefault = await repo.findFirstByUserId(userId);
     if (nextDefault) {
       await repo.updateCvDefault(nextDefault.id, true);
     }
+  }
+
+  // 3. Xóa file trên Storage sau khi DB đã xóa sạch (tránh URL hỏng và orphaned DB row)
+  try {
+    await storage.deleteFile(cv.fileUrl);
+  } catch (storageErr) {
+    console.warn("Lỗi khi xóa file trên Storage (không chặn nghiệp vụ DB):", storageErr.message);
   }
 
   return { message: "Xóa CV thành công" };
@@ -164,4 +168,5 @@ module.exports = {
   getMyCvs,
   setDefaultCv,
   deleteCv,
+  fetchOwnedCv,
 };

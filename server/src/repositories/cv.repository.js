@@ -32,7 +32,8 @@ async function findByUserId(userId, db = prisma) {
 async function findById(id, db = prisma) {
   return db.cv.findUnique({
     where: { id },
-    include: {
+    select: {
+      ...cvSelectFields,
       _count: {
         select: {
           applications: true,
