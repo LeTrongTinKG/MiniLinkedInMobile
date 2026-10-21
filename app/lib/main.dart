@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 // Core
 import 'core/network/dio_client.dart';
+import 'core/services/google_auth_service.dart';
 import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
@@ -40,6 +41,8 @@ void main() async {
   final tokenStorage = SecureTokenStorage.defaultStorage();
   final preferencesStorage = AppPreferencesStorage.defaultStorage();
   final dioClient = DioClient.create(tokenStorage);
+  final googleAuthService = GoogleAuthService();
+  await googleAuthService.initialize();
 
   // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);
@@ -70,6 +73,7 @@ void main() async {
             getMeUseCase: getMeUseCase,
             googleLoginUseCase: googleLoginUseCase,
             logoutUseCase: logoutUseCase,
+            googleAuthService: googleAuthService,
           ),
         ),
         ChangeNotifierProvider(

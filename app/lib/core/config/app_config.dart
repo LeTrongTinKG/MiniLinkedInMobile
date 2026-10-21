@@ -35,4 +35,12 @@ class AppConfig {
   // Tên key lưu trạng thái UI (tab, bộ lọc tìm kiếm)
   static const String keySelectedTab = 'selected_tab_index';
   static const String keyJobFilter = 'saved_job_filter';
+
+  // Client ID cho Google Sign-In (truyền qua cờ: flutter run --dart-define=GOOGLE_CLIENT_ID=...)
+  // Trên Web: Cần Client ID dạng Web OAuth Client
+  // Trên Android / iOS: Cần Server Client ID (Web Client ID) để backend verify được idToken
+  static const String googleClientId =
+      String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: '');
+  static const String googleServerClientId =
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '');
 }

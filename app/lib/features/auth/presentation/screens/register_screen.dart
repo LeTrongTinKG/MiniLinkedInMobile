@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../widgets/google_sign_in_button.dart';
 
 /// Màn hình đăng ký tài khoản mới (mặc định vai trò Sinh viên)
 class RegisterScreen extends StatefulWidget {
@@ -370,6 +371,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ),
                       ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Dòng phân cách "Hoặc" ─────────────────────────────
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'Hoặc',
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Nút Đăng ký bằng Google ───────────────────────────
+                    const GoogleSignInButton(
+                      label: 'Đăng ký bằng Google',
                     ),
 
                     const SizedBox(height: 16),
