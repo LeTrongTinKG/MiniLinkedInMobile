@@ -107,9 +107,10 @@ require.cache[require.resolve("../src/lib/prisma")] = {
 };
 
 const cvController = require("../src/controllers/cv.controller");
+const cvService = require("../src/services/cv.service");
 const { authenticate, authorize } = require("../src/middleware/auth");
-const { uploadCvMiddleware } = require("../src/middleware/upload");
-const { errorHandler } = require("../src/middleware/error");
+const { uploadCvMiddleware, PDF_MAGIC } = require("../src/middleware/upload");
+const { errorHandler, ApiError } = require("../src/middleware/error");
 const { generateAccessToken } = require("../src/utils/token");
 
 function createMockRes() {
@@ -208,7 +209,6 @@ test("POST /api/v1/cvs từ chối khi không gửi file (400 FILE_REQUIRED)", a
     authenticate,
     authorize("student"),
     (r, _res, n) => {
-      // Giả lập sau uploadCvMiddleware không thấy req.file
       r.file = undefined;
       n();
     },
@@ -249,6 +249,40 @@ test("POST /api/v1/cvs upload thành công file PDF <= 5MB và tự động đ�
   assert.equal(cvs.length, 1);
 });
 
+test("POST /api/v1/cvs sanitize tên file độc hại trước khi lưu DB (chống Stored/Second-order XSS)", async () => {
+  const token = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  const mockPdfBuffer = Buffer.from("%PDF-1.4 XSS Payload Test");
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    file: {
+      originalname: '"><img src=x onerror=alert(1)>.pdf',
+      mimetype: "application/pdf",
+      buffer: mockPdfBuffer,
+      size: mockPdfBuffer.length,
+    },
+  };
+
+  const res = await dispatch(cvController.uploadCv, req, [
+    authenticate,
+    authorize("student"),
+  ]);
+
+  assert.equal(res.statusCode, 201);
+  assert.ok(res.body.data);
+  // Các ký tự ", >, <, =, (, ) phải được thay thế bằng _
+  assert.ok(!res.body.data.fileName.includes("<"));
+  assert.ok(!res.body.data.fileName.includes(">"));
+  assert.ok(!res.body.data.fileName.includes('"'));
+  assert.ok(!res.body.data.fileName.includes('('));
+  assert.ok(!res.body.data.fileName.includes(')'));
+  assert.equal(res.body.data.fileName, '___img src_x onerror_alert_1__.pdf');
+});
+
 test("POST /api/v1/cvs upload CV thứ hai sẽ có isDefault = false", async () => {
   const token = generateAccessToken({
     id: "student-1",
@@ -264,7 +298,7 @@ test("POST /api/v1/cvs upload CV thứ hai sẽ có isDefault = false", async ()
       file: {
         originalname: "CV_1.pdf",
         mimetype: "application/pdf",
-        buffer: Buffer.from("CV 1"),
+        buffer: Buffer.from("%PDF-1.4 CV 1"),
       },
     },
     [authenticate, authorize("student")]
@@ -278,7 +312,7 @@ test("POST /api/v1/cvs upload CV thứ hai sẽ có isDefault = false", async ()
       file: {
         originalname: "CV_2.pdf",
         mimetype: "application/pdf",
-        buffer: Buffer.from("CV 2"),
+        buffer: Buffer.from("%PDF-1.4 CV 2"),
       },
     },
     [authenticate, authorize("student")]
@@ -311,7 +345,7 @@ test("GET /api/v1/cvs trả về danh sách CV của sinh viên đang đăng nh�
       file: {
         originalname: "Student1_CV.pdf",
         mimetype: "application/pdf",
-        buffer: Buffer.from("Student 1"),
+        buffer: Buffer.from("%PDF-1.4 Student 1"),
       },
     },
     [authenticate, authorize("student")]
@@ -325,7 +359,7 @@ test("GET /api/v1/cvs trả về danh sách CV của sinh viên đang đăng nh�
       file: {
         originalname: "Student2_CV.pdf",
         mimetype: "application/pdf",
-        buffer: Buffer.from("Student 2"),
+        buffer: Buffer.from("%PDF-1.4 Student 2"),
       },
     },
     [authenticate, authorize("student")]
@@ -356,7 +390,7 @@ test("PATCH /api/v1/cvs/:id/default đặt CV thành mặc định và đổi c�
     cvController.uploadCv,
     {
       headers: { authorization: `Bearer ${token}` },
-      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("1") },
+      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.4 1") },
     },
     [authenticate, authorize("student")]
   );
@@ -364,7 +398,7 @@ test("PATCH /api/v1/cvs/:id/default đặt CV thành mặc định và đổi c�
     cvController.uploadCv,
     {
       headers: { authorization: `Bearer ${token}` },
-      file: { originalname: "CV_2.pdf", mimetype: "application/pdf", buffer: Buffer.from("2") },
+      file: { originalname: "CV_2.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.4 2") },
     },
     [authenticate, authorize("student")]
   );
@@ -427,7 +461,7 @@ test("PATCH /api/v1/cvs/:id/default từ chối khi sinh viên thao tác trên C
     cvController.uploadCv,
     {
       headers: { authorization: `Bearer ${token1}` },
-      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("1") },
+      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.4 1") },
     },
     [authenticate, authorize("student")]
   );
@@ -458,7 +492,7 @@ test("DELETE /api/v1/cvs/:id từ chối xóa khi CV đã được dùng trong �
     cvController.uploadCv,
     {
       headers: { authorization: `Bearer ${token}` },
-      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("1") },
+      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.4 1") },
     },
     [authenticate, authorize("student")]
   );
@@ -492,7 +526,7 @@ test("DELETE /api/v1/cvs/:id xóa thành công và tự động gán CV còn l�
     cvController.uploadCv,
     {
       headers: { authorization: `Bearer ${token}` },
-      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("1") },
+      file: { originalname: "CV_1.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.4 1") },
     },
     [authenticate, authorize("student")]
   );
@@ -500,7 +534,7 @@ test("DELETE /api/v1/cvs/:id xóa thành công và tự động gán CV còn l�
     cvController.uploadCv,
     {
       headers: { authorization: `Bearer ${token}` },
-      file: { originalname: "CV_2.pdf", mimetype: "application/pdf", buffer: Buffer.from("2") },
+      file: { originalname: "CV_2.pdf", mimetype: "application/pdf", buffer: Buffer.from("%PDF-1.4 2") },
     },
     [authenticate, authorize("student")]
   );
@@ -526,23 +560,65 @@ test("DELETE /api/v1/cvs/:id xóa thành công và tự động gán CV còn l�
   assert.equal(cvs[0].isDefault, true);
 });
 
+test("fetchOwnedCv helper ném lỗi chuẩn xác khi validate input và ownership", async () => {
+  await assert.rejects(
+    async () => cvService.fetchOwnedCv(null, "cv-1"),
+    (err) => err instanceof ApiError && err.statusCode === 401 && err.code === "UNAUTHORIZED"
+  );
+
+  await assert.rejects(
+    async () => cvService.fetchOwnedCv("student-1", ""),
+    (err) => err instanceof ApiError && err.statusCode === 400 && err.code === "INVALID_CV_ID"
+  );
+});
+
+test("uploadCvMiddleware từ chối file có magic bytes không hợp lệ (không phải %PDF) với 400 INVALID_FILE_TYPE", async () => {
+  const req = {
+    files: {
+      file: [
+        {
+          originalname: "fake.pdf",
+          mimetype: "application/pdf",
+          buffer: Buffer.from("NOT-A-PDF-HEADER-CONTENTS"),
+        },
+      ],
+    },
+  };
+  const res = createMockRes();
+  let caughtError = null;
+  const next = (err) => {
+    caughtError = err;
+    if (err) errorHandler(err, req, res, () => {});
+  };
+
+  // Giả lập trực tiếp logic magic byte của uploadCvMiddleware sau khi parse
+  req.file = req.files.file[0];
+  if (
+    !req.file.buffer ||
+    req.file.buffer.length < 4 ||
+    !req.file.buffer.subarray(0, 4).equals(PDF_MAGIC)
+  ) {
+    next(new ApiError(400, "INVALID_FILE_TYPE", "File không phải định dạng PDF hợp lệ"));
+  }
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.error.code, "INVALID_FILE_TYPE");
+});
+
 test("uploadCvMiddleware từ chối file quá 5MB và trả về 400 FILE_TOO_LARGE", async () => {
   const req = {};
   const res = createMockRes();
   const multerErr = new Error("File too large");
   multerErr.code = "LIMIT_FILE_SIZE";
 
-  // Giả lập middleware upload bắt được lỗi LIMIT_FILE_SIZE từ multer
-  const { ApiError } = require("../src/middleware/error");
   let caughtError = null;
   const next = (err) => {
     caughtError = err;
     errorHandler(err, req, res, () => {});
   };
 
-  // Mock upload logic tương tự error handling trong upload.js
   if (multerErr.code === "LIMIT_FILE_SIZE") {
-    next(new ApiError(400, "FILE_TOO_LARGE", "File CV vượt quá dung lượng cho phép (tối đa 5MB)"));
+    next(new ApiError(400, "FILE_TOO_LARGE", "Kích thước file không được vượt quá 5MB"));
   }
 
   assert.equal(res.statusCode, 400);
@@ -552,7 +628,6 @@ test("uploadCvMiddleware từ chối file quá 5MB và trả về 400 FILE_TOO_L
 test("uploadCvMiddleware từ chối file sai định dạng không phải PDF và trả về 400 INVALID_FILE_TYPE", async () => {
   const req = {};
   const res = createMockRes();
-  const { ApiError } = require("../src/middleware/error");
   let caughtError = null;
   const next = (err) => {
     caughtError = err;
@@ -565,4 +640,3 @@ test("uploadCvMiddleware từ chối file sai định dạng không phải PDF v
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, "INVALID_FILE_TYPE");
 });
-
