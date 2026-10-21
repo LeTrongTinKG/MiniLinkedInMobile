@@ -2,6 +2,7 @@ const multer = require("multer");
 const { ApiError } = require("./error");
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const PDF_MAGIC = Buffer.from([0x25, 0x50, 0x44, 0x46]); // %PDF
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -14,9 +15,10 @@ const upload = multer({
       typeof file.originalname === "string" &&
       file.originalname.toLowerCase().endsWith(".pdf");
 
-    if (!isPdfMime && !isPdfExt) {
+    // Phải thỏa mãn CẢ HAI điều kiện: MIME type và file extension
+    if (!isPdfMime || !isPdfExt) {
       return cb(
-        new ApiError(400, "INVALID_FILE_TYPE", "Chỉ chấp nhận file định dạng PDF")
+        new ApiError(400, "INVALID_FILE_TYPE", "Chỉ chấp nhận file định dạng PDF (.pdf)")
       );
     }
     cb(null, true);
@@ -52,6 +54,17 @@ function uploadCvMiddleware(req, res, next) {
       return next(new ApiError(400, "FILE_REQUIRED", "File CV là bắt buộc"));
     }
 
+    // Magic byte validation: kiểm tra nội dung thực sự có header %PDF không
+    if (
+      !req.file.buffer ||
+      req.file.buffer.length < 4 ||
+      !req.file.buffer.subarray(0, 4).equals(PDF_MAGIC)
+    ) {
+      return next(
+        new ApiError(400, "INVALID_FILE_TYPE", "File không phải định dạng PDF hợp lệ")
+      );
+    }
+
     return next();
   });
 }
@@ -59,4 +72,5 @@ function uploadCvMiddleware(req, res, next) {
 module.exports = {
   uploadCvMiddleware,
   MAX_FILE_SIZE,
+  PDF_MAGIC,
 };

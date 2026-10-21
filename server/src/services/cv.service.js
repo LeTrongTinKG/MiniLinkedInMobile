@@ -21,10 +21,16 @@ async function uploadCv(
     throw new ApiError(400, "FILE_REQUIRED", "File CV là bắt buộc");
   }
 
+  // Sanitize tên file để ngăn chặn XSS và Directory Traversal
+  const rawFileName = typeof file.originalname === "string" ? file.originalname : "cv.pdf";
+  const sanitizedFileName = rawFileName
+    .replace(/[^a-zA-Z0-9._\- ]/g, "_")
+    .slice(0, 128);
+
   // 1. Upload file lên Storage (Supabase hoặc Mock)
   const uploadResult = await storage.uploadFile({
     buffer: file.buffer,
-    originalName: file.originalname,
+    originalName: sanitizedFileName,
     mimeType: file.mimetype,
     userId,
   });
@@ -32,7 +38,7 @@ async function uploadCv(
   // 2. Phân tích kỹ năng qua AI service (Graceful degradation: nếu AI lỗi thì vẫn lưu CV và set extractedSkills = null)
   let extractedSkills = null;
   try {
-    extractedSkills = await ai.analyzeCv(file.buffer, file.originalname);
+    extractedSkills = await ai.analyzeCv(file.buffer, sanitizedFileName);
   } catch (aiErr) {
     console.warn("AI service analyzeCv error (fallback to null):", aiErr.message);
     extractedSkills = null;
@@ -45,7 +51,7 @@ async function uploadCv(
   // 4. Lưu bản ghi vào Database
   const cv = await repo.createCv({
     userId,
-    fileName: file.originalname,
+    fileName: sanitizedFileName,
     fileUrl: uploadResult.url,
     extractedSkills,
     isDefault,

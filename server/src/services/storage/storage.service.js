@@ -39,7 +39,7 @@ const storageService = {
    * @param {Object} params
    * @param {Buffer} params.buffer - Nội dung file dưới dạng Buffer
    * @param {string} params.originalName - Tên gốc của file
-   * @param {string} params.mimeType - Kiểu MIME của file
+   * @param {string} [params.mimeType] - Kiểu MIME của file
    * @param {string} params.userId - ID người dùng sở hữu file
    * @returns {Promise<{ path: string, url: string }>}
    */
@@ -63,9 +63,9 @@ const storageService = {
       };
     }
 
-    // Upload lên Supabase Storage thật
+    // Upload lên Supabase Storage thật - luôn ép kiểu application/pdf để ngăn chặn XSS
     const { error } = await client.storage.from(bucket).upload(filePath, buffer, {
-      contentType: mimeType,
+      contentType: "application/pdf",
       upsert: false,
     });
 
