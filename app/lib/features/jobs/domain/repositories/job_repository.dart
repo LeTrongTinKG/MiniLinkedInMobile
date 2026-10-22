@@ -3,6 +3,9 @@ import '../entities/job_filter.dart';
 
 /// Interface hợp đồng dữ liệu cho công việc (DIP)
 abstract interface class JobRepository {
+  /// Cho biết dữ liệu hiện tại có đang lấy từ nguồn giả lập (Fallback Mock) hay không
+  bool get isUsingMockData;
+
   /// Lấy danh sách công việc theo bộ lọc
   Future<List<JobEntity>> getJobs({JobFilter? filter});
 
@@ -12,4 +15,3 @@ abstract interface class JobRepository {
   /// Lấy danh sách toàn bộ các kỹ năng phổ biến để hiển thị bộ lọc
   Future<List<String>> getAvailableSkills();
 }
-

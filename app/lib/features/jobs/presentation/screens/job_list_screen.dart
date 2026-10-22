@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/job_entity.dart';
 import '../providers/job_provider.dart';
@@ -180,37 +180,67 @@ class _JobListScreenState extends State<JobListScreen> {
       itemCount: provider.jobs.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          // Tiêu đề thống kê kết quả tìm kiếm
+          // Tiêu đề thống kê kết quả tìm kiếm và thông báo fallback
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Tìm thấy ${provider.jobs.length} công việc',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF666666),
-                  ),
-                ),
-                if (provider.hasFilter)
-                  InkWell(
-                    onTap: () => provider.resetFilter(),
-                    child: const Text(
-                      'Xóa lọc',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF0A66C2),
-                        fontWeight: FontWeight.bold,
-                      ),
+                if (provider.isUsingMockData)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFFD54F)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 16, color: Color(0xFFF57F17)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Đang hiển thị dữ liệu mẫu (máy chủ Render chưa có việc làm)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFE65100),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tìm thấy ${provider.jobs.length} công việc',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF666666),
+                      ),
+                    ),
+                    if (provider.hasFilter)
+                      InkWell(
+                        onTap: () => provider.resetFilter(),
+                        child: const Text(
+                          'Xóa lọc',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF0A66C2),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
           );
         }
-
         final job = provider.jobs[index - 1];
         return JobCard(
           job: job,

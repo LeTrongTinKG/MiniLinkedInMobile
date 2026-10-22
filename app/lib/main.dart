@@ -23,6 +23,7 @@ import 'features/auth/presentation/screens/register_screen.dart';
 
 // Jobs Feature - Data & Domain Layers
 import 'features/jobs/data/datasources/job_mock_datasource.dart';
+import 'features/jobs/data/datasources/job_remote_datasource.dart';
 import 'features/jobs/data/repositories/job_repository_impl.dart';
 import 'features/jobs/domain/usecases/job_usecases.dart';
 import 'features/jobs/presentation/providers/job_provider.dart';
@@ -56,9 +57,10 @@ void main() async {
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
-  // 3. Jobs Feature (Sử dụng JobMockDataSource theo Task F5, kèm lưu trữ bộ lọc bền vững)
-  final jobDataSource = JobMockDataSource();
-  final jobRepository = JobRepositoryImpl(jobDataSource);
+  // 3. Jobs Feature: Nối JobRemoteDataSource với máy chủ Render, kèm JobMockDataSource làm fallback
+  final jobRemoteDataSource = JobRemoteDataSource(dioClient.dio);
+  final jobMockDataSource = JobMockDataSource();
+  final jobRepository = JobRepositoryImpl(jobRemoteDataSource, jobMockDataSource);
   final getJobsUseCase = GetJobsUseCase(jobRepository);
   final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
 
