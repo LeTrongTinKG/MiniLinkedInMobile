@@ -26,6 +26,9 @@ const prisma = {
       if (where.userId) {
         filtered = filtered.filter((c) => c.userId === where.userId);
       }
+      if (where.isDefault !== undefined) {
+        filtered = filtered.filter((c) => c.isDefault === where.isDefault);
+      }
       return filtered[0] ? { ...filtered[0] } : null;
     },
   },
@@ -136,49 +139,7 @@ const { authenticate, authorize, optionalAuthenticate } = require("../src/middle
 const { errorHandler } = require("../src/middleware/error");
 const { generateAccessToken } = require("../src/utils/token");
 
-function createMockRes() {
-  return {
-    statusCode: 200,
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(body) {
-      this.body = body;
-      return this;
-    },
-  };
-}
-
-async function dispatch(handler, req, middlewares = []) {
-  const res = createMockRes();
-  const next = (err) => {
-    if (err) {
-      errorHandler(err, req, res, () => {});
-    }
-  };
-
-  for (const mw of middlewares) {
-    let nextCalled = false;
-    let mwError = null;
-    await mw(req, res, (err) => {
-      nextCalled = true;
-      mwError = err;
-    });
-
-    if (mwError) {
-      errorHandler(mwError, req, res, () => {});
-      return res;
-    }
-
-    if (!nextCalled) {
-      return res;
-    }
-  }
-
-  await handler(req, res, next);
-  return res;
-}
+const { createMockRes, dispatch } = require("./helpers");
 
 test.beforeEach(() => {
   users = [
@@ -375,8 +336,8 @@ test("GET /api/v1/jobs/:id trả về chi tiết job kèm thông tin recruiter v
   assert.ok(res.body.data.recruiter);
   assert.equal(res.body.data.recruiter.fullName, "Nguyễn Văn Tuyển");
   assert.equal(res.body.data.recruiter.recruiterProfile.companyName, "Tech Corp");
-  // Khách vãng lai chưa đăng nhập -> match = null
-  assert.equal(res.body.data.match, null);
+  // Khách vãng lai chưa đăng nhập -> không có trường match trong response (theo review B6)
+  assert.equal("match" in res.body.data, false);
 });
 
 test("GET /api/v1/jobs/:id trả về match kèm điểm số khi sinh viên đã đăng nhập và có CV mặc định", async () => {
@@ -554,7 +515,7 @@ test("GET /api/v1/recruiter/jobs từ chối khi user có role student (403 FORB
   assert.equal(res.body.error.code, "FORBIDDEN");
 });
 
-test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh sách job của chính họ kèm số ứng viên (không trùng field)", async () => {
+test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh sách job của chính họ kèm số ứng viên (không trùng field và không có trường match)", async () => {
   const recruiterToken = generateAccessToken({
     id: "recruiter-1",
     email: "recruiter1@company.com",
@@ -581,11 +542,12 @@ test("GET /api/v1/recruiter/jobs thành công cho recruiter và trả về danh 
   assert.ok(ids.includes("job-4"));
   assert.ok(!ids.includes("job-3")); // job-3 thuộc về recruiter-2
 
-  // Xác nhận chỉ có applicationsCount duy nhất
+  // Xác nhận chỉ có applicationsCount duy nhất và không có match
   const job1 = resAll.body.data.find((j) => j.id === "job-1");
   assert.equal(job1.applicationsCount, 5);
   assert.equal("totalApplications" in job1, false);
   assert.equal("_count" in job1, false);
+  assert.equal("match" in job1, false);
 
   // 2. Lọc theo status = closed
   const reqClosed = {

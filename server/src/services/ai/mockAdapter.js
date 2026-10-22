@@ -1,5 +1,4 @@
-const normalize = (arr) =>
-  [...new Set((arr ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean))];
+const { normalize } = require("./mapper");
 
 async function analyzeCv(_fileBuffer, _fileName) {
   return {

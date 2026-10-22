@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const { Readable } = require("node:stream");
 
 process.env.JWT_SECRET = "test-secret-with-more-than-thirty-two-characters";
 process.env.NODE_ENV = "test";
@@ -113,49 +114,7 @@ const { uploadCvMiddleware, PDF_MAGIC } = require("../src/middleware/upload");
 const { errorHandler, ApiError } = require("../src/middleware/error");
 const { generateAccessToken } = require("../src/utils/token");
 
-function createMockRes() {
-  return {
-    statusCode: 200,
-    status(code) {
-      this.statusCode = code;
-      return this;
-    },
-    json(body) {
-      this.body = body;
-      return this;
-    },
-  };
-}
-
-async function dispatch(handler, req, middlewares = []) {
-  const res = createMockRes();
-  const next = (err) => {
-    if (err) {
-      errorHandler(err, req, res, () => {});
-    }
-  };
-
-  for (const mw of middlewares) {
-    let nextCalled = false;
-    let mwError = null;
-    await mw(req, res, (err) => {
-      nextCalled = true;
-      mwError = err;
-    });
-
-    if (mwError) {
-      errorHandler(mwError, req, res, () => {});
-      return res;
-    }
-
-    if (!nextCalled) {
-      return res;
-    }
-  }
-
-  await handler(req, res, next);
-  return res;
-}
+const { createMockRes, dispatch } = require("./helpers");
 
 test.beforeEach(() => {
   cvs = [];
@@ -560,86 +519,105 @@ test("DELETE /api/v1/cvs/:id xóa thành công và tự động gán CV còn l�
   assert.equal(cvs[0].isDefault, true);
 });
 
-test("fetchOwnedCv helper ném lỗi chuẩn xác khi validate input và ownership", async () => {
-  await assert.rejects(
-    async () => cvService.fetchOwnedCv(null, "cv-1"),
-    (err) => err instanceof ApiError && err.statusCode === 401 && err.code === "UNAUTHORIZED"
-  );
-
-  await assert.rejects(
-    async () => cvService.fetchOwnedCv("student-1", ""),
-    (err) => err instanceof ApiError && err.statusCode === 400 && err.code === "INVALID_CV_ID"
-  );
-});
-
 test("uploadCvMiddleware từ chối file có magic bytes không hợp lệ (không phải %PDF) với 400 INVALID_FILE_TYPE", async () => {
-  const req = {
-    files: {
-      file: [
-        {
-          originalname: "fake.pdf",
-          mimetype: "application/pdf",
-          buffer: Buffer.from("NOT-A-PDF-HEADER-CONTENTS"),
-        },
-      ],
+  const boundary = "---------------------------974767299852498929531610575";
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\n`),
+    Buffer.from('Content-Disposition: form-data; name="file"; filename="fake.pdf"\r\n'),
+    Buffer.from('Content-Type: application/pdf\r\n\r\n'),
+    Buffer.from("NOT_A_REAL_PDF_HEADER_CONTENT"),
+    Buffer.from(`\r\n--${boundary}--\r\n`),
+  ]);
+
+  const req = new Readable({
+    read() {
+      this.push(body);
+      this.push(null);
     },
-  };
-  const res = createMockRes();
-  let caughtError = null;
-  const next = (err) => {
-    caughtError = err;
-    if (err) errorHandler(err, req, res, () => {});
+  });
+  req.headers = {
+    "content-type": `multipart/form-data; boundary=${boundary}`,
+    "content-length": body.length.toString(),
   };
 
-  // Giả lập trực tiếp logic magic byte của uploadCvMiddleware sau khi parse
-  req.file = req.files.file[0];
-  if (
-    !req.file.buffer ||
-    req.file.buffer.length < 4 ||
-    !req.file.buffer.subarray(0, 4).equals(PDF_MAGIC)
-  ) {
-    next(new ApiError(400, "INVALID_FILE_TYPE", "File không phải định dạng PDF hợp lệ"));
-  }
+  const res = createMockRes();
+  await new Promise((resolve) => {
+    uploadCvMiddleware(req, res, (err) => {
+      if (err) errorHandler(err, req, res, () => {});
+      resolve();
+    });
+  });
 
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, "INVALID_FILE_TYPE");
 });
 
 test("uploadCvMiddleware từ chối file quá 5MB và trả về 400 FILE_TOO_LARGE", async () => {
-  const req = {};
-  const res = createMockRes();
-  const multerErr = new Error("File too large");
-  multerErr.code = "LIMIT_FILE_SIZE";
+  const boundary = "---------------------------974767299852498929531610575";
+  const oversizedData = Buffer.alloc(5 * 1024 * 1024 + 1024, "a");
+  const header = Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="large.pdf"\r\nContent-Type: application/pdf\r\n\r\n`
+  );
+  const footer = Buffer.from(`\r\n--${boundary}--\r\n`);
+  const body = Buffer.concat([header, oversizedData, footer]);
 
-  let caughtError = null;
-  const next = (err) => {
-    caughtError = err;
-    errorHandler(err, req, res, () => {});
+  const req = new Readable({
+    read() {
+      this.push(body);
+      this.push(null);
+    },
+  });
+  req.headers = {
+    "content-type": `multipart/form-data; boundary=${boundary}`,
+    "content-length": body.length.toString(),
   };
 
-  if (multerErr.code === "LIMIT_FILE_SIZE") {
-    next(new ApiError(400, "FILE_TOO_LARGE", "Kích thước file không được vượt quá 5MB"));
-  }
+  const res = createMockRes();
+  await new Promise((resolve) => {
+    uploadCvMiddleware(req, res, (err) => {
+      if (err) errorHandler(err, req, res, () => {});
+      resolve();
+    });
+  });
 
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, "FILE_TOO_LARGE");
 });
 
 test("uploadCvMiddleware từ chối file sai định dạng không phải PDF và trả về 400 INVALID_FILE_TYPE", async () => {
-  const req = {};
-  const res = createMockRes();
-  let caughtError = null;
-  const next = (err) => {
-    caughtError = err;
-    errorHandler(err, req, res, () => {});
+  const boundary = "---------------------------974767299852498929531610575";
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\n`),
+    Buffer.from('Content-Disposition: form-data; name="file"; filename="document.docx"\r\n'),
+    Buffer.from('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n'),
+    Buffer.from("WORD_DOC_CONTENT"),
+    Buffer.from(`\r\n--${boundary}--\r\n`),
+  ]);
+
+  const req = new Readable({
+    read() {
+      this.push(body);
+      this.push(null);
+    },
+  });
+  req.headers = {
+    "content-type": `multipart/form-data; boundary=${boundary}`,
+    "content-length": body.length.toString(),
   };
 
-  const fileFilterErr = new ApiError(400, "INVALID_FILE_TYPE", "Chỉ chấp nhận file định dạng PDF (.pdf)");
-  next(fileFilterErr);
+  const res = createMockRes();
+  await new Promise((resolve) => {
+    uploadCvMiddleware(req, res, (err) => {
+      if (err) errorHandler(err, req, res, () => {});
+      resolve();
+    });
+  });
 
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, "INVALID_FILE_TYPE");
 });
+
+
 
 
 test("POST /api/v1/cvs tự động fallback sang mock khi AI service lỗi, vẫn lưu extractedSkills thành công và không trả 500", async () => {

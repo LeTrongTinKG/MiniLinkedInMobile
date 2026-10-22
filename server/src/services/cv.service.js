@@ -169,5 +169,4 @@ module.exports = {
   getMyCvs,
   setDefaultCv,
   deleteCv,
-  fetchOwnedCv,
 };
