@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth.routes");
 const jobRoutes = require("./routes/job.routes");
 const recruiterRoutes = require("./routes/recruiter.routes");
 const cvRoutes = require("./routes/cv.routes");
+const interactionsRoutes = require("./routes/interaction.routes");
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/recruiter", recruiterRoutes);
 app.use("/api/v1/cvs", cvRoutes);
+app.use("/api/v1", interactionsRoutes);
 
 // Health check endpoint
 app.get("/health", async (_req, res) => {
