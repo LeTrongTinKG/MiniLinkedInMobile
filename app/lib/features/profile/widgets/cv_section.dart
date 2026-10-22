@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/profile/cv_item.dart';
+import 'package:app/features/cv/domain/entities/cv_entity.dart';
 import 'package:app/features/profile/widgets/cv_card.dart';
 import 'package:app/features/profile/widgets/cv_empty_state.dart';
 
 class CvSection extends StatelessWidget {
-  final List<CvItem> cvs;
+  final List<CvEntity> cvs;
   final VoidCallback onUpload;
   final void Function(String id) onDelete;
   final void Function(String id) onSetDefault;
