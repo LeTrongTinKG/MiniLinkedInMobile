@@ -1,8 +1,10 @@
 const { AiServiceError } = require("./errors");
-const { analyzeResultToCamel, matchParamsToSnake, matchResultToCamel } = require("./mapper");
-
-const normalize = (arr) =>
-  [...new Set((arr ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean))];
+const {
+  normalize,
+  analyzeResultToCamel,
+  matchParamsToSnake,
+  matchResultToCamel,
+} = require("./mapper");
 
 function getBaseUrl() {
   return (process.env.AI_SERVICE_URL || "http://localhost:8000").replace(/\/$/, "");

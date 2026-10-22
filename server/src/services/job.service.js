@@ -3,68 +3,14 @@ const cvRepository = require("../repositories/cv.repository");
 const aiClient = require("./ai/aiClient");
 const mockAiAdapter = require("./ai/mockAdapter");
 const { ApiError } = require("../middleware/error");
-
-const VALID_WORK_MODES = ["onsite", "hybrid", "remote"];
-const VALID_JOB_LEVELS = ["intern", "fresher", "junior"];
-const VALID_JOB_STATUSES = ["open", "closed"];
-
-/**
- * Chuẩn hóa danh sách kỹ năng từ query string
- * Hỗ trợ chuỗi phẩy "React,Node.js" hoặc mảng query ["React", "Node.js"]
- * Tất cả kỹ năng được lowercase để so sánh không phân biệt hoa/thường
- */
-function parseSkills(skillsQuery) {
-  if (!skillsQuery) return [];
-
-  if (Array.isArray(skillsQuery)) {
-    return skillsQuery
-      .flatMap((item) => (typeof item === "string" ? item.split(",") : []))
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.length > 0);
-  }
-
-  if (typeof skillsQuery === "string") {
-    return skillsQuery
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.length > 0);
-  }
-
-  return [];
-}
-
-/**
- * Xử lý phân trang an toàn
- */
-function parsePagination(query, defaultLimit = 10, maxLimit = 50) {
-  let page = parseInt(query.page, 10);
-  if (isNaN(page) || page < 1) {
-    page = 1;
-  }
-
-  let limit = parseInt(query.limit, 10);
-  if (isNaN(limit) || limit < 1) {
-    limit = defaultLimit;
-  } else if (limit > maxLimit) {
-    limit = maxLimit;
-  }
-
-  const skip = (page - 1) * limit;
-
-  return { page, limit, skip };
-}
-
-/**
- * Format dữ liệu job trước khi trả về client
- * Chỉ giữ 1 field duy nhất applicationsCount (không trùng lặp)
- */
-function formatJob(job) {
-  const { _count, ...rest } = job;
-  return {
-    ...rest,
-    applicationsCount: _count?.applications ?? 0,
-  };
-}
+const {
+  VALID_WORK_MODES,
+  VALID_JOB_LEVELS,
+  VALID_JOB_STATUSES,
+  parseSkills,
+  parsePagination,
+  formatJob,
+} = require("../utils/job.util");
 
 /**
  * Lấy danh sách việc làm công khai (chỉ việc làm đang mở / status = open)
@@ -137,7 +83,6 @@ async function getJobDetail(
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
-  // Không nuốt lỗi DB — chỉ catch PrismaClientKnownRequestError mã P2023 (sai định dạng ID)
   let job;
   try {
     job = await repo.findJobById(id.trim());
@@ -145,7 +90,6 @@ async function getJobDetail(
     if (error?.code === "P2023") {
       throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
     }
-    // Lỗi hệ thống khác (mất kết nối DB, timeout, ...) -> để nổi lên cho errorHandler trả về 500
     throw error;
   }
 
@@ -161,21 +105,17 @@ async function getJobDetail(
     let matchResult = null;
     try {
       let targetCv = null;
-      // 1. Nếu có chỉ định cvId trên query -> tìm theo ID đó
       if (typeof context.cvId === "string" && context.cvId.trim().length > 0) {
         targetCv = await cvRepo.findById(context.cvId.trim());
-        // Chỉ chấp nhận CV thuộc về chính sinh viên đang đăng nhập
         if (targetCv && targetCv.userId !== user.userId) {
           targetCv = null;
         }
       }
 
-      // 2. Nếu không có hoặc không tìm thấy, tối ưu lấy CV mặc định (không load toàn bộ list)
       if (!targetCv) {
         targetCv = await cvRepo.findDefaultByUserId(user.userId);
       }
 
-      // 3. Gọi AI match giữa kỹ năng của CV và yêu cầu công việc
       if (targetCv && targetCv.extractedSkills) {
         let cvSkills = [];
         if (Array.isArray(targetCv.extractedSkills.skills)) {
@@ -249,9 +189,4 @@ module.exports = {
   getPublicJobs,
   getJobDetail,
   getRecruiterJobs,
-  parseSkills,
-  parsePagination,
-  VALID_WORK_MODES,
-  VALID_JOB_LEVELS,
-  VALID_JOB_STATUSES,
 };
