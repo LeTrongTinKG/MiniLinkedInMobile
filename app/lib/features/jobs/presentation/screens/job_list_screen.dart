@@ -117,13 +117,21 @@ class _ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.cloud_off_outlined,
-                size: 64, color: AppColors.textMuted),
-            const SizedBox(height: 20),
+            Container(
+              width: 88,
+              height: 88,
+              decoration: const BoxDecoration(
+                color: AppColors.accentContainer,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.cloud_off_rounded,
+                  size: 44, color: AppColors.accent),
+            ),
+            const SizedBox(height: 24),
             const Text(
               'Không tải được danh sách việc làm',
               textAlign: TextAlign.center,
@@ -136,19 +144,25 @@ class _ErrorState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
+              style: const TextStyle(
+                  fontSize: 14, color: AppColors.textMuted, height: 1.5),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh, size: 18),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Thử lại'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
               'Server có thể đang khởi động, chờ khoảng 30 giây rồi thử lại.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted, height: 1.5),
             ),
           ],
         ),
@@ -166,26 +180,22 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: const BoxDecoration(
-                color: AppColors.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.work_off_outlined,
-                  size: 40, color: AppColors.primary),
+            const Icon(
+              Icons.search_off_rounded,
+              size: 88,
+              color: AppColors.iconMuted,
             ),
             const SizedBox(height: 20),
             const Text(
               'Không tìm thấy việc phù hợp',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
@@ -193,13 +203,18 @@ class _EmptyState extends StatelessWidget {
               'Thử bỏ bớt bộ lọc hoặc tìm từ khoá khác',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 14, color: AppColors.textMuted, height: 1.4),
+                  fontSize: 14, color: AppColors.textMuted, height: 1.5),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             OutlinedButton.icon(
               onPressed: onClearFilter,
-              icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+              icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
               label: const Text('Xoá bộ lọc'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 44),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
             ),
           ],
         ),

@@ -16,6 +16,7 @@ class AppColors {
   static const Color accent = Color(0xFFC2410C);
   static const Color accentContainer = Color(0xFFFAEFEA);
   static const Color error = Color(0xFFB00020);
+  static const Color iconMuted = Color(0xFFBBC3CE);
 
   // 8 stable logo colors: [background, foreground]
   static const List<List<Color>> _logoPalette = [
