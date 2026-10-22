@@ -5,6 +5,7 @@ const { prisma } = require("./lib/prisma");
 const authRoutes = require("./routes/auth.routes");
 const jobRoutes = require("./routes/job.routes");
 const recruiterRoutes = require("./routes/recruiter.routes");
+const cvRoutes = require("./routes/cv.routes");
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/recruiter", recruiterRoutes);
+app.use("/api/v1/cvs", cvRoutes);
 
 // Health check endpoint
 app.get("/health", async (_req, res) => {
@@ -50,6 +52,7 @@ app.get("/", (_req, res) => {
       auth: "/api/v1/auth",
       jobs: "/api/v1/jobs",
       recruiter: "/api/v1/recruiter",
+      cvs: "/api/v1/cvs",
     },
   });
 });
