@@ -8,6 +8,7 @@ import '../widgets/job_card.dart';
 import '../widgets/job_detail_sheet.dart';
 import '../widgets/job_filter_sheet.dart';
 import '../widgets/job_list_header.dart';
+import '../widgets/job_skeleton_card.dart';
 
 class JobListScreen extends StatefulWidget {
   const JobListScreen({super.key});
@@ -69,83 +70,26 @@ class _JobListScreenState extends State<JobListScreen> {
 
   Widget _buildBody(JobProvider provider) {
     if (provider.isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text('Đang tìm kiếm cơ hội việc làm IT…',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
-          ],
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.sm, horizontal: AppSpacing.lg),
+        itemCount: 4,
+        itemBuilder: (_, __) => const Padding(
+          padding: EdgeInsets.only(bottom: AppSpacing.md),
+          child: JobSkeletonCard(),
         ),
       );
     }
 
     if (provider.errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline_rounded,
-                  size: 56, color: AppColors.error),
-              const SizedBox(height: 16),
-              Text(provider.errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 15, color: AppColors.textSecondary)),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () => provider.loadJobs(),
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Thử lại'),
-              ),
-            ],
-          ),
-        ),
+      return _ErrorState(
+        message: provider.errorMessage!,
+        onRetry: () => provider.loadJobs(),
       );
     }
 
     if (provider.jobs.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.work_off_outlined,
-                    size: 40, color: AppColors.primary),
-              ),
-              const SizedBox(height: 20),
-              const Text('Không tìm thấy việc phù hợp',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
-              const SizedBox(height: 8),
-              const Text('Thử bỏ bớt bộ lọc hoặc tìm từ khoá khác',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 14, color: AppColors.textMuted, height: 1.4)),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () => provider.resetFilter(),
-                icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
-                label: const Text('Xoá bộ lọc'),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _EmptyState(onClearFilter: () => provider.resetFilter());
     }
 
     return ListView.builder(
@@ -159,6 +103,107 @@ class _JobListScreenState extends State<JobListScreen> {
           child: JobCard(job: job, onTap: () => _showDetail(job)),
         );
       },
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_off_outlined,
+                size: 64, color: AppColors.textMuted),
+            const SizedBox(height: 20),
+            const Text(
+              'Không tải được danh sách việc làm',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Thử lại'),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Server có thể đang khởi động, chờ khoảng 30 giây rồi thử lại.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onClearFilter;
+
+  const _EmptyState({required this.onClearFilter});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                color: AppColors.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.work_off_outlined,
+                  size: 40, color: AppColors.primary),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Không tìm thấy việc phù hợp',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Thử bỏ bớt bộ lọc hoặc tìm từ khoá khác',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 14, color: AppColors.textMuted, height: 1.4),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: onClearFilter,
+              icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+              label: const Text('Xoá bộ lọc'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
