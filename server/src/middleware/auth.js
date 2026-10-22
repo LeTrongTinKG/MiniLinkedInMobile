@@ -115,8 +115,8 @@ async function optionalAuthenticate(req, res, next) {
       };
       return next();
     }
-  } catch (_err) {
-    // Token không hợp lệ hoặc hết hạn -> coi như khách vãng lai
+  } catch (err) {
+    console.warn(`[optionalAuthenticate] Bỏ qua access token không hợp lệ (${err.name}: ${err.message})`);
   }
 
   req.user = null;

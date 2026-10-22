@@ -156,9 +156,9 @@ async function getJobDetail(
   const formattedJob = formatJob(job);
 
   // Tính toán AI Match nếu người dùng là sinh viên
-  let matchResult = null;
   const user = context?.user;
   if (user && user.role === "student" && user.userId) {
+    let matchResult = null;
     try {
       let targetCv = null;
       // 1. Nếu có chỉ định cvId trên query -> tìm theo ID đó
@@ -170,12 +170,9 @@ async function getJobDetail(
         }
       }
 
-      // 2. Nếu không có hoặc không tìm thấy, lấy CV mặc định (hoặc CV đầu tiên)
+      // 2. Nếu không có hoặc không tìm thấy, tối ưu lấy CV mặc định (không load toàn bộ list)
       if (!targetCv) {
-        const cvs = await cvRepo.findByUserId(user.userId);
-        if (Array.isArray(cvs) && cvs.length > 0) {
-          targetCv = cvs.find((c) => c.isDefault) || cvs[0];
-        }
+        targetCv = await cvRepo.findDefaultByUserId(user.userId);
       }
 
       // 3. Gọi AI match giữa kỹ năng của CV và yêu cầu công việc
@@ -200,9 +197,11 @@ async function getJobDetail(
       console.warn("Lỗi tính toán AI match (fallback an toàn sang null):", matchErr.message);
       matchResult = null;
     }
+
+    // Chỉ gán thuộc tính match cho sinh viên (recruiter và khách vãng lai không có field này)
+    formattedJob.match = matchResult;
   }
 
-  formattedJob.match = matchResult;
   return formattedJob;
 }
 
