@@ -1,7 +1,7 @@
 const { verifyAccessToken } = require("../utils/token");
 
 async function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers?.authorization;
   if (typeof authHeader !== "string") {
     return res.status(401).json({
       error: {
@@ -87,7 +87,7 @@ function authorize(...allowedRoles) {
  * Nếu không gửi hoặc token không hợp lệ -> req.user = null, vẫn cho phép request tiếp tục
  */
 async function optionalAuthenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers?.authorization;
   if (typeof authHeader !== "string") {
     req.user = null;
     return next();
