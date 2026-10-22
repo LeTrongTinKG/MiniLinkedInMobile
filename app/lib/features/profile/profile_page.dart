@@ -1,8 +1,9 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:app/features/profile/cv_item.dart';
+import 'package:app/features/cv/presentation/providers/cv_provider.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
 import 'package:app/features/profile/widgets/cv_section.dart';
 
@@ -14,40 +15,40 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Mock data — thay bằng API khi B4 hoàn thành
-  List<CvItem> _cvs = const [
-    CvItem(
-      id: '1',
-      fileName: 'CV_LanNguyen_Flutter....',
-      uploadDate: '18/10',
-      fileSize: '412 KB',
-      skills: ['flutter', 'dart', 'git', 'firebase'],
-      isDefault: true,
-    ),
-    CvItem(
-      id: '2',
-      fileName: 'CV_LanNguyen_Web.pdf',
-      uploadDate: '02/10',
-      fileSize: '380 KB',
-      skills: ['react', 'nodejs', 'sql'],
-      isDefault: false,
-    ),
-  ];
-
-  void _handleDelete(String id) {
-    setState(() => _cvs = _cvs.where((cv) => cv.id != id).toList());
-  }
-
-  void _handleSetDefault(String id) {
-    setState(() {
-      _cvs = _cvs.map((cv) => cv.copyWith(isDefault: cv.id == id)).toList();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CvProvider>().loadCvs();
     });
   }
 
-  void _handleUpload() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chức năng đang phát triển')),
+  Future<void> _handleUpload() async {
+    // file_picker v12+: FilePicker.pickFiles() returns List<PlatformFile>
+    final files = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
     );
+    if (files.isEmpty || !mounted) return;
+
+    final file = files.first;
+    final fileSize = file.lengthSync() ?? await file.length();
+    if (!mounted) return;
+    if (fileSize != null && fileSize > 5 * 1024 * 1024) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('File không được vượt quá 5 MB')),
+      );
+      return;
+    }
+
+    final success = await context.read<CvProvider>().uploadCv(file);
+    if (!mounted) return;
+    if (!success) {
+      final msg =
+          context.read<CvProvider>().errorMessage ?? 'Tải lên thất bại';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(msg)));
+    }
   }
 
   @override
@@ -74,11 +75,21 @@ class _ProfilePageState extends State<ProfilePage> {
                         onEditProfile: () {},
                       ),
                       const Divider(height: 1),
-                      CvSection(
-                        cvs: _cvs,
-                        onUpload: _handleUpload,
-                        onDelete: _handleDelete,
-                        onSetDefault: _handleSetDefault,
+                      Consumer<CvProvider>(
+                        builder: (context, cv, _) {
+                          if (cv.isLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 48),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          return CvSection(
+                            cvs: cv.cvs,
+                            onUpload: _handleUpload,
+                            onDelete: (id) => cv.deleteCv(id),
+                            onSetDefault: (id) => cv.setDefault(id),
+                          );
+                        },
                       ),
                     ],
                   ),

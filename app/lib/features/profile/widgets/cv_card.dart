@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/profile/cv_item.dart';
+import 'package:app/features/cv/domain/entities/cv_entity.dart';
 
 class CvCard extends StatelessWidget {
-  final CvItem cv;
+  final CvEntity cv;
   final VoidCallback onDelete;
   final VoidCallback? onSetDefault;
 
@@ -74,7 +74,7 @@ class CvCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Tải lên ${cv.uploadDate} · ${cv.fileSize}',
+                      'Tải lên ${cv.formattedDate}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
@@ -86,12 +86,12 @@ class CvCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            children:
-                cv.skills.map((s) => _SkillChip(skill: s)).toList(),
-          ),
+          if (cv.skills.isNotEmpty)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: cv.skills.map((s) => _SkillChip(skill: s)).toList(),
+            ),
           const SizedBox(height: 8),
           Row(
             children: [

@@ -7,34 +7,33 @@ import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
 
-// Auth Feature - Data Layer
+// Auth Feature
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
-
-// Auth Feature - Domain Layer
 import 'features/auth/domain/usecases/auth_usecases.dart';
-
-// Auth Feature - Presentation Layer
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 
-// Jobs Feature - Data & Domain Layers
+// Jobs Feature
 import 'features/jobs/data/datasources/job_mock_datasource.dart';
 import 'features/jobs/data/repositories/job_repository_impl.dart';
 import 'features/jobs/domain/usecases/job_usecases.dart';
 import 'features/jobs/presentation/providers/job_provider.dart';
+
+// CV Feature
+import 'features/cv/data/datasources/cv_remote_datasource.dart';
+import 'features/cv/data/repositories/cv_repository_impl.dart';
+import 'features/cv/domain/usecases/cv_usecases.dart';
+import 'features/cv/presentation/providers/cv_provider.dart';
 
 // Home Features
 import 'features/student_home/student_home_screen.dart';
 import 'features/recruiter_home/recruiter_home_screen.dart';
 
 void main() async {
-  // Đảm bảo Flutter binding đã khởi tạo trước khi dùng plugin
   WidgetsFlutterBinding.ensureInitialized();
-
-  // --- Khởi tạo Dependency Injection thủ công (Manual DI) ---
 
   // 1. Infrastructure
   final tokenStorage = SecureTokenStorage.defaultStorage();
@@ -53,14 +52,21 @@ void main() async {
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
-  // 3. Jobs Feature (Sử dụng JobMockDataSource theo Task F5, kèm lưu trữ bộ lọc bền vững)
+  // 3. Jobs Feature
   final jobDataSource = JobMockDataSource();
   final jobRepository = JobRepositoryImpl(jobDataSource);
   final getJobsUseCase = GetJobsUseCase(jobRepository);
   final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
 
+  // 4. CV Feature
+  final cvDataSource = CvRemoteDataSource(dioClient.dio);
+  final cvRepository = CvRepositoryImpl(cvDataSource);
+  final getCvsUseCase = GetCvsUseCase(cvRepository);
+  final uploadCvUseCase = UploadCvUseCase(cvRepository);
+  final setDefaultCvUseCase = SetDefaultCvUseCase(cvRepository);
+  final deleteCvUseCase = DeleteCvUseCase(cvRepository);
+
   runApp(
-    // 4. Cung cấp Providers cho toàn bộ widget tree
     MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -79,6 +85,14 @@ void main() async {
             preferences: preferencesStorage,
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => CvProvider(
+            getCvs: getCvsUseCase,
+            uploadCv: uploadCvUseCase,
+            setDefault: setDefaultCvUseCase,
+            deleteCv: deleteCvUseCase,
+          ),
+        ),
       ],
       child: const MiniLinkedInApp(),
     ),
@@ -94,11 +108,7 @@ class MiniLinkedInApp extends StatelessWidget {
       title: 'Mini LinkedIn',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-
-      // Màn hình khởi động: SplashScreen tự điều hướng
       initialRoute: '/',
-
-      // Định nghĩa toàn bộ routes của ứng dụng
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
