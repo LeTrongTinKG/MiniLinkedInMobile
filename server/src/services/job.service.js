@@ -1,11 +1,12 @@
 const jobRepository = require("../repositories/job.repository");
+const cvRepository = require("../repositories/cv.repository");
+const aiClient = require("./ai/aiClient");
+const mockAiAdapter = require("./ai/mockAdapter");
 const { ApiError } = require("../middleware/error");
 
 const VALID_WORK_MODES = ["onsite", "hybrid", "remote"];
 const VALID_JOB_LEVELS = ["intern", "fresher", "junior"];
 const VALID_JOB_STATUSES = ["open", "closed"];
-
-
 
 /**
  * Chuẩn hóa danh sách kỹ năng từ query string
@@ -123,9 +124,15 @@ async function getPublicJobs(query = {}, repo = jobRepository) {
 }
 
 /**
- * Lấy chi tiết việc làm theo ID
+ * Lấy chi tiết việc làm theo ID, kèm chấm điểm mức độ phù hợp (AI match) cho sinh viên
  */
-async function getJobDetail(id, repo = jobRepository) {
+async function getJobDetail(
+  id,
+  context = {},
+  repo = jobRepository,
+  cvRepo = cvRepository,
+  ai = aiClient
+) {
   if (typeof id !== "string" || id.trim().length === 0) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
@@ -146,7 +153,57 @@ async function getJobDetail(id, repo = jobRepository) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
-  return formatJob(job);
+  const formattedJob = formatJob(job);
+
+  // Tính toán AI Match nếu người dùng là sinh viên
+  let matchResult = null;
+  const user = context?.user;
+  if (user && user.role === "student" && user.userId) {
+    try {
+      let targetCv = null;
+      // 1. Nếu có chỉ định cvId trên query -> tìm theo ID đó
+      if (typeof context.cvId === "string" && context.cvId.trim().length > 0) {
+        targetCv = await cvRepo.findById(context.cvId.trim());
+        // Chỉ chấp nhận CV thuộc về chính sinh viên đang đăng nhập
+        if (targetCv && targetCv.userId !== user.userId) {
+          targetCv = null;
+        }
+      }
+
+      // 2. Nếu không có hoặc không tìm thấy, lấy CV mặc định (hoặc CV đầu tiên)
+      if (!targetCv) {
+        const cvs = await cvRepo.findByUserId(user.userId);
+        if (Array.isArray(cvs) && cvs.length > 0) {
+          targetCv = cvs.find((c) => c.isDefault) || cvs[0];
+        }
+      }
+
+      // 3. Gọi AI match giữa kỹ năng của CV và yêu cầu công việc
+      if (targetCv && targetCv.extractedSkills) {
+        let cvSkills = [];
+        if (Array.isArray(targetCv.extractedSkills.skills)) {
+          cvSkills = targetCv.extractedSkills.skills;
+        } else if (Array.isArray(targetCv.extractedSkills)) {
+          cvSkills = targetCv.extractedSkills;
+        }
+
+        if (cvSkills.length > 0) {
+          try {
+            matchResult = await ai.match(cvSkills, formattedJob);
+          } catch (aiErr) {
+            console.warn("AI service match error (fallback to mock):", aiErr.message);
+            matchResult = await mockAiAdapter.match(cvSkills, formattedJob);
+          }
+        }
+      }
+    } catch (matchErr) {
+      console.warn("Lỗi tính toán AI match (fallback an toàn sang null):", matchErr.message);
+      matchResult = null;
+    }
+  }
+
+  formattedJob.match = matchResult;
+  return formattedJob;
 }
 
 /**
