@@ -15,4 +15,5 @@ class AppSpacing {
   static const double radiusInput = 12;
 
   static const double maxContentWidth = 680;
+  static const double maxGridWidth = 1200;
 }

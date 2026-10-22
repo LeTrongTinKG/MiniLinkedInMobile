@@ -4,6 +4,7 @@ import 'package:app/core/storage/preferences_storage.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/profile/profile_page.dart';
+import 'package:app/features/student_home/student_nav.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -48,35 +49,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: studentScaffoldKey,
+      backgroundColor: AppColors.background,
+      drawer: StudentDrawer(
+        selectedIndex: _selectedIndex,
+        onSelect: _onItemTapped,
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _onItemTapped,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.work_outline),
-              selectedIcon: Icon(Icons.work),
-              label: 'Việc làm',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.assignment_turned_in_outlined),
-              selectedIcon: Icon(Icons.assignment_turned_in),
-              label: 'Đã ứng tuyển',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Hồ sơ',
-            ),
-          ],
-        ),
       ),
     );
   }

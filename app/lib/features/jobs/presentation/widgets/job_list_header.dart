@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/features/student_home/student_nav.dart';
 import '../../domain/entities/job_entity.dart';
 import '../providers/job_provider.dart';
 
@@ -88,9 +89,11 @@ class _TitleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.xs),
+          AppSpacing.xs, AppSpacing.sm, AppSpacing.lg, AppSpacing.xs),
       child: Row(
         children: [
+          const StudentMenuButton(),
+          const SizedBox(width: AppSpacing.xs),
           Container(
             width: 32,
             height: 32,

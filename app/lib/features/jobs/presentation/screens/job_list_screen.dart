@@ -46,7 +46,7 @@ class _JobListScreenState extends State<JobListScreen> {
         body: Center(
           child: ConstrainedBox(
             constraints:
-                const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
+                const BoxConstraints(maxWidth: AppSpacing.maxGridWidth),
             child: Column(
               children: [
                 JobListHeader(
@@ -68,17 +68,53 @@ class _JobListScreenState extends State<JobListScreen> {
     );
   }
 
+  /// 1 cột trên mobile, 2 cột tablet, 3 cột trên web/màn rộng.
+  static int _columnsFor(double width) {
+    if (width >= 960) return 3;
+    if (width >= 640) return 2;
+    return 1;
+  }
+
+  /// Xếp item thành lưới nhiều cột, mỗi hàng cao bằng card cao nhất.
+  Widget _grid({
+    required int itemCount,
+    required Widget Function(int index) itemBuilder,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = _columnsFor(constraints.maxWidth);
+        final rows = (itemCount / columns).ceil();
+        return ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.sm, horizontal: AppSpacing.lg),
+          itemCount: rows,
+          itemBuilder: (_, row) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var c = 0; c < columns; c++) ...[
+                    if (c > 0) const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: row * columns + c < itemCount
+                          ? itemBuilder(row * columns + c)
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildBody(JobProvider provider) {
     if (provider.isLoading) {
-      return ListView.builder(
-        padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.sm, horizontal: AppSpacing.lg),
-        itemCount: 4,
-        itemBuilder: (_, __) => const Padding(
-          padding: EdgeInsets.only(bottom: AppSpacing.md),
-          child: JobSkeletonCard(),
-        ),
-      );
+      return _grid(itemCount: 6, itemBuilder: (_) => const JobSkeletonCard());
     }
 
     if (provider.errorMessage != null) {
@@ -92,16 +128,11 @@ class _JobListScreenState extends State<JobListScreen> {
       return _EmptyState(onClearFilter: () => provider.resetFilter());
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.sm, horizontal: AppSpacing.lg),
+    return _grid(
       itemCount: provider.jobs.length,
-      itemBuilder: (context, index) {
-        final job = provider.jobs[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: JobCard(job: job, onTap: () => _showDetail(job)),
-        );
+      itemBuilder: (i) {
+        final job = provider.jobs[i];
+        return JobCard(job: job, onTap: () => _showDetail(job));
       },
     );
   }

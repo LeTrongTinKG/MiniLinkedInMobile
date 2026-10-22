@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/student_home/student_nav.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/cv/presentation/providers/cv_provider.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
@@ -114,9 +115,10 @@ class _ProfileAppBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         children: [
+          const StudentMenuButton(),
           const Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: 8),
+              padding: EdgeInsets.only(left: 4),
               child: Text(
                 'Hồ sơ',
                 style: TextStyle(

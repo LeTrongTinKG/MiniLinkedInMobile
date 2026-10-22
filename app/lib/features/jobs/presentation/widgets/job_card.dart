@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
+import 'package:app/features/interactions/presentation/widgets/reaction_bar.dart';
 import '../../domain/entities/job_entity.dart';
 
 String _initials(String name) {
@@ -58,135 +59,165 @@ class _JobCardState extends State<JobCard> {
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-            border: Border.all(
-              color: _hovered
-                  ? AppColors.primary.withValues(alpha: 0.4)
-                  : AppColors.border,
-            ),
-            boxShadow: _hovered
-                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2))]
-                : null,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: _hovered ? 0.16 : 0.10),
+                blurRadius: _hovered ? 6 : 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-            child: InkWell(
-              onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _CompanyLogo(
-                          logoUrl: job.companyLogoUrl,
-                          initials: _initials(job.companyName),
-                          colors: logoColors,
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(job.title,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                    height: 1.25,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis),
-                              const SizedBox(height: 2),
-                              Text(job.companyName,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textSecondary,
-                                  )),
-                              const SizedBox(height: 2),
-                              Text(meta,
-                                  style: const TextStyle(
-                                      fontSize: 13, color: AppColors.textMuted),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: IconButton(
-                            icon: const Icon(Icons.bookmark_border_rounded),
-                            iconSize: 22,
-                            color: AppColors.textMuted,
-                            tooltip: 'Lưu việc làm',
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text('Đã lưu: ${job.title}'),
-                                duration: const Duration(seconds: 1),
-                                behavior: SnackBarBehavior.floating,
-                              ));
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(salary,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.salary)),
-                        ),
-                        if (isNew)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentContainer,
-                              borderRadius: BorderRadius.circular(AppSpacing.xs),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header kiểu bài đăng: avatar công ty + tên + thời gian
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, AppSpacing.md, AppSpacing.xs, 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _CompanyLogo(
+                        logoUrl: job.companyLogoUrl,
+                        initials: _initials(job.companyName),
+                        colors: logoColors,
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(job.companyName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                )),
+                            const SizedBox(height: 1),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(job.timeAgo,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 12.5,
+                                          color: AppColors.textMuted)),
+                                ),
+                                const Text(' · ',
+                                    style: TextStyle(
+                                        fontSize: 12.5,
+                                        color: AppColors.textMuted)),
+                                const Icon(Icons.public,
+                                    size: 12, color: AppColors.textMuted),
+                              ],
                             ),
-                            child: const Text('Mới',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.accent)),
-                          ),
-                      ],
-                    ),
-                    if (skills.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          ...skills.take(3).map((s) => _SkillChip(label: s)),
-                          if (skills.length > 3)
-                            _SkillChip(label: '+${skills.length - 3}'),
-                        ],
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.bookmark_border_rounded),
+                        iconSize: 22,
+                        color: AppColors.textMuted,
+                        tooltip: 'Lưu việc làm',
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text('Đã lưu: ${job.title}'),
+                            duration: const Duration(seconds: 1),
+                            behavior: SnackBarBehavior.floating,
+                          ));
+                        },
                       ),
                     ],
-                    const SizedBox(height: AppSpacing.sm),
-                    const Divider(height: 1),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(job.timeAgo,
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textMuted)),
-                    // ReactionBar sẽ gắn ở đây
-                    const SizedBox.shrink(),
-                  ],
+                  ),
                 ),
-              ),
+                // Nội dung bài đăng
+                InkWell(
+                  onTap: widget.onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(job.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              height: 1.3,
+                            )),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(meta,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 14, color: AppColors.textSecondary)),
+                        const SizedBox(height: AppSpacing.xs),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(salary,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.salary)),
+                            ),
+                            if (isNew) ...[
+                              const SizedBox(width: AppSpacing.sm),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentContainer,
+                                  borderRadius:
+                                      BorderRadius.circular(AppSpacing.xs),
+                                ),
+                                child: const Text('Mới',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.accent)),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (skills.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            skills
+                                .take(4)
+                                .map((s) => '#${s.replaceAll(RegExp(r'\s+'), '')}')
+                                .join('  '),
+                            style: const TextStyle(
+                                fontSize: 14, color: AppColors.primary),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Thống kê + Thích / Bình luận / Chia sẻ
+                ReactionBar(
+                  targetId: job.id,
+                  shareText: '${job.title} - ${job.companyName}',
+                ),
+              ],
             ),
           ),
         ),
@@ -242,25 +273,4 @@ class _CompanyLogo extends StatelessWidget {
           ),
         ),
       );
-}
-
-class _SkillChip extends StatelessWidget {
-  final String label;
-  const _SkillChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(label,
-          style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary)),
-    );
-  }
 }
