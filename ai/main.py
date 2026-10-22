@@ -33,6 +33,10 @@ class MatchResponse(BaseModel):
 def read_root():
     return {"message": "Mini LinkedIn AI Service is running"}
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "ai"}
+
 @app.post("/analyze-cv", response_model=AnalyzeCvResponse)
 async def analyze_cv(file: UploadFile = File(...)):
     """
