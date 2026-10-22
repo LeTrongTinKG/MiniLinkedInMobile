@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/storage/preferences_storage.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/profile/profile_page.dart';
+import 'package:app/features/student_home/student_nav.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -48,30 +49,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: studentScaffoldKey,
+      backgroundColor: AppColors.background,
+      drawer: StudentDrawer(
+        selectedIndex: _selectedIndex,
+        onSelect: _onItemTapped,
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.primaryBlue,
-        unselectedItemColor: AppTheme.textSecondary,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline),
-            label: 'Việc làm',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_turned_in_outlined),
-            label: 'Đã ứng tuyển',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Hồ sơ',
-          ),
-        ],
       ),
     );
   }

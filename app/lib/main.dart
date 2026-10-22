@@ -17,7 +17,9 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 
 // Jobs Feature
+import 'features/jobs/data/datasources/job_datasource.dart';
 import 'features/jobs/data/datasources/job_mock_datasource.dart';
+import 'features/jobs/data/datasources/job_remote_datasource.dart';
 import 'features/jobs/data/repositories/job_repository_impl.dart';
 import 'features/jobs/domain/usecases/job_usecases.dart';
 import 'features/jobs/presentation/providers/job_provider.dart';
@@ -27,6 +29,14 @@ import 'features/cv/data/datasources/cv_remote_datasource.dart';
 import 'features/cv/data/repositories/cv_repository_impl.dart';
 import 'features/cv/domain/usecases/cv_usecases.dart';
 import 'features/cv/presentation/providers/cv_provider.dart';
+
+// Interactions Feature
+import 'features/interactions/data/datasources/interaction_datasource.dart';
+import 'features/interactions/data/datasources/interaction_mock_datasource.dart';
+import 'features/interactions/data/datasources/interaction_remote_datasource.dart';
+import 'features/interactions/data/repositories/interaction_repository_impl.dart';
+import 'features/interactions/domain/repositories/interaction_repository.dart';
+import 'features/interactions/presentation/providers/interaction_provider.dart';
 
 // Home Features
 import 'features/student_home/student_home_screen.dart';
@@ -53,7 +63,10 @@ void main() async {
   final logoutUseCase = LogoutUseCase(authRepository);
 
   // 3. Jobs Feature
-  final jobDataSource = JobMockDataSource();
+  // Mặc định gọi API thật (Render); chạy với --dart-define=USE_MOCK=true để dùng dữ liệu giả
+  const useMock = bool.fromEnvironment('USE_MOCK');
+  final JobDataSource jobDataSource =
+      useMock ? JobMockDataSource() : JobRemoteDataSource(dioClient.dio);
   final jobRepository = JobRepositoryImpl(jobDataSource);
   final getJobsUseCase = GetJobsUseCase(jobRepository);
   final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
@@ -66,9 +79,20 @@ void main() async {
   final setDefaultCvUseCase = SetDefaultCvUseCase(cvRepository);
   final deleteCvUseCase = DeleteCvUseCase(cvRepository);
 
+  // 5. Interactions Feature (cảm xúc + bình luận)
+  final InteractionDataSource interactionDataSource = useMock
+      ? InteractionMockDataSource()
+      : InteractionRemoteDataSource(dioClient.dio);
+  final InteractionRepository interactionRepository =
+      InteractionRepositoryImpl(interactionDataSource);
+
   runApp(
     MultiProvider(
       providers: [
+        Provider<InteractionRepository>.value(value: interactionRepository),
+        ChangeNotifierProvider(
+          create: (_) => InteractionProvider(interactionRepository),
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(
             loginUseCase: loginUseCase,
