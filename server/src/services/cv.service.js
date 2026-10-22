@@ -1,6 +1,7 @@
 const cvRepository = require("../repositories/cv.repository");
 const storageService = require("./storage/storage.service");
 const { analyzeCv } = require("./ai/aiClient");
+const mockAiAdapter = require("./ai/mockAdapter");
 const { ApiError } = require("../middleware/error");
 
 /**
@@ -78,13 +79,13 @@ async function uploadCv(
     userId,
   });
 
-  // 2. Phân tích kỹ năng qua AI service (Graceful degradation: nếu AI lỗi thì vẫn lưu CV và set extractedSkills = null)
+  // 2. Phân tích kỹ năng qua AI service (Nếu AI lỗi thì dùng mock B5, không trả 500)
   let extractedSkills = null;
   try {
     extractedSkills = await ai.analyzeCv(file.buffer, sanitizedFileName);
   } catch (aiErr) {
-    console.warn("AI service analyzeCv error (fallback to null):", aiErr.message);
-    extractedSkills = null;
+    console.warn("AI service analyzeCv error (fallback to mock):", aiErr.message);
+    extractedSkills = await mockAiAdapter.analyzeCv(file.buffer, sanitizedFileName);
   }
 
   // 3. Kiểm tra xem sinh viên đã có CV nào chưa -> Nếu chưa có, tự động đặt làm CV mặc định

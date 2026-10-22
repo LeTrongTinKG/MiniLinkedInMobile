@@ -640,3 +640,43 @@ test("uploadCvMiddleware từ chối file sai định dạng không phải PDF v
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, "INVALID_FILE_TYPE");
 });
+
+
+test("POST /api/v1/cvs tự động fallback sang mock khi AI service lỗi, vẫn lưu extractedSkills thành công và không trả 500", async () => {
+  const token = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  const aiClient = require("../src/services/ai/aiClient");
+  const originalAnalyzeCv = aiClient.analyzeCv;
+  aiClient.analyzeCv = async () => {
+    throw new Error("AI Service 503 Service Unavailable");
+  };
+
+  try {
+    const mockPdfBuffer = Buffer.from("%PDF-1.4 Mock CV Error Fallback");
+    const req = {
+      headers: { authorization: `Bearer ${token}` },
+      file: {
+        originalname: "Fallback_CV.pdf",
+        mimetype: "application/pdf",
+        buffer: mockPdfBuffer,
+        size: mockPdfBuffer.length,
+      },
+    };
+
+    const res = await dispatch(cvController.uploadCv, req, [
+      authenticate,
+      authorize("student"),
+    ]);
+
+    assert.equal(res.statusCode, 201);
+    assert.ok(res.body.data);
+    assert.ok(res.body.data.extractedSkills);
+    assert.deepEqual(res.body.data.extractedSkills.skills, ["flutter", "dart", "git"]);
+  } finally {
+    aiClient.analyzeCv = originalAnalyzeCv;
+  }
+});

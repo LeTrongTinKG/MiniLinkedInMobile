@@ -6,8 +6,29 @@ process.env.JWT_SECRET = "test-secret-with-more-than-thirty-two-characters";
 
 let jobs = [];
 let users = [];
+let cvs = [];
 
 const prisma = {
+  cv: {
+    async findUnique({ where: { id } }) {
+      const found = cvs.find((c) => c.id === id);
+      return found ? { ...found } : null;
+    },
+    async findMany({ where = {} }) {
+      let filtered = [...cvs];
+      if (where.userId) {
+        filtered = filtered.filter((c) => c.userId === where.userId);
+      }
+      return filtered.map((c) => ({ ...c }));
+    },
+    async findFirst({ where = {} }) {
+      let filtered = [...cvs];
+      if (where.userId) {
+        filtered = filtered.filter((c) => c.userId === where.userId);
+      }
+      return filtered[0] ? { ...filtered[0] } : null;
+    },
+  },
   job: {
     async findMany({ where = {}, skip = 0, take = 10, orderBy }) {
       let filtered = [...jobs];
@@ -111,7 +132,7 @@ require.cache[require.resolve("../src/lib/prisma")] = {
 };
 
 const jobController = require("../src/controllers/job.controller");
-const { authenticate, authorize } = require("../src/middleware/auth");
+const { authenticate, authorize, optionalAuthenticate } = require("../src/middleware/auth");
 const { errorHandler } = require("../src/middleware/error");
 const { generateAccessToken } = require("../src/utils/token");
 
@@ -159,7 +180,7 @@ async function dispatch(handler, req, middlewares = []) {
   return res;
 }
 
-function resetDb() {
+test.beforeEach(() => {
   users = [
     {
       id: "recruiter-1",
@@ -250,52 +271,48 @@ function resetDb() {
       status: "open",
       createdAt: new Date("2026-10-17T10:00:00Z"),
       updatedAt: new Date("2026-10-17T10:00:00Z"),
-      applicationsCountMock: 3,
+      applicationsCountMock: 0,
     },
     {
       id: "job-4",
       recruiterId: "recruiter-1",
-      title: "Closed Golang Backend Developer",
+      title: "DevOps Engineer (Đã đóng)",
       companyName: "Tech Corp",
       companyLogoUrl: "https://example.com/logo.png",
       location: "Hồ Chí Minh",
-      workMode: "remote",
+      workMode: "onsite",
       level: "junior",
       salaryMin: 15000000,
-      salaryMax: 25000000,
-      description: "Job đã đóng không hiển thị ngoài trang public",
-      requiredSkills: ["Golang"],
-      niceToHave: ["gRPC"],
-      status: "closed",
-      createdAt: new Date("2026-10-18T10:00:00Z"),
-      updatedAt: new Date("2026-10-18T10:00:00Z"),
+      salaryMax: 20000000,
+      description: "Quản trị hạ tầng CI/CD và Kubernetes",
+      requiredSkills: ["Docker", "Kubernetes"],
+      niceToHave: ["AWS"],
+      status: "closed", // Job này đã đóng
+      createdAt: new Date("2026-10-14T10:00:00Z"),
+      updatedAt: new Date("2026-10-14T10:00:00Z"),
       applicationsCountMock: 8,
     },
   ];
-}
 
-test.beforeEach(() => {
-  resetDb();
+  cvs = [];
 });
 
 test("GET /api/v1/jobs trả về danh sách job đang open kèm pagination meta chuẩn (chỉ có total)", async () => {
-  const req = { query: { page: "1", limit: "10" } };
+  const req = { query: {} };
   const res = await dispatch(jobController.getPublicJobs, req);
 
   assert.equal(res.statusCode, 200);
-  assert.ok(Array.isArray(res.body.data));
-  // Chỉ 3 job open, job-4 closed bị loại bỏ
-  assert.equal(res.body.data.length, 3);
+  assert.equal(res.body.data.length, 3); // job-1, job-2, job-3 (job-4 closed)
   assert.equal(res.body.meta.total, 3);
-  assert.equal("totalItems" in res.body.meta, false); // Đã loại bỏ field trùng
+  assert.equal("totalItems" in res.body.meta, false); // Đã loại bỏ field trùng lặp
   assert.equal(res.body.meta.page, 1);
   assert.equal(res.body.meta.limit, 10);
   assert.equal(res.body.meta.totalPages, 1);
   assert.equal(res.body.meta.hasNextPage, false);
   assert.equal(res.body.meta.hasPrevPage, false);
 
-  // Kiểm tra duy nhất thuộc tính applicationsCount (không trùng lặp)
-  assert.equal(res.body.data[0].applicationsCount, 3); // job-3 mới nhất
+  // Kiểm tra cấu trúc item: chỉ có applicationsCount, không có totalApplications và _count
+  assert.equal(res.body.data[0].applicationsCount, 0); // job-3 mới nhất
   assert.equal("totalApplications" in res.body.data[0], false);
   assert.equal("_count" in res.body.data[0], false);
 });
@@ -347,8 +364,8 @@ test("GET /api/v1/jobs lọc theo level, workMode và location", async () => {
 });
 
 test("GET /api/v1/jobs/:id trả về chi tiết job kèm thông tin recruiter và số lượt ứng tuyển", async () => {
-  const req = { params: { id: "job-1" } };
-  const res = await dispatch(jobController.getJobDetail, req);
+  const req = { params: { id: "job-1" }, query: {} };
+  const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
 
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.data.id, "job-1");
@@ -358,11 +375,130 @@ test("GET /api/v1/jobs/:id trả về chi tiết job kèm thông tin recruiter v
   assert.ok(res.body.data.recruiter);
   assert.equal(res.body.data.recruiter.fullName, "Nguyễn Văn Tuyển");
   assert.equal(res.body.data.recruiter.recruiterProfile.companyName, "Tech Corp");
+  // Khách vãng lai chưa đăng nhập -> match = null
+  assert.equal(res.body.data.match, null);
+});
+
+test("GET /api/v1/jobs/:id trả về match kèm điểm số khi sinh viên đã đăng nhập và có CV mặc định", async () => {
+  const studentToken = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  // Tạo CV mặc định cho student-1 có kỹ năng ["flutter", "dart", "git"]
+  cvs.push({
+    id: "cv-default",
+    userId: "student-1",
+    fileName: "My_Flutter_CV.pdf",
+    fileUrl: "https://example.com/cv.pdf",
+    extractedSkills: {
+      skills: ["flutter", "dart", "git"],
+      education: "Đại học CNTT",
+      experienceMonths: 6,
+    },
+    isDefault: true,
+    createdAt: new Date(),
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${studentToken}` },
+    params: { id: "job-1" }, // job-1 yêu cầu ["Flutter", "Dart"]
+    query: {},
+  };
+  const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.data.match);
+  // Khớp đủ cả 2 requiredSkills ["Flutter", "Dart"]
+  assert.equal(res.body.data.match.score, 100);
+  assert.deepEqual(res.body.data.match.matchedSkills, ["flutter", "dart"]);
+  assert.deepEqual(res.body.data.match.missingSkills, []);
+});
+
+test("GET /api/v1/jobs/:id?cvId=... ưu tiên tính match theo đúng CV chỉ định trên query", async () => {
+  const studentToken = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  // CV mặc định: có đủ Flutter và Dart -> 100%
+  cvs.push({
+    id: "cv-1",
+    userId: "student-1",
+    fileName: "Full_CV.pdf",
+    extractedSkills: { skills: ["flutter", "dart"] },
+    isDefault: true,
+    createdAt: new Date(),
+  });
+
+  // CV khác: chỉ có mỗi Flutter -> 50%
+  cvs.push({
+    id: "cv-partial",
+    userId: "student-1",
+    fileName: "Partial_CV.pdf",
+    extractedSkills: { skills: ["flutter"] },
+    isDefault: false,
+    createdAt: new Date(),
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${studentToken}` },
+    params: { id: "job-1" },
+    query: { cvId: "cv-partial" }, // Chỉ định dùng cv-partial
+  };
+  const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.data.match);
+  assert.equal(res.body.data.match.score, 50); // Chỉ khớp 1/2 kỹ năng bắt buộc
+  assert.deepEqual(res.body.data.match.matchedSkills, ["flutter"]);
+  assert.deepEqual(res.body.data.match.missingSkills, ["dart"]);
+});
+
+test("GET /api/v1/jobs/:id tự động fallback sang mock match khi AI service ném lỗi, không trả về 500", async () => {
+  const studentToken = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  cvs.push({
+    id: "cv-1",
+    userId: "student-1",
+    fileName: "CV.pdf",
+    extractedSkills: { skills: ["flutter", "dart"] },
+    isDefault: true,
+    createdAt: new Date(),
+  });
+
+  const aiClient = require("../src/services/ai/aiClient");
+  const originalMatch = aiClient.match;
+  aiClient.match = async () => {
+    throw new Error("AI Match Timeout 504");
+  };
+
+  try {
+    const req = {
+      headers: { authorization: `Bearer ${studentToken}` },
+      params: { id: "job-1" },
+      query: {},
+    };
+    const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
+
+    assert.equal(res.statusCode, 200);
+    // Vẫn tính được match nhờ mock adapter fallback
+    assert.ok(res.body.data.match);
+    assert.equal(res.body.data.match.score, 100);
+  } finally {
+    aiClient.match = originalMatch;
+  }
 });
 
 test("GET /api/v1/jobs/:id trả về 404 khi ID không tồn tại", async () => {
-  const req = { params: { id: "non-existent-id" } };
-  const res = await dispatch(jobController.getJobDetail, req);
+  const req = { params: { id: "non-existent-id" }, query: {} };
+  const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
 
   assert.equal(res.statusCode, 404);
   assert.equal(res.body.error.code, "JOB_NOT_FOUND");
@@ -378,8 +514,8 @@ test("GET /api/v1/jobs/:id ném lỗi 500 khi DB gặp lỗi kết nối (không
   };
 
   try {
-    const req = { params: { id: "job-1" } };
-    const res = await dispatch(jobController.getJobDetail, req);
+    const req = { params: { id: "job-1" }, query: {} };
+    const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
     assert.equal(res.statusCode, 500);
     assert.equal(res.body.error.code, "INTERNAL_SERVER_ERROR");
   } finally {
