@@ -1,8 +1,10 @@
 const { AiServiceError } = require("./errors");
-const { analyzeResultToCamel, matchParamsToSnake, matchResultToCamel } = require("./mapper");
-
-const normalize = (arr) =>
-  [...new Set((arr ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean))];
+const {
+  normalize,
+  analyzeResultToCamel,
+  matchParamsToSnake,
+  matchResultToCamel,
+} = require("./mapper");
 
 function getBaseUrl() {
   return (process.env.AI_SERVICE_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -28,7 +30,18 @@ async function fetchWithTimeout(url, options, timeoutMs) {
 }
 
 async function parseAiResponse(res) {
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (_err) {
+    throw new AiServiceError(
+      "INVALID_RESPONSE",
+      `AI service trả về định dạng không hợp lệ (HTTP ${res.status})`,
+      res.status >= 400 ? res.status : 502
+    );
+  }
+
   if (!res.ok) {
     throw new AiServiceError(
       data?.error?.code ?? "AI_ERROR",
@@ -37,6 +50,15 @@ async function parseAiResponse(res) {
     );
   }
   return data;
+}
+
+async function checkHealth() {
+  const res = await fetchWithTimeout(
+    `${getBaseUrl()}/health`,
+    { method: "GET" },
+    3_000
+  );
+  return parseAiResponse(res);
 }
 
 async function analyzeCv(fileBuffer, fileName) {
@@ -75,4 +97,4 @@ async function match(cvSkills, job) {
   return result;
 }
 
-module.exports = { analyzeCv, match };
+module.exports = { analyzeCv, match, checkHealth };

@@ -55,6 +55,26 @@ test("GET /api/v1 trả về thông tin API version 1", async () => {
   assert.equal(res.body.version, "1.0.0");
 });
 
+test("GET /health trả về tình trạng kết nối DB và AI service", async () => {
+  const res = await mockRequest(app, { method: "GET", url: "/health" });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.status, "ok");
+  assert.ok(res.body.database);
+  assert.equal(res.body.aiService, "ok");
+  assert.ok(res.body.aiMode);
+  assert.ok(res.body.timestamp);
+});
+
+test("GET /api/v1/health/ai trả về tình trạng sức khỏe AI service", async () => {
+  const res = await mockRequest(app, { method: "GET", url: "/api/v1/health/ai" });
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.data);
+  assert.equal(res.body.data.status, "ok");
+  assert.ok(res.body.data.mode);
+});
+
 test("404 handler bắt các route lạ và trả về JSON chuẩn", async () => {
   const res = await mockRequest(app, { method: "GET", url: "/random-unknown-route" });
 

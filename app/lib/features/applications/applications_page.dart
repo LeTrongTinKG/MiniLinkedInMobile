@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/student_home/student_nav.dart';
 
 class ApplicationsPage extends StatelessWidget {
   const ApplicationsPage({super.key});
@@ -13,9 +14,11 @@ class ApplicationsPage extends StatelessWidget {
           Container(
             color: Colors.white,
             padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: const Row(
               children: [
+                StudentMenuButton(),
+                SizedBox(width: 4),
                 Text(
                   'Đã ứng tuyển',
                   style: TextStyle(

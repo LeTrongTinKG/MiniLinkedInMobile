@@ -22,6 +22,38 @@ async function withFallback(realFn, mockFn, label) {
   }
 }
 
+async function checkHealth() {
+  if (!isRealMode()) {
+    return {
+      status: "ok",
+      mode: "mock",
+      service: "ai",
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  try {
+    const data = await httpAdapter.checkHealth();
+    return {
+      status: "ok",
+      mode: "real",
+      service: "ai",
+      details: data,
+      timestamp: new Date().toISOString(),
+    };
+  } catch (err) {
+    const fallbackActive = isFallbackEnabled();
+    return {
+      status: fallbackActive ? "degraded" : "error",
+      mode: "real",
+      service: "ai",
+      error: err.message,
+      fallbackToMock: fallbackActive,
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
 async function analyzeCv(fileBuffer, fileName) {
   if (!isRealMode()) return mockAdapter.analyzeCv(fileBuffer, fileName);
   return withFallback(
@@ -40,4 +72,4 @@ async function match(cvSkills, job) {
   );
 }
 
-module.exports = { analyzeCv, match, AiServiceError };
+module.exports = { analyzeCv, match, checkHealth, AiServiceError };

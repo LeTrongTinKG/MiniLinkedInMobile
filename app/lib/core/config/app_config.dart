@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 
 /// Cấu hình toàn cục của ứng dụng.
 /// Tự động thích ứng theo nền tảng thực thi:
-///   - Android Emulator: http://10.0.2.2:5000/api/v1 (trỏ về localhost máy tính host)
-///   - Web / iOS Simulator / Desktop: http://localhost:5000/api/v1
-///   - Tùy chỉnh qua cờ: flutter run --dart-define=API_URL=https://your-api.com/api/v1
+///   - Mặc định: Server local (http://localhost:5000/api/v1 hoặc 10.0.2.2 cho Android)
+///   - Render: flutter run --dart-define=API_URL=https://minilinkedinmobile.onrender.com/api/v1
 class AppConfig {
   AppConfig._(); // Không cho khởi tạo
 

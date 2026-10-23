@@ -1,69 +1,16 @@
 const jobRepository = require("../repositories/job.repository");
+const cvRepository = require("../repositories/cv.repository");
+const aiClient = require("./ai/aiClient");
+const mockAiAdapter = require("./ai/mockAdapter");
 const { ApiError } = require("../middleware/error");
-
-const VALID_WORK_MODES = ["onsite", "hybrid", "remote"];
-const VALID_JOB_LEVELS = ["intern", "fresher", "junior"];
-const VALID_JOB_STATUSES = ["open", "closed"];
-
-
-
-/**
- * Chuẩn hóa danh sách kỹ năng từ query string
- * Hỗ trợ chuỗi phẩy "React,Node.js" hoặc mảng query ["React", "Node.js"]
- * Tất cả kỹ năng được lowercase để so sánh không phân biệt hoa/thường
- */
-function parseSkills(skillsQuery) {
-  if (!skillsQuery) return [];
-
-  if (Array.isArray(skillsQuery)) {
-    return skillsQuery
-      .flatMap((item) => (typeof item === "string" ? item.split(",") : []))
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.length > 0);
-  }
-
-  if (typeof skillsQuery === "string") {
-    return skillsQuery
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s.length > 0);
-  }
-
-  return [];
-}
-
-/**
- * Xử lý phân trang an toàn
- */
-function parsePagination(query, defaultLimit = 10, maxLimit = 50) {
-  let page = parseInt(query.page, 10);
-  if (isNaN(page) || page < 1) {
-    page = 1;
-  }
-
-  let limit = parseInt(query.limit, 10);
-  if (isNaN(limit) || limit < 1) {
-    limit = defaultLimit;
-  } else if (limit > maxLimit) {
-    limit = maxLimit;
-  }
-
-  const skip = (page - 1) * limit;
-
-  return { page, limit, skip };
-}
-
-/**
- * Format dữ liệu job trước khi trả về client
- * Chỉ giữ 1 field duy nhất applicationsCount (không trùng lặp)
- */
-function formatJob(job) {
-  const { _count, ...rest } = job;
-  return {
-    ...rest,
-    applicationsCount: _count?.applications ?? 0,
-  };
-}
+const {
+  VALID_WORK_MODES,
+  VALID_JOB_LEVELS,
+  VALID_JOB_STATUSES,
+  parseSkills,
+  parsePagination,
+  formatJob,
+} = require("../utils/job.util");
 
 /**
  * Lấy danh sách việc làm công khai (chỉ việc làm đang mở / status = open)
@@ -123,14 +70,19 @@ async function getPublicJobs(query = {}, repo = jobRepository) {
 }
 
 /**
- * Lấy chi tiết việc làm theo ID
+ * Lấy chi tiết việc làm theo ID, kèm chấm điểm mức độ phù hợp (AI match) cho sinh viên
  */
-async function getJobDetail(id, repo = jobRepository) {
+async function getJobDetail(
+  id,
+  context = {},
+  repo = jobRepository,
+  cvRepo = cvRepository,
+  ai = aiClient
+) {
   if (typeof id !== "string" || id.trim().length === 0) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
-  // Không nuốt lỗi DB — chỉ catch PrismaClientKnownRequestError mã P2023 (sai định dạng ID)
   let job;
   try {
     job = await repo.findJobById(id.trim());
@@ -138,7 +90,6 @@ async function getJobDetail(id, repo = jobRepository) {
     if (error?.code === "P2023") {
       throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
     }
-    // Lỗi hệ thống khác (mất kết nối DB, timeout, ...) -> để nổi lên cho errorHandler trả về 500
     throw error;
   }
 
@@ -146,7 +97,52 @@ async function getJobDetail(id, repo = jobRepository) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
   }
 
-  return formatJob(job);
+  const formattedJob = formatJob(job);
+
+  // Tính toán AI Match nếu người dùng là sinh viên
+  const user = context?.user;
+  if (user && user.role === "student" && user.userId) {
+    let matchResult = null;
+    try {
+      let targetCv = null;
+      if (typeof context.cvId === "string" && context.cvId.trim().length > 0) {
+        targetCv = await cvRepo.findById(context.cvId.trim());
+        if (targetCv && targetCv.userId !== user.userId) {
+          targetCv = null;
+        }
+      }
+
+      if (!targetCv) {
+        targetCv = await cvRepo.findDefaultByUserId(user.userId);
+      }
+
+      if (targetCv && targetCv.extractedSkills) {
+        let cvSkills = [];
+        if (Array.isArray(targetCv.extractedSkills.skills)) {
+          cvSkills = targetCv.extractedSkills.skills;
+        } else if (Array.isArray(targetCv.extractedSkills)) {
+          cvSkills = targetCv.extractedSkills;
+        }
+
+        if (cvSkills.length > 0) {
+          try {
+            matchResult = await ai.match(cvSkills, formattedJob);
+          } catch (aiErr) {
+            console.warn("AI service match error (fallback to mock):", aiErr.message);
+            matchResult = await mockAiAdapter.match(cvSkills, formattedJob);
+          }
+        }
+      }
+    } catch (matchErr) {
+      console.warn("Lỗi tính toán AI match (fallback an toàn sang null):", matchErr.message);
+      matchResult = null;
+    }
+
+    // Chỉ gán thuộc tính match cho sinh viên (recruiter và khách vãng lai không có field này)
+    formattedJob.match = matchResult;
+  }
+
+  return formattedJob;
 }
 
 /**
@@ -193,9 +189,4 @@ module.exports = {
   getPublicJobs,
   getJobDetail,
   getRecruiterJobs,
-  parseSkills,
-  parsePagination,
-  VALID_WORK_MODES,
-  VALID_JOB_LEVELS,
-  VALID_JOB_STATUSES,
 };
