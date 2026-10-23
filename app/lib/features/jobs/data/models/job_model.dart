@@ -1,5 +1,12 @@
 import '../../domain/entities/job_entity.dart';
 
+int? _readInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  if (value is String) return int.tryParse(value);
+  return null;
+}
+
 /// DTO parse dữ liệu công việc từ JSON API / Mock
 class JobModel {
   final String id;
@@ -38,7 +45,7 @@ class JobModel {
 
   factory JobModel.fromJson(Map<String, dynamic> json) {
     return JobModel(
-      id: json['id'] as String,
+      id: json['id']?.toString() ?? '',
       recruiterId: json['recruiterId'] as String? ?? '',
       title: json['title'] as String,
       companyName: json['companyName'] as String,
@@ -46,8 +53,8 @@ class JobModel {
       location: json['location'] as String,
       workMode: json['workMode'] as String? ?? 'onsite',
       level: json['level'] as String? ?? 'intern',
-      salaryMin: json['salaryMin'] as int?,
-      salaryMax: json['salaryMax'] as int?,
+      salaryMin: _readInt(json['salaryMin']),
+      salaryMax: _readInt(json['salaryMax']),
       description: json['description'] as String? ?? '',
       requiredSkills: (json['requiredSkills'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -58,9 +65,8 @@ class JobModel {
               .toList() ??
           [],
       status: json['status'] as String? ?? 'open',
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 

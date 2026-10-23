@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../core/error/app_exception.dart';
+import '../../../../core/services/google_auth_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/auth_usecases.dart';
 
@@ -29,6 +30,7 @@ class AuthProvider extends ChangeNotifier {
   final GetMeUseCase _getMeUseCase;
   final GoogleLoginUseCase _googleLoginUseCase;
   final LogoutUseCase _logoutUseCase;
+  final IGoogleAuthService? _googleAuthService;
 
   AuthStatus _status = AuthStatus.initial;
   UserEntity? _currentUser;
@@ -41,11 +43,13 @@ class AuthProvider extends ChangeNotifier {
     required GetMeUseCase getMeUseCase,
     required GoogleLoginUseCase googleLoginUseCase,
     required LogoutUseCase logoutUseCase,
+    IGoogleAuthService? googleAuthService,
   })  : _loginUseCase = loginUseCase,
         _registerUseCase = registerUseCase,
         _getMeUseCase = getMeUseCase,
         _googleLoginUseCase = googleLoginUseCase,
-        _logoutUseCase = logoutUseCase;
+        _logoutUseCase = logoutUseCase,
+        _googleAuthService = googleAuthService;
 
   // --- Getters ---
   AuthStatus get status => _status;
@@ -122,7 +126,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Đăng nhập bằng Google
+  /// Đăng nhập / Đăng ký trực tiếp với Google ID Token
   Future<void> googleLogin(String idToken) async {
     _setLoading();
     try {
@@ -139,11 +143,50 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Kích hoạt luồng đăng nhập / đăng ký qua Google SDK
+  Future<void> signInWithGoogle() async {
+    if (_googleAuthService == null) {
+      _status = AuthStatus.error;
+      _errorMessage = 'Dịch vụ Google Sign-In chưa được khởi tạo';
+      notifyListeners();
+      return;
+    }
+
+    _setLoading();
+    try {
+      final idToken = await _googleAuthService.getIdToken();
+      if (idToken == null) {
+        // Người dùng đã hủy hoặc đóng pop-up Google
+        _status = AuthStatus.unauthenticated;
+        _errorMessage = null;
+        _lastException = null;
+        notifyListeners();
+        return;
+      }
+
+      _currentUser = await _googleLoginUseCase(idToken);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      _lastException = null;
+    } on AppException catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e.message;
+      _lastException = e;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = 'Đăng nhập Google thất bại: $e';
+      _lastException = null;
+    } finally {
+      notifyListeners();
+    }
+  }
+
   /// Đăng xuất
   Future<void> logout() async {
     _setLoading();
     try {
       await _logoutUseCase();
+      await _googleAuthService?.signOut();
     } catch (_) {
       // Bỏ qua lỗi, vẫn đăng xuất phía client
     } finally {
@@ -170,4 +213,3 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-

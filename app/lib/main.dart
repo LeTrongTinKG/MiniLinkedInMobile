@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 // Core
 import 'core/network/dio_client.dart';
+import 'core/services/google_auth_service.dart';
 import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
@@ -49,6 +50,8 @@ void main() async {
   final tokenStorage = SecureTokenStorage.defaultStorage();
   final preferencesStorage = AppPreferencesStorage.defaultStorage();
   final dioClient = DioClient.create(tokenStorage);
+  final googleAuthService = GoogleAuthService();
+  await googleAuthService.initialize();
 
   // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);
@@ -62,12 +65,14 @@ void main() async {
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
-  // 3. Jobs Feature
-  // Mặc định gọi API thật (Render); chạy với --dart-define=USE_MOCK=true để dùng dữ liệu giả
+  // 3. Jobs: GET /jobs trên Render. USE_MOCK=true thì dùng dữ liệu giả (test).
   const useMock = bool.fromEnvironment('USE_MOCK');
   final JobDataSource jobDataSource =
       useMock ? JobMockDataSource() : JobRemoteDataSource(dioClient.dio);
-  final jobRepository = JobRepositoryImpl(jobDataSource);
+  final jobRepository = JobRepositoryImpl(
+    jobDataSource,
+    useMock ? null : JobMockDataSource(),
+  );
   final getJobsUseCase = GetJobsUseCase(jobRepository);
   final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
 
@@ -100,6 +105,7 @@ void main() async {
             getMeUseCase: getMeUseCase,
             googleLoginUseCase: googleLoginUseCase,
             logoutUseCase: logoutUseCase,
+            googleAuthService: googleAuthService,
           ),
         ),
         ChangeNotifierProvider(

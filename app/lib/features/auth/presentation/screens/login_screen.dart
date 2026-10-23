@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../widgets/google_sign_in_button.dart';
 
 /// Màn hình đăng nhập với form email/password và tùy chọn Google Sign-In
 class LoginScreen extends StatefulWidget {
@@ -279,37 +280,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
 
                     // ── Nút Tiếp tục với Google ───────────────────────────
-                    SizedBox(
-                      height: 50,
-                      child: OutlinedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                // TODO: Implement Google Sign-In using google_sign_in package
-                                // Cần cấu hình google-services.json và thêm dependency google_sign_in
-                              },
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          side: BorderSide(color: Colors.grey.shade400),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Icon chữ G của Google với màu sắc đặc trưng
-                            _GoogleIcon(),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Tiếp tục với Google',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF1A1A1A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    const GoogleSignInButton(
+                      label: 'Tiếp tục với Google',
                     ),
 
                     const SizedBox(height: 20),
@@ -330,32 +302,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-/// Widget hiển thị logo Google với các chữ cái nhiều màu đặc trưng
-class _GoogleIcon extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: const Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            // Màu xanh dương đặc trưng của Google
-            color: Color(0xFF4285F4),
-          ),
-        ),
       ),
     );
   }
