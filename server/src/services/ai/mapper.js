@@ -1,5 +1,8 @@
-// Chỉ httpAdapter dùng file này.
+// Chỉ httpAdapter và mockAdapter dùng file này.
 // Phần còn lại của backend chỉ làm việc với camelCase.
+
+const normalize = (arr) =>
+  [...new Set((arr ?? []).map((s) => s.trim().toLowerCase()).filter(Boolean))];
 
 function analyzeResultToCamel(raw) {
   return {
@@ -30,4 +33,9 @@ function matchResultToCamel(raw) {
   };
 }
 
-module.exports = { analyzeResultToCamel, matchParamsToSnake, matchResultToCamel };
+module.exports = {
+  normalize,
+  analyzeResultToCamel,
+  matchParamsToSnake,
+  matchResultToCamel,
+};

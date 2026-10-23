@@ -61,6 +61,19 @@ async function findFirstByUserId(userId, excludeId = null, db = prisma) {
   });
 }
 
+async function findDefaultByUserId(userId, db = prisma) {
+  const defaultCv = await db.cv.findFirst({
+    where: { userId, isDefault: true },
+    select: cvSelectFields,
+  });
+  if (defaultCv) return defaultCv;
+  return db.cv.findFirst({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: cvSelectFields,
+  });
+}
+
 async function setDefaultCv(userId, cvId, db = prisma) {
   return db.$transaction(async (tx) => {
     // 1. Chuyển tất cả CV của user về false
@@ -98,6 +111,7 @@ module.exports = {
   findById,
   countByUserId,
   findFirstByUserId,
+  findDefaultByUserId,
   setDefaultCv,
   updateCvDefault,
   deleteCv,

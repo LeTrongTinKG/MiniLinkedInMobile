@@ -73,6 +73,10 @@ model User {
 
   refreshTokens RefreshToken[]
 
+  // Interactions (cảm xúc + bình luận)
+  reactions Reaction[]
+  comments  Comment[]
+
   @@map("users")
 }
 
@@ -207,6 +211,8 @@ model Job {
 
   recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   applications Application[]
+  reactions    Reaction[]
+  comments     Comment[]
 
   @@index([recruiterId])
   @@map("jobs")
@@ -232,4 +238,47 @@ model Application {
   @@index([studentId])
   @@index([jobId])
   @@map("applications")
+}
+
+enum ReactionType {
+  LIKE
+  CELEBRATE
+  SUPPORT
+  LOVE
+  INSIGHTFUL
+  FUNNY
+}
+
+// Interactions: 1 User — N Reaction, 1 Job — N Reaction (mỗi user tối đa 1 cảm xúc / job)
+model Reaction {
+  id        String       @id @default(uuid())
+  userId    String
+  jobId     String
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@index([jobId])
+  @@map("reactions")
+}
+
+// 1 User — N Comment, 1 Job — N Comment
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  jobId     String
+  content   String   @db.VarChar(1000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, createdAt])
+  @@index([userId])
+  @@map("comments")
 }

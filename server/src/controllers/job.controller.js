@@ -12,7 +12,10 @@ const getPublicJobs = asyncHandler(async (req, res) => {
 });
 
 const getJobDetail = asyncHandler(async (req, res) => {
-  const job = await jobService.getJobDetail(req.params.id);
+  const job = await jobService.getJobDetail(req.params.id, {
+    user: req.user,
+    cvId: req.query.cvId,
+  });
   return sendSuccess(res, job, 200);
 });
 
