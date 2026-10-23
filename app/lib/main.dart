@@ -65,12 +65,14 @@ void main() async {
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
-  // 3. Jobs Feature
-  // Mặc định gọi API thật (Render); chạy với --dart-define=USE_MOCK=true để dùng dữ liệu giả
+  // 3. Jobs: GET /jobs trên Render. USE_MOCK=true thì dùng dữ liệu giả (test).
   const useMock = bool.fromEnvironment('USE_MOCK');
   final JobDataSource jobDataSource =
       useMock ? JobMockDataSource() : JobRemoteDataSource(dioClient.dio);
-  final jobRepository = JobRepositoryImpl(jobDataSource);
+  final jobRepository = JobRepositoryImpl(
+    jobDataSource,
+    useMock ? null : JobMockDataSource(),
+  );
   final getJobsUseCase = GetJobsUseCase(jobRepository);
   final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
 

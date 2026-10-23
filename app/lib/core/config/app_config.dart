@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 /// Cấu hình toàn cục của ứng dụng.
-/// Mặc định kết nối tới Backend Render chính thức: https://minilinkedinmobile.onrender.com/api/v1
-/// Tùy chỉnh qua cờ: flutter run --dart-define=API_URL=http://localhost:5000/api/v1
+/// Mặc định kết nối backend Render: https://minilinkedinmobile.onrender.com/api/v1
+/// Đổi máy chủ: flutter run --dart-define=API_URL=http://localhost:5000/api/v1
 class AppConfig {
   AppConfig._(); // Không cho khởi tạo
 

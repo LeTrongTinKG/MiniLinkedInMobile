@@ -25,18 +25,14 @@ class JobRepositoryImpl implements JobRepository {
     final mock = _mockDataSource;
     try {
       final models = await _remoteDataSource.getJobs(filter: filter);
-
-      // Nếu Remote API trả về có kết quả hoặc không có mock fallback, dùng dữ liệu thật
-      if (models.isNotEmpty || mock == null) {
-        _isUsingMockData = false;
-        return models.map((m) => m.toEntity()).toList();
-      }
+      // Danh sách rỗng là kết quả thật (lọc không khớp), không đổi sang dữ liệu mẫu.
+      _isUsingMockData = false;
+      return models.map((m) => m.toEntity()).toList();
     } catch (_) {
-      // Nếu không có mock fallback dự phòng thì ném tiếp ngoại lệ
       if (mock == null) rethrow;
     }
 
-    // Smart Fallback: Rơi về MockDataSource khi server rỗng hoặc lỗi kết nối / cold start
+    // Máy chủ Render lỗi hoặc đang cold start: hiện dữ liệu mẫu kèm cờ để UI báo.
     _isUsingMockData = true;
     final fallbackModels = await mock.getJobs(filter: filter);
     return fallbackModels.map((m) => m.toEntity()).toList();

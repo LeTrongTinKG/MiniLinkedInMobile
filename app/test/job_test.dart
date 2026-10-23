@@ -36,6 +36,36 @@ void main() {
       expect(entity.requiredSkills, contains('Flutter'));
     });
 
+    test('JobModel.fromJson đọc payload GET /jobs của Render', () {
+      final json = {
+        'id': '60272f08-8b7b-4239-a43f-3c934a1d72c7',
+        'recruiterId': 'df4204b1-a465-453a-9988-89df077997af',
+        'title': 'Junior Full Stack Developer',
+        'companyName': 'FPT Software',
+        'companyLogoUrl': null,
+        'location': 'Hà Nội',
+        'workMode': 'remote',
+        'level': 'junior',
+        'salaryMin': 12000000,
+        'salaryMax': 18000000,
+        'description': 'Phụ trách end-to-end',
+        'requiredSkills': ['react', 'nodejs'],
+        'niceToHave': ['graphql'],
+        'status': 'open',
+        'createdAt': '2026-10-22T13:16:27.141Z',
+        'updatedAt': '2026-10-22T13:16:27.141Z',
+        'recruiter': {'id': 'df4204b1', 'fullName': 'Nguyễn Hồng Anh'},
+        'applicationsCount': 0,
+      };
+
+      final entity = JobModel.fromJson(json).toEntity();
+      expect(entity.companyName, 'FPT Software');
+      expect(entity.workMode, WorkMode.remote);
+      expect(entity.level, JobLevel.junior);
+      expect(entity.salaryMin, 12000000);
+      expect(entity.requiredSkills, ['react', 'nodejs']);
+    });
+
     test('JobFilter detection, reset & serialization works accurately', () {
       var filter = const JobFilter();
       expect(filter.hasFilter, false);

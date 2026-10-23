@@ -4,12 +4,21 @@ import '../../domain/entities/job_filter.dart';
 import '../models/job_model.dart';
 import 'job_datasource.dart';
 
-/// Triển khai JobDataSource gọi REST API thật từ Backend (Render)
+/// Gọi GET /jobs trên backend (Render). Lọc keyword/workMode/level/kỹ năng phía client
+/// để khớp đúng ô tìm kiếm (địa điểm, kỹ năng), không chỉ các field server đang search.
 class JobRemoteDataSource implements JobDataSource {
-  final Dio _dio;
-  final Set<String> _collectedSkills = {};
+  JobRemoteDataSource(this._dio);
 
-  /// Danh mục kỹ năng IT phổ biến mặc định
+  final Dio _dio;
+
+  static const int _pageSize = 50;
+  static const int _maxPages = 20;
+
+  /// Render free tier ngủ đông; request đầu có thể mất ~1 phút mới trả body.
+  static final _slowServer = Options(
+    receiveTimeout: const Duration(seconds: 60),
+  );
+
   static const List<String> _baseSkills = [
     'Flutter',
     'Dart',
@@ -17,118 +26,111 @@ class JobRemoteDataSource implements JobDataSource {
     'React Native',
     'Node.js',
     'Express',
-    'NestJS',
     'JavaScript',
     'TypeScript',
     'Python',
-    'FastAPI',
-    'Django',
     'Java',
-    'Spring Boot',
-    'C#',
-    '.NET',
-    'Golang',
-    'PHP',
     'SQL',
     'PostgreSQL',
-    'MySQL',
-    'MongoDB',
-    'Redis',
     'Docker',
-    'Kubernetes',
     'Git',
-    'REST API',
-    'GraphQL',
-    'AWS',
-    'Firebase',
-    'CI/CD',
-    'Linux',
-    'Figma',
   ];
-
-  JobRemoteDataSource(this._dio) {
-    _collectedSkills.addAll(_baseSkills);
-  }
 
   @override
   Future<List<JobModel>> getJobs({JobFilter? filter}) async {
     try {
-      final queryParams = <String, dynamic>{};
-
-      if (filter != null) {
-        if (filter.keyword.trim().isNotEmpty) {
-          queryParams['q'] = filter.keyword.trim();
-        }
-
-        if (filter.selectedSkills.isNotEmpty) {
-          // Backend hỗ trợ định dạng chuỗi phân tách dấu phẩy: "Flutter,Dart"
-          queryParams['skills'] = filter.selectedSkills.join(',');
-        }
-
-        if (filter.level != null) {
-          queryParams['level'] = filter.level!.name;
-        }
-
-        if (filter.workMode != null) {
-          queryParams['workMode'] = filter.workMode!.name;
-        }
-      }
-
-      final response = await _dio.get(
-        '/jobs',
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      );
-
-      final body = response.data;
-      List<dynamic> rawList = [];
-
-      if (body is Map<String, dynamic>) {
-        if (body['data'] is List<dynamic>) {
-          rawList = body['data'] as List<dynamic>;
-        }
-      } else if (body is List<dynamic>) {
-        rawList = body;
-      }
-
-      final jobs = rawList
-          .whereType<Map<String, dynamic>>()
-          .map((item) => JobModel.fromJson(item))
-          .toList();
-
-      // Cập nhật thêm các kỹ năng từ job thực tế vào cache
-      for (final job in jobs) {
-        _collectedSkills.addAll(job.requiredSkills);
-        _collectedSkills.addAll(job.niceToHave);
-      }
-
-      return jobs;
+      final jobs = await _fetchAllPages();
+      if (filter == null || !filter.hasFilter) return jobs;
+      return jobs.where((job) => _matches(job, filter)).toList();
     } on DioException catch (e) {
       throw DioClient.handleDioError(e);
     }
   }
 
+  Future<List<JobModel>> _fetchAllPages() async {
+    final jobs = <JobModel>[];
+    for (var page = 1; page <= _maxPages; page++) {
+      final response = await _dio.get(
+        '/jobs',
+        queryParameters: {'page': page, 'limit': _pageSize},
+        options: _slowServer,
+      );
+      final body = response.data;
+      final rawList = _extractList(body);
+      for (final item in rawList) {
+        if (item is Map) {
+          jobs.add(JobModel.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+      if (!_hasNextPage(body) || rawList.isEmpty) break;
+    }
+    return jobs;
+  }
+
+  List<dynamic> _extractList(dynamic body) {
+    if (body is Map && body['data'] is List) return body['data'] as List;
+    if (body is List) return body;
+    return const [];
+  }
+
+  bool _hasNextPage(dynamic body) {
+    if (body is! Map) return false;
+    final meta = body['meta'];
+    return meta is Map && meta['hasNextPage'] == true;
+  }
+
+  bool _matches(JobModel job, JobFilter filter) {
+    final query = filter.keyword.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      final hit = job.title.toLowerCase().contains(query) ||
+          job.companyName.toLowerCase().contains(query) ||
+          job.location.toLowerCase().contains(query) ||
+          job.requiredSkills.any((s) => s.toLowerCase().contains(query));
+      if (!hit) return false;
+    }
+    if (filter.workMode != null &&
+        job.workMode.toLowerCase() != filter.workMode!.name.toLowerCase()) {
+      return false;
+    }
+    if (filter.level != null &&
+        job.level.toLowerCase() != filter.level!.name.toLowerCase()) {
+      return false;
+    }
+    if (filter.selectedSkills.isNotEmpty) {
+      final skills = job.requiredSkills.map((s) => s.toLowerCase()).toSet();
+      if (!filter.selectedSkills.any((s) => skills.contains(s.toLowerCase()))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   Future<JobModel?> getJobById(String id) async {
     try {
-      final response = await _dio.get('/jobs/$id');
+      final response = await _dio.get('/jobs/$id', options: _slowServer);
       final body = response.data;
-
-      if (body is Map<String, dynamic> && body['data'] is Map<String, dynamic>) {
-        return JobModel.fromJson(body['data'] as Map<String, dynamic>);
+      if (body is Map && body['data'] is Map) {
+        return JobModel.fromJson(Map<String, dynamic>.from(body['data'] as Map));
       }
       return null;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        return null;
-      }
+      if (e.response?.statusCode == 404) return null;
       throw DioClient.handleDioError(e);
     }
   }
 
   @override
   Future<List<String>> getAvailableSkills() async {
-    final list = _collectedSkills.toList()..sort();
+    final jobs = await getJobs();
+    final byKey = <String, String>{};
+    for (final skill in [
+      ..._baseSkills,
+      for (final job in jobs) ...job.requiredSkills,
+    ]) {
+      byKey.putIfAbsent(skill.toLowerCase(), () => skill);
+    }
+    final list = byKey.values.toList()..sort();
     return list;
   }
 }
-
