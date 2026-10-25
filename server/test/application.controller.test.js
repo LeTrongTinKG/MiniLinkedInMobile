@@ -40,9 +40,19 @@ const prisma = {
         const found = applications.find((a) => a.id === where.id);
         if (!found) return null;
         const job = jobs.find((j) => j.id === found.jobId);
+        const student = users.find((u) => u.id === found.studentId);
+        const cv = cvs.find((c) => c.id === found.cvId);
         return {
           ...found,
-          job: job ? { id: job.id, recruiterId: job.recruiterId, title: job.title } : null,
+          job: job ? { id: job.id, recruiterId: job.recruiterId, title: job.title, companyName: job.companyName, location: job.location } : null,
+          student: student ? {
+            id: student.id,
+            fullName: student.fullName,
+            email: student.email,
+            avatarUrl: student.avatarUrl,
+            studentProfile: student.studentProfile,
+          } : null,
+          cv: cv ? { id: cv.id, fileName: cv.fileName, fileUrl: cv.fileUrl } : null,
         };
       }
       if (where.jobId_studentId) {
@@ -812,4 +822,292 @@ test("PATCH /api/v1/recruiter/applications/:id/status trả về 400 khi status 
 
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, "INVALID_STATUS");
+});
+
+
+// --- NHÓM TEST BỔ SUNG: RÚT ĐƠN & XEM CHI TIẾT ỨNG VIÊN ---
+
+test("PATCH /api/v1/applications/:id/withdraw rút đơn thành công và đổi status thành withdrawn", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "submitted",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.withdrawApplication, req, [
+    authenticate,
+    authorize("student"),
+  ]);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.data.status, "withdrawn");
+  assert.equal(applications[0].status, "withdrawn");
+});
+
+test("PATCH /api/v1/applications/:id/withdraw từ chối khi sinh viên cố rút đơn của người khác (403 FORBIDDEN)", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "submitted",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "student-2",
+    email: "student2@school.edu.vn",
+    role: "student",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.withdrawApplication, req, [
+    authenticate,
+    authorize("student"),
+  ]);
+
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.error.code, "FORBIDDEN");
+});
+
+test("PATCH /api/v1/applications/:id/withdraw từ chối khi đơn đã ở trạng thái withdrawn (400 ALREADY_WITHDRAWN)", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "withdrawn",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.withdrawApplication, req, [
+    authenticate,
+    authorize("student"),
+  ]);
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.error.code, "ALREADY_WITHDRAWN");
+});
+
+test("PATCH /api/v1/applications/:id/withdraw từ chối khi đơn đã có kết quả accepted/rejected (400 CANNOT_WITHDRAW)", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "accepted",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.withdrawApplication, req, [
+    authenticate,
+    authorize("student"),
+  ]);
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.error.code, "CANNOT_WITHDRAW");
+});
+
+test("PATCH /api/v1/applications/:id/withdraw trả về 404 khi ID không tồn tại", async () => {
+  const token = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "non-existent-app" },
+  };
+
+  const res = await dispatch(applicationController.withdrawApplication, req, [
+    authenticate,
+    authorize("student"),
+  ]);
+
+  assert.equal(res.statusCode, 404);
+  assert.equal(res.body.error.code, "APPLICATION_NOT_FOUND");
+});
+
+test("GET /api/v1/recruiter/applications/:id trả về chi tiết ứng viên và tự động đổi submitted -> viewed", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "submitted",
+      matchScore: 85,
+      matchedSkills: ["Flutter"],
+      missingSkills: ["Dart"],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "recruiter-1",
+    email: "recruiter1@company.com",
+    role: "recruiter",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.getRecruiterApplicationDetail, req, [
+    authenticate,
+    authorize("recruiter"),
+  ]);
+
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.data);
+  assert.equal(res.body.data.id, "app-1");
+  assert.equal(res.body.data.status, "viewed"); // Tự động chuyển submitted -> viewed
+  assert.equal(applications[0].status, "viewed"); // DB đã được cập nhật
+  assert.ok(res.body.data.student);
+  assert.equal(res.body.data.student.fullName, "Nguyễn Văn Sinh Viên");
+  assert.ok(res.body.data.cv);
+  assert.equal(res.body.data.cv.fileName, "NguyenVanA_Flutter_CV.pdf");
+});
+
+test("GET /api/v1/recruiter/applications/:id giữ nguyên status nếu đơn đã là viewed hoặc accepted", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "accepted",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "recruiter-1",
+    email: "recruiter1@company.com",
+    role: "recruiter",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.getRecruiterApplicationDetail, req, [
+    authenticate,
+    authorize("recruiter"),
+  ]);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.data.status, "accepted");
+  assert.equal(applications[0].status, "accepted");
+});
+
+test("GET /api/v1/recruiter/applications/:id từ chối với 403 khi recruiter không phải là chủ sở hữu Job", async () => {
+  applications = [
+    {
+      id: "app-1",
+      jobId: "job-1",
+      studentId: "student-1",
+      cvId: "cv-1",
+      status: "submitted",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
+
+  const token = generateAccessToken({
+    id: "recruiter-2",
+    email: "recruiter2@other.com",
+    role: "recruiter",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "app-1" },
+  };
+
+  const res = await dispatch(applicationController.getRecruiterApplicationDetail, req, [
+    authenticate,
+    authorize("recruiter"),
+  ]);
+
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.error.code, "FORBIDDEN");
+});
+
+test("GET /api/v1/recruiter/applications/:id trả về 404 khi đơn không tồn tại", async () => {
+  const token = generateAccessToken({
+    id: "recruiter-1",
+    email: "recruiter1@company.com",
+    role: "recruiter",
+  });
+
+  const req = {
+    headers: { authorization: `Bearer ${token}` },
+    params: { id: "non-existent-app" },
+  };
+
+  const res = await dispatch(applicationController.getRecruiterApplicationDetail, req, [
+    authenticate,
+    authorize("recruiter"),
+  ]);
+
+  assert.equal(res.statusCode, 404);
+  assert.equal(res.body.error.code, "APPLICATION_NOT_FOUND");
 });
