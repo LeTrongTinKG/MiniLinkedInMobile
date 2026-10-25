@@ -7,7 +7,9 @@ const { parsePagination } = require("../utils/job.util");
 const {
   VALID_APPLICATION_STATUSES,
   ALLOWED_DECISION_STATUSES,
+  WITHDRAWABLE_STATUSES,
   extractCvSkills,
+  findJobOrThrow,
   resolveTargetCv,
 } = require("../utils/application.util");
 
@@ -18,37 +20,22 @@ async function applyJob(user, { jobId, cvId }) {
   if (!user || user.role !== "student" || !user.userId) {
     throw new ApiError(403, "FORBIDDEN", "Chỉ sinh viên mới có quyền ứng tuyển");
   }
-
   if (!jobId || typeof jobId !== "string" || jobId.trim().length === 0) {
     throw new ApiError(400, "INVALID_INPUT", "jobId là bắt buộc");
   }
 
   const cleanJobId = jobId.trim();
-
-  // 1. Kiểm tra Job tồn tại và đang mở tuyển
-  let job;
-  try {
-    job = await jobRepository.findJobById(cleanJobId);
-  } catch (err) {
-    if (err?.code === "P2023") throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy công việc");
-    throw err;
-  }
-
-  if (!job) throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy công việc");
+  const job = await findJobOrThrow(cleanJobId, jobRepository);
   if (job.status !== "open") {
     throw new ApiError(400, "JOB_CLOSED", "Công việc này đã đóng đơn ứng tuyển");
   }
 
-  // 2. Chống nộp trùng lặp (Tiêu chuẩn nghiệm thu 1: Ứng tuyển 2 lần trả 409)
   const existing = await applicationRepository.findByJobAndStudent(cleanJobId, user.userId);
   if (existing) {
     throw new ApiError(409, "ALREADY_APPLIED", "Bạn đã ứng tuyển vào công việc này rồi");
   }
 
-  // 3. Xác thực quyền sở hữu CV hoặc tự động fallback CV mặc định
   const targetCv = await resolveTargetCv(user.userId, cvId, cvRepository);
-
-  // 4. Trích xuất kỹ năng CV và tính điểm AI match
   const cvSkills = extractCvSkills(targetCv);
   let matchResult = { score: 0, matchedSkills: [], missingSkills: [] };
   try {
@@ -60,7 +47,6 @@ async function applyJob(user, { jobId, cvId }) {
     console.warn("[applicationService] Lỗi tính AI match (fallback 0):", aiErr.message);
   }
 
-  // 5. Lưu đơn ứng tuyển vào DB (bắt lỗi P2002 đề phòng race conditions)
   try {
     return await applicationRepository.createApplication({
       jobId: job.id,
@@ -86,23 +72,12 @@ async function getJobApplications(user, jobId, query = {}) {
   if (!user || user.role !== "recruiter" || !user.userId) {
     throw new ApiError(403, "FORBIDDEN", "Chỉ nhà tuyển dụng mới có quyền xem danh sách ứng viên");
   }
-
   if (!jobId || typeof jobId !== "string" || jobId.trim().length === 0) {
     throw new ApiError(400, "INVALID_INPUT", "jobId là bắt buộc");
   }
 
   const cleanJobId = jobId.trim();
-  let job;
-  try {
-    job = await jobRepository.findJobById(cleanJobId);
-  } catch (err) {
-    if (err?.code === "P2023") throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy công việc");
-    throw err;
-  }
-
-  if (!job) throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy công việc");
-
-  // Tiêu chuẩn nghiệm thu 3: Không phải chủ job trả 403
+  const job = await findJobOrThrow(cleanJobId, jobRepository);
   if (job.recruiterId !== user.userId) {
     throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền xem danh sách ứng viên của công việc này");
   }
@@ -110,7 +85,6 @@ async function getJobApplications(user, jobId, query = {}) {
   const { page, limit, skip } = parsePagination(query, 10, 50);
   const status = VALID_APPLICATION_STATUSES.includes(query.status) ? query.status : undefined;
 
-  // Tiêu chuẩn nghiệm thu 2: Ứng viên giảm dần theo matchScore (trong repository)
   const [items, total] = await Promise.all([
     applicationRepository.findApplicationsByJobId({ jobId: cleanJobId, status, skip, limit }),
     applicationRepository.countApplicationsByJobId({ jobId: cleanJobId, status }),
@@ -131,12 +105,7 @@ async function getMyApplications(user, query = {}) {
   const status = VALID_APPLICATION_STATUSES.includes(query.status) ? query.status : undefined;
 
   const [items, total] = await Promise.all([
-    applicationRepository.findApplicationsByStudentId({
-      studentId: user.userId,
-      status,
-      skip,
-      limit,
-    }),
+    applicationRepository.findApplicationsByStudentId({ studentId: user.userId, status, skip, limit }),
     applicationRepository.countApplicationsByStudentId({ studentId: user.userId, status }),
   ]);
 
@@ -150,30 +119,72 @@ async function updateApplicationStatus(user, applicationId, newStatus) {
   if (!user || user.role !== "recruiter" || !user.userId) {
     throw new ApiError(403, "FORBIDDEN", "Chỉ nhà tuyển dụng mới có quyền cập nhật trạng thái đơn");
   }
+  if (!applicationId || typeof applicationId !== "string" || applicationId.trim().length === 0) {
+    throw new ApiError(400, "INVALID_INPUT", "ID đơn ứng tuyển không hợp lệ");
+  }
+  if (!ALLOWED_DECISION_STATUSES.includes(newStatus)) {
+    throw new ApiError(400, "INVALID_STATUS", `Trạng thái không hợp lệ: ${ALLOWED_DECISION_STATUSES.join(", ")}`);
+  }
 
+  const app = await applicationRepository.findById(applicationId.trim());
+  if (!app) throw new ApiError(404, "APPLICATION_NOT_FOUND", "Không tìm thấy đơn ứng tuyển");
+  if (app.job.recruiterId !== user.userId) {
+    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền cập nhật đơn ứng tuyển của công việc này");
+  }
+
+  return applicationRepository.updateStatus(app.id, newStatus);
+}
+
+/**
+ * Sinh viên chủ động rút đơn ứng tuyển
+ */
+async function withdrawApplication(user, applicationId) {
+  if (!user || user.role !== "student" || !user.userId) {
+    throw new ApiError(403, "FORBIDDEN", "Chỉ sinh viên mới có quyền rút đơn ứng tuyển");
+  }
   if (!applicationId || typeof applicationId !== "string" || applicationId.trim().length === 0) {
     throw new ApiError(400, "INVALID_INPUT", "ID đơn ứng tuyển không hợp lệ");
   }
 
-  if (!ALLOWED_DECISION_STATUSES.includes(newStatus)) {
-    throw new ApiError(
-      400,
-      "INVALID_STATUS",
-      `Trạng thái không hợp lệ. Chỉ chấp nhận: ${ALLOWED_DECISION_STATUSES.join(", ")}`
-    );
+  const app = await applicationRepository.findById(applicationId.trim());
+  if (!app) throw new ApiError(404, "APPLICATION_NOT_FOUND", "Không tìm thấy đơn ứng tuyển");
+  if (app.studentId !== user.userId) {
+    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền rút đơn ứng tuyển này");
+  }
+  if (app.status === "withdrawn") {
+    throw new ApiError(400, "ALREADY_WITHDRAWN", "Đơn ứng tuyển này đã được rút trước đó");
+  }
+  if (!WITHDRAWABLE_STATUSES.includes(app.status)) {
+    throw new ApiError(400, "CANNOT_WITHDRAW", "Không thể rút đơn ứng tuyển đã có kết quả duyệt");
   }
 
-  const application = await applicationRepository.findById(applicationId.trim());
-  if (!application) {
-    throw new ApiError(404, "APPLICATION_NOT_FOUND", "Không tìm thấy đơn ứng tuyển");
+  return applicationRepository.updateStatus(app.id, "withdrawn");
+}
+
+/**
+ * Nhà tuyển dụng xem chi tiết ứng viên (tự động chuyển submitted -> viewed)
+ */
+async function getRecruiterApplicationDetail(user, applicationId) {
+  if (!user || user.role !== "recruiter" || !user.userId) {
+    throw new ApiError(403, "FORBIDDEN", "Chỉ nhà tuyển dụng mới có quyền xem chi tiết ứng viên");
+  }
+  if (!applicationId || typeof applicationId !== "string" || applicationId.trim().length === 0) {
+    throw new ApiError(400, "INVALID_INPUT", "ID đơn ứng tuyển không hợp lệ");
   }
 
-  // Quyền sở hữu: Chỉ chủ Job mới có quyền duyệt đơn
-  if (application.job.recruiterId !== user.userId) {
-    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền cập nhật đơn ứng tuyển của công việc này");
+  const app = await applicationRepository.findDetailById(applicationId.trim());
+  if (!app) throw new ApiError(404, "APPLICATION_NOT_FOUND", "Không tìm thấy đơn ứng tuyển");
+  if (app.job?.recruiterId !== user.userId) {
+    throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền xem chi tiết đơn ứng tuyển của công việc này");
   }
 
-  return applicationRepository.updateStatus(application.id, newStatus);
+  // Tự động chuyển submitted -> viewed khi mở xem lần đầu
+  if (app.status === "submitted") {
+    const updated = await applicationRepository.updateStatus(app.id, "viewed");
+    app.status = updated.status;
+  }
+
+  return app;
 }
 
 module.exports = {
@@ -181,4 +192,6 @@ module.exports = {
   getJobApplications,
   getMyApplications,
   updateApplicationStatus,
+  withdrawApplication,
+  getRecruiterApplicationDetail,
 };

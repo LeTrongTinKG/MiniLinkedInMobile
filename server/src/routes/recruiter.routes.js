@@ -21,6 +21,11 @@ router.get("/jobs/:jobId/applications", applicationController.getJobApplications
 router.get("/applications", applicationController.getJobApplications);
 
 /**
+ * GET /api/v1/recruiter/applications/:id - Xem chi tiết 1 ứng viên (tự đổi submitted -> viewed)
+ */
+router.get("/applications/:id", applicationController.getRecruiterApplicationDetail);
+
+/**
  * PATCH /api/v1/recruiter/applications/:id/status - Duyệt hoặc từ chối đơn ứng tuyển
  */
 router.patch("/applications/:id/status", applicationController.updateApplicationStatus);

@@ -11,6 +11,8 @@ const VALID_APPLICATION_STATUSES = [
 
 const ALLOWED_DECISION_STATUSES = ["viewed", "shortlisted", "accepted", "rejected"];
 
+const WITHDRAWABLE_STATUSES = ["submitted", "viewed", "shortlisted"];
+
 /**
  * Trích xuất mảng kỹ năng từ bản ghi CV
  */
@@ -23,6 +25,21 @@ function extractCvSkills(cv) {
     return cv.extractedSkills;
   }
   return [];
+}
+
+/**
+ * Tìm Job hoặc ném lỗi nếu không tồn tại / sai ID
+ */
+async function findJobOrThrow(jobId, jobRepo) {
+  let job;
+  try {
+    job = await jobRepo.findJobById(jobId);
+  } catch (err) {
+    if (err?.code === "P2023") throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy công việc");
+    throw err;
+  }
+  if (!job) throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy công việc");
+  return job;
 }
 
 /**
@@ -50,6 +67,8 @@ async function resolveTargetCv(userId, cvId, cvRepo) {
 module.exports = {
   VALID_APPLICATION_STATUSES,
   ALLOWED_DECISION_STATUSES,
+  WITHDRAWABLE_STATUSES,
   extractCvSkills,
+  findJobOrThrow,
   resolveTargetCv,
 };

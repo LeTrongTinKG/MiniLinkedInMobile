@@ -17,4 +17,9 @@ router.post("/", applicationController.applyJob);
  */
 router.get("/my", applicationController.getMyApplications);
 
+/**
+ * PATCH /api/v1/applications/:id/withdraw - Sinh viên chủ động rút đơn
+ */
+router.patch("/:id/withdraw", applicationController.withdrawApplication);
+
 module.exports = router;

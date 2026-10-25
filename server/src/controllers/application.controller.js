@@ -47,9 +47,27 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
   return sendSuccess(res, updated, 200);
 });
 
+/**
+ * PATCH /api/v1/applications/:id/withdraw - Sinh viên chủ động rút đơn
+ */
+const withdrawApplication = asyncHandler(async (req, res) => {
+  const updated = await applicationService.withdrawApplication(req.user, req.params?.id);
+  return sendSuccess(res, updated, 200);
+});
+
+/**
+ * GET /api/v1/recruiter/applications/:id - Xem chi tiết ứng viên (tự đổi submitted -> viewed)
+ */
+const getRecruiterApplicationDetail = asyncHandler(async (req, res) => {
+  const detail = await applicationService.getRecruiterApplicationDetail(req.user, req.params?.id);
+  return sendSuccess(res, detail, 200);
+});
+
 module.exports = {
   applyJob,
   getJobApplications,
   getMyApplications,
   updateApplicationStatus,
+  withdrawApplication,
+  getRecruiterApplicationDetail,
 };

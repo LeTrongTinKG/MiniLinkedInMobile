@@ -152,6 +152,28 @@ async function findById(id, db = prisma) {
 }
 
 /**
+ * Lấy chi tiết đơn ứng tuyển đầy đủ (kèm thông tin sinh viên, CV và Job)
+ */
+async function findDetailById(id, db = prisma) {
+  return db.application.findUnique({
+    where: { id },
+    include: {
+      student: { select: studentSelect },
+      cv: { select: cvSelect },
+      job: {
+        select: {
+          id: true,
+          recruiterId: true,
+          title: true,
+          companyName: true,
+          location: true,
+        },
+      },
+    },
+  });
+}
+
+/**
  * Cập nhật trạng thái đơn ứng tuyển
  */
 async function updateStatus(id, status, db = prisma) {
@@ -169,5 +191,6 @@ module.exports = {
   findApplicationsByStudentId,
   countApplicationsByStudentId,
   findById,
+  findDetailById,
   updateStatus,
 };
