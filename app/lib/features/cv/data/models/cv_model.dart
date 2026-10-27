@@ -17,15 +17,19 @@ class CvModel {
     required this.createdAt,
   });
 
+  /// Server lưu kết quả AI dạng { skills: [...], education, experienceMonths };
+  /// vẫn chấp nhận dạng danh sách thuần để tương thích dữ liệu cũ.
+  static List<String> _readSkills(dynamic raw) {
+    final list = raw is Map ? raw['skills'] : raw;
+    return list is List ? list.map((e) => e.toString()).toList() : [];
+  }
+
   factory CvModel.fromJson(Map<String, dynamic> json) {
     return CvModel(
       id: json['id'] as String,
       fileName: json['fileName'] as String,
       fileUrl: json['fileUrl'] as String,
-      extractedSkills: (json['extractedSkills'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      extractedSkills: _readSkills(json['extractedSkills']),
       isDefault: json['isDefault'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
