@@ -6,3 +6,9 @@ build/
 .pub-cache/
 .pub/
 __pycache__/
+# Log chạy local
+.flutter-*.log
+.server-dev.log
+
+# IDE
+app/android/.settings/

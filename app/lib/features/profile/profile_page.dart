@@ -7,6 +7,7 @@ import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/cv/presentation/providers/cv_provider.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
 import 'package:app/features/profile/widgets/cv_section.dart';
+import 'package:app/features/profile/edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -73,7 +74,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         headline:
                             'Sinh viên CNTT năm 4 · tìm thực tập Flutter',
                         location: 'TP. Hồ Chí Minh',
-                        onEditProfile: () {},
+                        onEditProfile: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const EditProfilePage(),
+                            ),
+                          );
+                        },
                       ),
                       const Divider(height: 1),
                       Consumer<CvProvider>(

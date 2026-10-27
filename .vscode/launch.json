@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Chrome Web - Local Backend)",
+      "cwd": "app",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "args": ["--web-port", "3000"]
+    },
+    {
+      "name": "Flutter (Chrome Web - Render Backend)",
+      "cwd": "app",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "args": [
+        "--web-port",
+        "3000",
+        "--dart-define=API_URL=https://minilinkedinmobile.onrender.com/api/v1"
+      ]
+    },
+    {
+      "name": "Flutter (Thiết bị mặc định - Local Backend)",
+      "cwd": "app",
+      "request": "launch",
+      "type": "dart"
+    }
+  ]
+}

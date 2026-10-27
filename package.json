@@ -1,1 +1,10 @@
-{}
+{
+  "name": "mini-linkedin-mobile",
+  "version": "1.0.0",
+  "description": "Mini LinkedIn Mobile Monorepo",
+  "scripts": {
+    "start:server": "cd server && npm run dev",
+    "start:ai": "cd ai && python -m uvicorn main:app --reload --port 8000",
+    "start:app": "node scripts/watch-flutter.js"
+  }
+}
