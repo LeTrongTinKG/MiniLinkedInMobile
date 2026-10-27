@@ -1,4 +1,5 @@
 const applicationService = require("../services/application.service");
+const recruiterApplicationService = require("../services/recruiter-application.service");
 const { asyncHandler } = require("../middleware/error");
 const { sendSuccess } = require("./response");
 
@@ -16,11 +17,10 @@ const applyJob = asyncHandler(async (req, res) => {
  */
 const getJobApplications = asyncHandler(async (req, res) => {
   const jobId = req.params?.jobId || req.query?.jobId;
-  const { items, pagination } = await applicationService.getJobApplications(
-    req.user,
-    jobId,
-    req.query || {}
-  );
+  // Không chọn job → trả đơn của tất cả job thuộc nhà tuyển dụng
+  const { items, pagination } = jobId
+    ? await applicationService.getJobApplications(req.user, jobId, req.query || {})
+    : await recruiterApplicationService.getAllApplications(req.user, req.query || {});
   return sendSuccess(res, items, 200, pagination);
 });
 

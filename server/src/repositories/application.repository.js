@@ -81,6 +81,7 @@ async function findApplicationsByJobId({ jobId, status, skip = 0, limit = 10 }, 
     include: {
       student: { select: studentSelect },
       cv: { select: cvSelect },
+      job: { select: jobSummarySelect },
     },
   });
 }
@@ -184,6 +185,9 @@ async function updateStatus(id, status, db = prisma) {
 }
 
 module.exports = {
+  studentSelect,
+  cvSelect,
+  jobSummarySelect,
   findByJobAndStudent,
   createApplication,
   findApplicationsByJobId,
