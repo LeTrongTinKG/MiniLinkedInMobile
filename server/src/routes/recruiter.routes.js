@@ -1,5 +1,6 @@
 const express = require("express");
 const jobController = require("../controllers/job.controller");
+const applicationController = require("../controllers/application.controller");
 const { authenticate, authorize } = require("../middleware/auth");
 
 const router = express.Router();
@@ -12,5 +13,21 @@ router.use(authenticate, authorize("recruiter"));
  */
 router.get("/jobs", jobController.getRecruiterJobs);
 
-module.exports = router;
+/**
+ * GET /api/v1/recruiter/jobs/:jobId/applications - Danh sách ứng viên của một Job (xếp theo matchScore giảm dần)
+ * GET /api/v1/recruiter/applications?jobId=... - Hỗ trợ alias qua query param
+ */
+router.get("/jobs/:jobId/applications", applicationController.getJobApplications);
+router.get("/applications", applicationController.getJobApplications);
 
+/**
+ * GET /api/v1/recruiter/applications/:id - Xem chi tiết 1 ứng viên (tự đổi submitted -> viewed)
+ */
+router.get("/applications/:id", applicationController.getRecruiterApplicationDetail);
+
+/**
+ * PATCH /api/v1/recruiter/applications/:id/status - Duyệt hoặc từ chối đơn ứng tuyển
+ */
+router.patch("/applications/:id/status", applicationController.updateApplicationStatus);
+
+module.exports = router;

@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth.routes");
 const jobRoutes = require("./routes/job.routes");
 const recruiterRoutes = require("./routes/recruiter.routes");
 const cvRoutes = require("./routes/cv.routes");
+const applicationRoutes = require("./routes/application.routes");
 const interactionsRoutes = require("./routes/interaction.routes");
 const healthRoutes = require("./routes/health.routes");
 
@@ -24,6 +25,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/recruiter", recruiterRoutes);
 app.use("/api/v1/cvs", cvRoutes);
+app.use("/api/v1/applications", applicationRoutes);
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1", interactionsRoutes);
 
@@ -66,6 +68,7 @@ app.get("/", (_req, res) => {
       jobs: "/api/v1/jobs",
       recruiter: "/api/v1/recruiter",
       cvs: "/api/v1/cvs",
+      applications: "/api/v1/applications",
     },
   });
 });
