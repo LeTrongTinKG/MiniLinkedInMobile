@@ -1,11 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/features/applications/presentation/providers/student_applications_provider.dart';
+import '../../data/datasources/job_match_remote_datasource.dart';
 import '../../domain/entities/job_entity.dart';
+import '../../domain/entities/job_match.dart';
+import 'job_apply_button.dart';
+import 'job_match_section.dart';
 
-class JobDetailSheet extends StatelessWidget {
+class JobDetailSheet extends StatefulWidget {
   final JobEntity job;
 
   const JobDetailSheet({super.key, required this.job});
+
+  @override
+  State<JobDetailSheet> createState() => _JobDetailSheetState();
+}
+
+class _JobDetailSheetState extends State<JobDetailSheet> {
+  late final Future<JobMatch?> _matchFuture;
+
+  JobEntity get job => widget.job;
+
+  @override
+  void initState() {
+    super.initState();
+    _matchFuture = _loadMatch();
+    // Cần biết đã ứng tuyển job này chưa để hiện đúng nút
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<StudentApplicationsProvider>().load();
+    });
+  }
+
+  Future<JobMatch?> _loadMatch() async {
+    try {
+      return await context.read<JobMatchRemoteDataSource>().fetchMatch(job.id);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +102,16 @@ class JobDetailSheet extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                FutureBuilder<JobMatch?>(
+                  future: _matchFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const LinearProgressIndicator();
+                    }
+                    return JobMatchSection(match: snapshot.data);
+                  },
+                ),
                 const SizedBox(height: 20),
                 _sectionTitle('Kỹ năng bắt buộc'),
                 const SizedBox(height: 8),
@@ -93,7 +136,7 @@ class JobDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-          _applyButton(context),
+          JobApplyButton(jobId: job.id),
         ],
       ),
     );
@@ -131,33 +174,5 @@ class JobDetailSheet extends StatelessWidget {
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
           ),
         ],
-      );
-
-  Widget _applyButton(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.border)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tính năng ứng tuyển sẽ có ở Task F8!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              child: const Text('Ứng tuyển ngay',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ),
       );
 }

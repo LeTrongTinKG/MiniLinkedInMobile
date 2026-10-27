@@ -1,11 +1,19 @@
 const { normalize } = require("./mapper");
+const { analyzePdfText } = require("./cvTextAnalyzer");
 
-async function analyzeCv(_fileBuffer, _fileName) {
-  return {
-    skills: ["flutter", "dart", "git"],
-    education: "CNTT năm 4",
-    experienceMonths: 6,
-  };
+const DEFAULT_ANALYSIS = {
+  skills: ["flutter", "dart", "git"],
+  education: "CNTT năm 4",
+  experienceMonths: 6,
+};
+
+// Đọc chữ thật trong PDF; file không đọc được thì trả kết quả mặc định như trước
+async function analyzeCv(fileBuffer, _fileName) {
+  try {
+    return await analyzePdfText(fileBuffer);
+  } catch (_err) {
+    return { ...DEFAULT_ANALYSIS };
+  }
 }
 
 async function match(cvSkills, job) {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'recruiter_applications_page.dart';
+import 'recruiter_jobs_page.dart';
 
 class RecruiterHomeScreen extends StatefulWidget {
   const RecruiterHomeScreen({super.key});
@@ -19,16 +21,8 @@ class _RecruiterHomeScreenState extends State<RecruiterHomeScreen> {
   void initState() {
     super.initState();
     _pages = [
-      _buildPlaceholderPage(
-        icon: Icons.list_alt,
-        title: 'Việc đã đăng',
-        subtitle: 'Danh sách việc bạn đăng sẽ xuất hiện ở đây',
-      ),
-      _buildPlaceholderPage(
-        icon: Icons.people_outline,
-        title: 'Ứng viên',
-        subtitle: 'Danh sách ứng viên sẽ xuất hiện ở đây',
-      ),
+      const RecruiterJobsPage(),
+      const RecruiterApplicationsPage(),
       _buildPlaceholderPage(
         icon: Icons.add_circle_outline,
         title: 'Đăng việc',
@@ -46,10 +40,8 @@ class _RecruiterHomeScreenState extends State<RecruiterHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
+      // Chỉ dựng tab đang xem để danh sách việc/ứng viên luôn tải mới khi quay lại
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppTheme.primaryBlue,

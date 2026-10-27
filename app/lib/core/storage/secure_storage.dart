@@ -32,10 +32,10 @@ class SecureTokenStorage implements ITokenStorage {
     required String accessToken,
     required String refreshToken,
   }) async {
-    await Future.wait([
-      _storage.write(key: AppConfig.keyAccessToken, value: accessToken),
-      _storage.write(key: AppConfig.keyRefreshToken, value: refreshToken),
-    ]);
+    // Ghi tuần tự: trên web hai lần ghi song song cùng tạo khóa mã hóa,
+    // lần sau ghi đè khóa của lần trước nên token đọc lại bị OperationError.
+    await _storage.write(key: AppConfig.keyAccessToken, value: accessToken);
+    await _storage.write(key: AppConfig.keyRefreshToken, value: refreshToken);
   }
 
   @override

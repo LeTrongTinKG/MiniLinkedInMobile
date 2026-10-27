@@ -31,6 +31,12 @@ import 'features/cv/data/repositories/cv_repository_impl.dart';
 import 'features/cv/domain/usecases/cv_usecases.dart';
 import 'features/cv/presentation/providers/cv_provider.dart';
 
+// Applications Feature (ứng tuyển, duyệt ứng viên, độ phù hợp)
+import 'features/applications/data/application_remote_datasource.dart';
+import 'features/applications/presentation/providers/student_applications_provider.dart';
+import 'features/jobs/data/datasources/job_match_remote_datasource.dart';
+import 'features/recruiter_home/recruiter_jobs_datasource.dart';
+
 // Interactions Feature
 import 'features/interactions/data/datasources/interaction_datasource.dart';
 import 'features/interactions/data/datasources/interaction_mock_datasource.dart';
@@ -91,9 +97,22 @@ void main() async {
   final InteractionRepository interactionRepository =
       InteractionRepositoryImpl(interactionDataSource);
 
+  // 6. Applications Feature
+  final applicationDataSource = ApplicationRemoteDataSource(dioClient.dio);
+
   runApp(
     MultiProvider(
       providers: [
+        Provider<ApplicationRemoteDataSource>.value(value: applicationDataSource),
+        Provider<JobMatchRemoteDataSource>.value(
+          value: JobMatchRemoteDataSource(dioClient.dio),
+        ),
+        Provider<RecruiterJobsDataSource>.value(
+          value: RecruiterJobsDataSource(dioClient.dio),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => StudentApplicationsProvider(applicationDataSource),
+        ),
         Provider<InteractionRepository>.value(value: interactionRepository),
         ChangeNotifierProvider(
           create: (_) => InteractionProvider(interactionRepository),
