@@ -4,7 +4,7 @@
  */
 
 const VALID_WORK_MODES = ["onsite", "hybrid", "remote"];
-const VALID_JOB_LEVELS = ["intern", "fresher", "junior"];
+const VALID_JOB_LEVELS = ["intern", "fresher", "junior", "mid", "senior", "lead"];
 const VALID_JOB_STATUSES = ["open", "closed"];
 
 /**
@@ -58,9 +58,15 @@ function parsePagination(query, defaultLimit = 10, maxLimit = 50) {
  * Chỉ giữ 1 field duy nhất applicationsCount (không trùng lặp)
  */
 function formatJob(job) {
-  const { _count, ...rest } = job;
+  // dedupeKey/lastSeenAt/externalId chỉ dùng nội bộ cho Job Sync, không trả ra client
+  const { _count, dedupeKey, lastSeenAt, externalId, ...rest } = job;
   return {
     ...rest,
+    // Job nguồn ngoài: không có recruiter, có link ứng tuyển gốc
+    recruiter: job.recruiter ?? null,
+    source: job.source ?? "internal",
+    applyUrl: job.applyUrl ?? null,
+    salaryCurrency: job.salaryCurrency ?? null,
     applicationsCount: _count?.applications ?? 0,
   };
 }

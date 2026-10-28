@@ -42,7 +42,7 @@ function buildPublicJobWhere(filters = {}) {
     });
   }
 
-  // 3. Lọc theo cấp bậc (level: intern | fresher | junior)
+  // 3. Lọc theo cấp bậc (level: intern | fresher | junior | mid | senior | lead)
   if (typeof filters.level === "string" && filters.level.trim().length > 0) {
     conditions.push({
       level: filters.level.trim().toLowerCase(),
