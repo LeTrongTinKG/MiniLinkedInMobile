@@ -28,6 +28,7 @@ app.use("/api/v1/cvs", cvRoutes);
 app.use("/api/v1/applications", applicationRoutes);
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1", interactionsRoutes);
+app.use("/api/social", require("./routes/social"));
 
 // Health check endpoint tổng quan
 app.get("/health", async (_req, res) => {

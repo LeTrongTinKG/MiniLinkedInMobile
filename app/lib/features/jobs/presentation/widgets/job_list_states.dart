@@ -1,39 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
 
-class JobMockDataBanner extends StatelessWidget {
-  const JobMockDataBanner({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFFD54F)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.info_outline, size: 16, color: Color(0xFFF57F17)),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Đang hiển thị dữ liệu mẫu (máy chủ Render chưa phản hồi)',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFFE65100),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class JobListErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;

@@ -23,6 +23,19 @@ function getBucketName() {
   return process.env.SUPABASE_STORAGE_BUCKET || "cvs";
 }
 
+const ensuredBuckets = new Set();
+
+// (Module social) Bucket chưa có thì tạo (public đọc). Mỗi bucket chỉ kiểm tra 1 lần mỗi lần chạy server.
+async function ensurePublicBucket(client, bucket) {
+  if (ensuredBuckets.has(bucket)) return;
+  const { error } = await client.storage.createBucket(bucket, { public: true });
+  // Lỗi "đã tồn tại" là bình thường
+  if (error && !/already exists|duplicate/i.test(error.message)) {
+    throw new Error(`Không tạo được bucket ${bucket}: ${error.message}`);
+  }
+  ensuredBuckets.add(bucket);
+}
+
 function sanitizeFileName(name) {
   if (!name) return "cv.pdf";
   // Loại bỏ các ký tự đặc biệt, giữ lại chữ cái, số, dấu gạch nối và đuôi file
@@ -109,6 +122,41 @@ const storageService = {
       return false;
     }
 
+    return true;
+  },
+  /**
+   * (Dùng cho module social) Upload file lên bucket bất kỳ, content-type tự chọn, bucket public.
+   * Không đụng tới luồng upload CV ở trên.
+   * @returns {Promise<{ path: string, url: string }>}
+   */
+  async uploadToBucket({ bucket, path: filePath, buffer, contentType }) {
+    const client = getSupabaseClient();
+    if (process.env.NODE_ENV === "test" || !client) {
+      const base = process.env.SUPABASE_URL
+        ? `${process.env.SUPABASE_URL}/storage/v1/object/public/${bucket}`
+        : `https://mock-supabase.storage.local/${bucket}`;
+      return { path: filePath, url: `${base}/${filePath}` };
+    }
+
+    await ensurePublicBucket(client, bucket);
+    const { error } = await client.storage
+      .from(bucket)
+      .upload(filePath, buffer, { contentType, upsert: false });
+    if (error) throw new Error(`Supabase Storage upload error: ${error.message}`);
+
+    const { data } = client.storage.from(bucket).getPublicUrl(filePath);
+    return { path: filePath, url: data.publicUrl };
+  },
+
+  /** (Dùng cho module social) Xóa nhiều file trong 1 bucket */
+  async removeFromBucket(bucket, paths) {
+    const client = getSupabaseClient();
+    if (process.env.NODE_ENV === "test" || !client || paths.length === 0) return true;
+    const { error } = await client.storage.from(bucket).remove(paths);
+    if (error) {
+      console.warn("Không thể xóa file trên Supabase Storage:", error.message);
+      return false;
+    }
     return true;
   },
 };

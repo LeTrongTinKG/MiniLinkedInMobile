@@ -30,6 +30,11 @@ async function applyJob(user, { jobId, cvId }) {
     throw new ApiError(400, "JOB_CLOSED", "Công việc này đã đóng đơn ứng tuyển");
   }
 
+  // Job kéo từ nguồn ngoài: không nhận đơn trong app, trả link ứng tuyển gốc
+  if (job.source && job.source !== "internal") {
+    throw new ApiError(409, "EXTERNAL_JOB_APPLY", "Job này đăng ở nguồn bên ngoài, vui lòng ứng tuyển trực tiếp qua link gốc", { applyUrl: job.applyUrl ?? null });
+  }
+
   const existing = await applicationRepository.findByJobAndStudent(cleanJobId, user.userId);
   if (existing) {
     throw new ApiError(409, "ALREADY_APPLIED", "Bạn đã ứng tuyển vào công việc này rồi");

@@ -387,6 +387,31 @@ test("POST /api/v1/applications trả về 400 khi Job đã đóng (status = clo
   assert.equal(res.body.error.code, "JOB_CLOSED");
 });
 
+test("POST /api/v1/applications trả về 409 EXTERNAL_JOB_APPLY kèm applyUrl khi job nguồn ngoài (không có recruiter)", async () => {
+  jobs.push({
+    id: "job-external",
+    recruiterId: null,
+    title: "Junior Dev",
+    companyName: "Acme",
+    status: "open",
+    source: "jsearch",
+    applyUrl: "https://vn.linkedin.com/jobs/view/1",
+    requiredSkills: [],
+    niceToHave: [],
+  });
+  const token = generateAccessToken({ id: "student-1", email: "student1@school.edu.vn", role: "student" });
+
+  const res = await dispatch(
+    applicationController.applyJob,
+    { headers: { authorization: `Bearer ${token}` }, body: { jobId: "job-external" } },
+    [authenticate, authorize("student")]
+  );
+
+  assert.equal(res.statusCode, 409);
+  assert.equal(res.body.error.code, "EXTERNAL_JOB_APPLY");
+  assert.equal(res.body.error.applyUrl, "https://vn.linkedin.com/jobs/view/1");
+});
+
 test("POST /api/v1/applications nộp đơn thành công với CV chỉ định và lưu đúng matchScore", async () => {
   const token = generateAccessToken({
     id: "student-1",

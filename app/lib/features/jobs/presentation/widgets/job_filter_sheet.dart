@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
 import '../../domain/entities/job_entity.dart';
 import '../providers/job_provider.dart';
+import 'job_filter_parts.dart';
 
 class JobFilterSheet extends StatefulWidget {
   final JobProvider provider;
@@ -97,31 +98,31 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _sectionTitle('Cấp bậc công việc'),
+                FilterSectionTitle('Cấp bậc công việc'),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _choiceChip('Tất cả cấp bậc', _level == null,
+                    FilterChoiceChip('Tất cả cấp bậc', _level == null,
                         () => setState(() => _level = null)),
-                    ...JobLevel.values.map((lvl) => _choiceChip(
+                    ...JobLevel.values.map((lvl) => FilterChoiceChip(
                         lvl.label, _level == lvl, () => setState(() => _level = lvl))),
                   ],
                 ),
                 const SizedBox(height: 24),
-                _sectionTitle('Hình thức làm việc'),
+                FilterSectionTitle('Hình thức làm việc'),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _choiceChip('Tất cả hình thức', _workMode == null,
+                    FilterChoiceChip('Tất cả hình thức', _workMode == null,
                         () => setState(() => _workMode = null)),
-                    ...WorkMode.values.map((m) => _choiceChip(
+                    ...WorkMode.values.map((m) => FilterChoiceChip(
                         m.label, _workMode == m, () => setState(() => _workMode = m))),
                   ],
                 ),
                 const SizedBox(height: 24),
-                _sectionTitle('Kỹ năng chuyên môn IT'),
+                FilterSectionTitle('Kỹ năng chuyên môn IT'),
                 if (availableSkills.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
@@ -181,30 +182,4 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
       ),
     );
   }
-
-  Widget _sectionTitle(String title) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Text(title,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary)),
-      );
-
-  Widget _choiceChip(String label, bool isSelected, VoidCallback onTap) => ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (_) => onTap(),
-        selectedColor: AppColors.primaryContainer,
-        labelStyle: TextStyle(
-          color: isSelected ? AppColors.primary : AppColors.textPrimary,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          fontSize: 13,
-        ),
-        backgroundColor: AppColors.background,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: isSelected ? AppColors.primary : Colors.transparent),
-        ),
-      );
 }

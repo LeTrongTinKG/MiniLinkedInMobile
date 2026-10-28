@@ -3,32 +3,21 @@ import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/interactions/presentation/widgets/reaction_bar.dart';
 import '../../domain/entities/job_entity.dart';
-
-String _initials(String name) {
-  final words = name.trim().split(RegExp(r'[\s\-_]+'));
-  if (words.length == 1) {
-    return name.substring(0, name.length.clamp(0, 2)).toUpperCase();
-  }
-  return words.take(2).map((w) => w.isNotEmpty ? w[0] : '').join().toUpperCase();
-}
+import 'job_badge.dart';
+import 'job_card_header.dart';
 
 String _shortLocation(String loc) {
   final i = loc.indexOf(' (');
   return i >= 0 ? loc.substring(0, i) : loc;
 }
 
-String _formatSalary(int? min, int? max) {
-  if (min == null && max == null) return 'Thoả thuận';
-  String f(int n) => n.toString().replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
-  if (min != null && max != null) return '\$${f(min)} – \$${f(max)} / tháng';
-  if (min != null) return 'Từ \$${f(min)} / tháng';
-  return 'Lên tới \$${f(max!)} / tháng';
-}
-
 String _shortMode(WorkMode m) =>
     const {WorkMode.onsite: 'Tại VP', WorkMode.hybrid: 'Hybrid', WorkMode.remote: 'Remote'}[m]!;
 
+/// Mô tả job ngoài có nhiều dòng: gộp thành 1 đoạn để card cắt gọn
+String _flatten(String text) => text.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+/// Thẻ job trong danh sách (giống component JobCard bên React)
 class JobCard extends StatefulWidget {
   final JobEntity job;
   final VoidCallback? onTap;
@@ -40,16 +29,18 @@ class JobCard extends StatefulWidget {
 }
 
 class _JobCardState extends State<JobCard> {
-  bool _hovered = false;
+  bool _hovered = false; // ~ useState: chuột đang rê lên thẻ (web/desktop)
   JobEntity get job => widget.job;
 
   @override
   Widget build(BuildContext context) {
     final isNew = DateTime.now().difference(job.createdAt).inDays <= 3;
-    final logoColors = AppColors.logoColorsFor(job.companyName);
-    final salary = _formatSalary(job.salaryMin, job.salaryMax);
-    final meta =
-        '${_shortLocation(job.location)} · ${_shortMode(job.workMode)} · ${job.level.label}';
+    final salary = job.formattedSalary;
+    // Dòng địa điểm + hình thức (bỏ phần trống nếu job ngoài thiếu địa điểm)
+    final meta = [_shortLocation(job.location), _shortMode(job.workMode)]
+        .where((e) => e.isNotEmpty)
+        .join(' · ');
+    final description = _flatten(job.description);
     final skills = job.requiredSkills;
 
     return Semantics(
@@ -80,70 +71,9 @@ class _JobCardState extends State<JobCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header kiểu bài đăng: avatar công ty + tên + thời gian
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg, AppSpacing.md, AppSpacing.xs, 0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _CompanyLogo(
-                        logoUrl: job.companyLogoUrl,
-                        initials: _initials(job.companyName),
-                        colors: logoColors,
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(job.companyName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                )),
-                            const SizedBox(height: 1),
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(job.timeAgo,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontSize: 12.5,
-                                          color: AppColors.textMuted)),
-                                ),
-                                const Text(' · ',
-                                    style: TextStyle(
-                                        fontSize: 12.5,
-                                        color: AppColors.textMuted)),
-                                const Icon(Icons.public,
-                                    size: 12, color: AppColors.textMuted),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.bookmark_border_rounded),
-                        iconSize: 22,
-                        color: AppColors.textMuted,
-                        tooltip: 'Lưu việc làm',
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Đã lưu: ${job.title}'),
-                            duration: const Duration(seconds: 1),
-                            behavior: SnackBarBehavior.floating,
-                          ));
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                // Nội dung bài đăng
+                // 1. Logo + tên công ty + thời gian
+                JobCardHeader(job: job),
+                // 2. Nội dung: bấm vào để mở chi tiết
                 InkWell(
                   onTap: widget.onTap,
                   child: Padding(
@@ -152,6 +82,16 @@ class _JobCardState extends State<JobCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Badge nguồn + badge level
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            JobBadge(job.sourceName, highlight: true),
+                            JobBadge(job.level.label),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(job.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -161,13 +101,16 @@ class _JobCardState extends State<JobCard> {
                               color: AppColors.textPrimary,
                               height: 1.3,
                             )),
+                        if (meta.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(meta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 14, color: AppColors.textSecondary)),
+                        ],
                         const SizedBox(height: AppSpacing.xs),
-                        Text(meta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 14, color: AppColors.textSecondary)),
-                        const SizedBox(height: AppSpacing.xs),
+                        // Lương + nhãn "Mới"
                         Row(
                           children: [
                             Flexible(
@@ -179,23 +122,20 @@ class _JobCardState extends State<JobCard> {
                             ),
                             if (isNew) ...[
                               const SizedBox(width: AppSpacing.sm),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accentContainer,
-                                  borderRadius:
-                                      BorderRadius.circular(AppSpacing.xs),
-                                ),
-                                child: const Text('Mới',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.accent)),
-                              ),
+                              const JobBadge('Mới', highlight: true),
                             ],
                           ],
                         ),
+                        // Mô tả cắt còn 2 dòng
+                        if (description.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(description,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppColors.textMuted)),
+                        ],
+                        // Kỹ năng dạng hashtag
                         if (skills.isNotEmpty) ...[
                           const SizedBox(height: AppSpacing.sm),
                           Text(
@@ -203,8 +143,9 @@ class _JobCardState extends State<JobCard> {
                                 .take(4)
                                 .map((s) => '#${s.replaceAll(RegExp(r'\s+'), '')}')
                                 .join('  '),
-                            style: const TextStyle(
-                                fontSize: 14, color: AppColors.primary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14, color: AppColors.primary),
                           ),
                         ],
                       ],
@@ -212,7 +153,7 @@ class _JobCardState extends State<JobCard> {
                   ),
                 ),
                 const Spacer(),
-                // Thống kê + Thích / Bình luận / Chia sẻ
+                // 3. Thích / Bình luận / Chia sẻ
                 ReactionBar(
                   targetId: job.id,
                   shareText: '${job.title} - ${job.companyName}',
@@ -224,53 +165,4 @@ class _JobCardState extends State<JobCard> {
       ),
     );
   }
-}
-
-class _CompanyLogo extends StatelessWidget {
-  final String? logoUrl;
-  final String initials;
-  final List<Color> colors;
-
-  const _CompanyLogo({required this.logoUrl, required this.initials, required this.colors});
-
-  @override
-  Widget build(BuildContext context) {
-    if (logoUrl != null && logoUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLogo),
-        child: Container(
-          width: 48,
-          height: 48,
-          color: AppColors.surface,
-          child: Image.network(
-            logoUrl!,
-            width: 48,
-            height: 48,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _fallback(),
-          ),
-        ),
-      );
-    }
-    return _fallback();
-  }
-
-  Widget _fallback() => Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: colors[0],
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLogo),
-          border: Border.all(color: AppColors.border),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          initials,
-          style: TextStyle(
-            fontSize: initials.length > 1 ? 16 : 20,
-            fontWeight: FontWeight.w700,
-            color: colors[1],
-          ),
-        ),
-      );
 }
