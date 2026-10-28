@@ -195,7 +195,16 @@ Không cần DB / Render để chạy unit test (Prisma mock in-memory).
 
 ## 7. Commit & push
 
-Commit Conventional Commits tiếng Việt, scope `server`. SHA cụ thể xem `git log -1` trên nhánh sau khi push.
+| | |
+| --- | --- |
+| Commit | `c96de0a` |
+| Message | `feat(server): siết phân quyền Application, state machine và fallback AI null` |
+| Files | 16 files, +1116 / −1223 |
+| Nhánh remote | `origin/feature/B9-application-auth-and-fixes` |
+
+```
+c96de0a feat(server): siết phân quyền Application, state machine và fallback AI null
+```
 
 Đề xuất PR:
 
