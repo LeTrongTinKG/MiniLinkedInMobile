@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Cấu hình toàn cục của ứng dụng.
 /// Mặc định kết nối backend Render: https://minilinkedinmobile.onrender.com/api/v1
 /// Đổi máy chủ: flutter run --dart-define=API_URL=http://localhost:5000/api/v1
@@ -36,4 +34,13 @@ class AppConfig {
       String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: '');
   static const String googleServerClientId =
       String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '');
+
+  // Cấu hình GitHub OAuth
+  // Truyền qua cờ: flutter run --dart-define=GITHUB_CLIENT_ID=...
+  static const String githubClientId =
+      String.fromEnvironment('GITHUB_CLIENT_ID', defaultValue: '');
+  static const String githubRedirectUri = String.fromEnvironment(
+    'GITHUB_REDIRECT_URI',
+    defaultValue: 'minilinkedin://oauth-callback',
+  );
 }

@@ -35,6 +35,14 @@ class GoogleLoginUseCase {
   Future<UserEntity> call(String idToken) => _repository.googleLogin(idToken);
 }
 
+/// UseCase: Đăng nhập GitHub.
+class GitHubLoginUseCase {
+  final AuthRepository _repository;
+  const GitHubLoginUseCase(this._repository);
+
+  Future<UserEntity> call(String code) => _repository.githubLogin(code);
+}
+
 /// UseCase: Đăng xuất.
 class LogoutUseCase {
   final AuthRepository _repository;
@@ -42,4 +50,3 @@ class LogoutUseCase {
 
   Future<void> call() => _repository.logout();
 }
-

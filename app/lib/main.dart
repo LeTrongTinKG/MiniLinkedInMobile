@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 // Core
 import 'core/network/dio_client.dart';
 import 'core/services/google_auth_service.dart';
+import 'core/services/github_auth_service.dart';
 import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
@@ -58,6 +59,7 @@ void main() async {
   final dioClient = DioClient.create(tokenStorage);
   final googleAuthService = GoogleAuthService();
   await googleAuthService.initialize();
+  final githubAuthService = GitHubAuthService();
 
   // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);
@@ -69,6 +71,7 @@ void main() async {
   final registerUseCase = RegisterUseCase(authRepository);
   final getMeUseCase = GetMeUseCase(authRepository);
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
+  final githubLoginUseCase = GitHubLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
   // 3. Jobs: GET /jobs trên Render. USE_MOCK=true thì dùng dữ liệu giả (test).
@@ -123,8 +126,10 @@ void main() async {
             registerUseCase: registerUseCase,
             getMeUseCase: getMeUseCase,
             googleLoginUseCase: googleLoginUseCase,
+            githubLoginUseCase: githubLoginUseCase,
             logoutUseCase: logoutUseCase,
             googleAuthService: googleAuthService,
+            githubAuthService: githubAuthService,
           ),
         ),
         ChangeNotifierProvider(

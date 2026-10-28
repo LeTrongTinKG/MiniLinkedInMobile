@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/google_sign_in_button.dart';
+import '../widgets/github_sign_in_button.dart';
 
 /// Màn hình đăng ký tài khoản mới (mặc định vai trò Sinh viên)
 class RegisterScreen extends StatefulWidget {
@@ -395,6 +396,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // ── Nút Đăng ký bằng Google ───────────────────────────
                     const GoogleSignInButton(
                       label: 'Đăng ký bằng Google',
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // ── Nút Đăng ký bằng GitHub ───────────────────────────
+                    const GitHubSignInButton(
+                      label: 'Đăng ký bằng GitHub',
                     ),
 
                     const SizedBox(height: 16),

@@ -46,6 +46,13 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<UserEntity> githubLogin(String code) async {
+    final data = await _dataSource.githubLogin(code);
+    await _saveTokensFromData(data);
+    return UserModel.fromJson(data['user'] as Map<String, dynamic>).toEntity();
+  }
+
+  @override
   Future<void> logout() async {
     final refreshToken = await _tokenStorage.getRefreshToken();
     // Gọi server xóa refreshToken (best-effort, không throw nếu lỗi)
@@ -67,4 +74,3 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 }
-

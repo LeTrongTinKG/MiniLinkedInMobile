@@ -16,7 +16,9 @@ abstract interface class AuthRepository {
   /// Đăng nhập bằng Google idToken
   Future<UserEntity> googleLogin(String idToken);
 
+  /// Đăng nhập bằng GitHub authorization code
+  Future<UserEntity> githubLogin(String code);
+
   /// Đăng xuất (xóa refreshToken trên server + xóa token local)
   Future<void> logout();
 }
-
