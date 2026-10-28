@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/features/profile/profile_page.dart';
 
-/// Key của Scaffold chính trong StudentHomeScreen, để các trang con mở drawer.
+/// Key của Scaffold chính trong StudentHomeScreen, để header mở được drawer.
 final GlobalKey<ScaffoldState> studentScaffoldKey = GlobalKey<ScaffoldState>();
 
 /// Nút hamburger mở drawer trượt từ trái.
@@ -21,29 +23,17 @@ class StudentMenuButton extends StatelessWidget {
   }
 }
 
+/// Drawer trượt từ trái: "Đã ứng tuyển", "Hồ sơ & CV" và Đăng xuất.
+/// Chọn mục nào thì đóng drawer rồi mở trang đó đè lên shell (bấm Back để quay lại).
 class StudentDrawer extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onSelect;
+  const StudentDrawer({super.key});
 
-  const StudentDrawer({
-    super.key,
-    required this.selectedIndex,
-    required this.onSelect,
-  });
-
-  static const _items = <({IconData icon, IconData selectedIcon, String label})>[
-    (icon: Icons.work_outline, selectedIcon: Icons.work, label: 'Việc làm'),
-    (
-      icon: Icons.assignment_turned_in_outlined,
-      selectedIcon: Icons.assignment_turned_in,
-      label: 'Đã ứng tuyển'
-    ),
-    (
-      icon: Icons.description_outlined,
-      selectedIcon: Icons.description,
-      label: 'Hồ sơ & CV'
-    ),
-  ];
+  // Đóng drawer rồi mở trang mới (giống navigate('/path') trong React Router).
+  void _openPage(BuildContext context, Widget page) {
+    final nav = Navigator.of(context);
+    nav.pop();
+    nav.push(MaterialPageRoute(builder: (_) => Scaffold(body: page)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +46,7 @@ class StudentDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
+            // Phần đầu: avatar + tên người dùng.
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Row(
@@ -86,44 +77,58 @@ class StudentDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
             const SizedBox(height: 8),
-            for (var i = 0; i < _items.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                child: ListTile(
-                  selected: i == selectedIndex,
-                  selectedTileColor: AppColors.primaryContainer,
-                  selectedColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  leading: Icon(
-                      i == selectedIndex ? _items[i].selectedIcon : _items[i].icon),
-                  title: Text(_items[i].label,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    onSelect(i);
-                  },
-                ),
-              ),
+            // Hai trang phụ: mở bằng cách push route.
+            _DrawerItem(
+              icon: Icons.assignment_turned_in_outlined,
+              label: 'Đã ứng tuyển',
+              onTap: () => _openPage(context, const ApplicationsPage()),
+            ),
+            _DrawerItem(
+              icon: Icons.description_outlined,
+              label: 'Hồ sơ & CV',
+              onTap: () => _openPage(context, const ProfilePage()),
+            ),
             const Spacer(),
             const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: ListTile(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                leading: const Icon(Icons.logout_rounded),
-                title: const Text('Đăng xuất',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-                onTap: () async {
-                  final nav = Navigator.of(context);
-                  await context.read<AuthProvider>().logout();
-                  nav.pushNamedAndRemoveUntil('/login', (_) => false);
-                },
-              ),
+            // Đăng xuất rồi về màn đăng nhập.
+            _DrawerItem(
+              icon: Icons.logout_rounded,
+              label: 'Đăng xuất',
+              onTap: () async {
+                final nav = Navigator.of(context);
+                await context.read<AuthProvider>().logout();
+                nav.pushNamedAndRemoveUntil('/login', (_) => false);
+              },
             ),
+            const SizedBox(height: 8),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// Một dòng trong drawer (icon + chữ).
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: Icon(icon),
+        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        onTap: onTap,
       ),
     );
   }

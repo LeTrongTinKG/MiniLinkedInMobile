@@ -36,9 +36,6 @@ class JobProvider extends ChangeNotifier {
   bool get hasFilter => _filter.hasFilter;
   int get activeFilterCount => _filter.activeFilterCount;
 
-  /// Cho biết dữ liệu hiện tại có phải từ nguồn mock fallback do server Render rỗng / cold start hay không
-  bool get isUsingMockData => _getJobsUseCase.isUsingMockData;
-
   /// Khởi tạo và nạp dữ liệu ban đầu kèm khôi phục bộ lọc đã lưu (nếu có)
   Future<void> init() async {
     await _restoreFilter();

@@ -1,5 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+
+// UI kit (lớp bọc shadcn_ui)
+import 'ui_kit/app_shad_theme.dart';
 
 // Core
 import 'core/network/dio_client.dart';
@@ -19,7 +24,6 @@ import 'features/auth/presentation/screens/register_screen.dart';
 
 // Jobs Feature
 import 'features/jobs/data/datasources/job_datasource.dart';
-import 'features/jobs/data/datasources/job_mock_datasource.dart';
 import 'features/jobs/data/datasources/job_remote_datasource.dart';
 import 'features/jobs/data/repositories/job_repository_impl.dart';
 import 'features/jobs/domain/usecases/job_usecases.dart';
@@ -71,14 +75,9 @@ void main() async {
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
-  // 3. Jobs: GET /jobs trên Render. USE_MOCK=true thì dùng dữ liệu giả (test).
-  const useMock = bool.fromEnvironment('USE_MOCK');
-  final JobDataSource jobDataSource =
-      useMock ? JobMockDataSource() : JobRemoteDataSource(dioClient.dio);
-  final jobRepository = JobRepositoryImpl(
-    jobDataSource,
-    useMock ? null : JobMockDataSource(),
-  );
+  // 3. Jobs: luôn lấy dữ liệu thật từ API GET /jobs.
+  final JobDataSource jobDataSource = JobRemoteDataSource(dioClient.dio);
+  final jobRepository = JobRepositoryImpl(jobDataSource);
   final getJobsUseCase = GetJobsUseCase(jobRepository);
   final getAvailableSkillsUseCase = GetAvailableSkillsUseCase(jobRepository);
 
@@ -90,7 +89,8 @@ void main() async {
   final setDefaultCvUseCase = SetDefaultCvUseCase(cvRepository);
   final deleteCvUseCase = DeleteCvUseCase(cvRepository);
 
-  // 5. Interactions Feature (cảm xúc + bình luận)
+  // 5. Interactions Feature (cảm xúc + bình luận). USE_MOCK=true thì dùng dữ liệu giả.
+  const useMock = bool.fromEnvironment('USE_MOCK');
   final InteractionDataSource interactionDataSource = useMock
       ? InteractionMockDataSource()
       : InteractionRemoteDataSource(dioClient.dio);
@@ -103,6 +103,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        // Dio dùng chung (đã gắn sẵn token) cho module social tự dựng repository
+        Provider<Dio>.value(value: dioClient.dio),
         Provider<ApplicationRemoteDataSource>.value(value: applicationDataSource),
         Provider<JobMatchRemoteDataSource>.value(
           value: JobMatchRemoteDataSource(dioClient.dio),
@@ -153,18 +155,24 @@ class MiniLinkedInApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mini LinkedIn',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/student-home': (context) => const StudentHomeScreen(),
-        '/recruiter-home': (context) => const RecruiterHomeScreen(),
-      },
+    // ShadApp.custom: nạp theme của ui_kit (giống bọc <ThemeProvider> trong React).
+    // MaterialApp bên trong vẫn dùng AppTheme.lightTheme nên màn hình cũ không đổi.
+    return ShadApp.custom(
+      theme: buildAppShadTheme(),
+      appBuilder: (context) => MaterialApp(
+        title: 'Mini LinkedIn',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        builder: (context, child) => ShadAppBuilder(child: child!),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const SplashScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/student-home': (context) => const StudentHomeScreen(),
+          '/recruiter-home': (context) => const RecruiterHomeScreen(),
+        },
+      ),
     );
   }
 }

@@ -3,78 +3,24 @@ import '../../domain/entities/job_filter.dart';
 import '../../domain/repositories/job_repository.dart';
 import '../datasources/job_datasource.dart';
 
-/// Cài đặt JobRepository tuân thủ DIP & OCP với cơ chế Smart Fallback
+/// Lấy dữ liệu job từ datasource (API thật) rồi đổi Model -> Entity.
 class JobRepositoryImpl implements JobRepository {
-  final JobDataSource _remoteDataSource;
-  final JobDataSource? _mockDataSource;
+  final JobDataSource _dataSource;
 
-  bool _isUsingMockData = false;
-
-  /// Constructor linh hoạt: hỗ trợ nhận dataSource đơn lẻ hoặc cả cặp (remote + mock fallback)
-  JobRepositoryImpl(
-    JobDataSource remoteDataSource, [
-    JobDataSource? mockDataSource,
-  ])  : _remoteDataSource = remoteDataSource,
-        _mockDataSource = mockDataSource;
-
-  @override
-  bool get isUsingMockData => _isUsingMockData;
+  JobRepositoryImpl(this._dataSource);
 
   @override
   Future<List<JobEntity>> getJobs({JobFilter? filter}) async {
-    final mock = _mockDataSource;
-    try {
-      final models = await _remoteDataSource.getJobs(filter: filter);
-      // Danh sách rỗng là kết quả thật (lọc không khớp), không đổi sang dữ liệu mẫu.
-      _isUsingMockData = false;
-      return models.map((m) => m.toEntity()).toList();
-    } catch (_) {
-      if (mock == null) rethrow;
-    }
-
-    // Máy chủ Render lỗi hoặc đang cold start: hiện dữ liệu mẫu kèm cờ để UI báo.
-    _isUsingMockData = true;
-    final fallbackModels = await mock.getJobs(filter: filter);
-    return fallbackModels.map((m) => m.toEntity()).toList();
+    final models = await _dataSource.getJobs(filter: filter);
+    return models.map((m) => m.toEntity()).toList();
   }
 
   @override
   Future<JobEntity?> getJobById(String id) async {
-    final mock = _mockDataSource;
-    try {
-      final model = await _remoteDataSource.getJobById(id);
-      if (model != null) {
-        return model.toEntity();
-      }
-    } catch (_) {
-      if (mock == null) rethrow;
-    }
-
-    if (mock != null) {
-      final fallback = await mock.getJobById(id);
-      return fallback?.toEntity();
-    }
-
-    return null;
+    final model = await _dataSource.getJobById(id);
+    return model?.toEntity();
   }
 
   @override
-  Future<List<String>> getAvailableSkills() async {
-    final mock = _mockDataSource;
-    try {
-      final remoteSkills = await _remoteDataSource.getAvailableSkills();
-      if (mock != null) {
-        final mockSkills = await mock.getAvailableSkills();
-        final combined = <String>{...remoteSkills, ...mockSkills};
-        final sorted = combined.toList()..sort();
-        return sorted;
-      }
-      return remoteSkills;
-    } catch (_) {
-      if (mock != null) {
-        return mock.getAvailableSkills();
-      }
-      rethrow;
-    }
-  }
+  Future<List<String>> getAvailableSkills() => _dataSource.getAvailableSkills();
 }

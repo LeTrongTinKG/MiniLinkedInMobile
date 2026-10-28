@@ -40,6 +40,8 @@ dependencies:
   flutter_secure_storage: ^11.2.0
   google_sign_in: ^7.2.0
   google_fonts: ^6.2.1
+  url_launcher: ^6.3.3
+  shadcn_ui: 0.57.3
 
 dev_dependencies:
   flutter_test:

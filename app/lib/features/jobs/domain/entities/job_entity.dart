@@ -1,67 +1,13 @@
-/// Chế độ làm việc
-enum WorkMode {
-  onsite,
-  hybrid,
-  remote;
+import 'job_enums.dart';
+import 'job_labels.dart';
 
-  String get label {
-    switch (this) {
-      case WorkMode.onsite:
-        return 'Tại văn phòng';
-      case WorkMode.hybrid:
-        return 'Linh hoạt (Hybrid)';
-      case WorkMode.remote:
-        return 'Từ xa (Remote)';
-    }
-  }
-
-  static WorkMode fromString(String value) {
-    switch (value.toLowerCase()) {
-      case 'hybrid':
-        return WorkMode.hybrid;
-      case 'remote':
-        return WorkMode.remote;
-      case 'onsite':
-      default:
-        return WorkMode.onsite;
-    }
-  }
-}
-
-/// Cấp bậc công việc
-enum JobLevel {
-  intern,
-  fresher,
-  junior;
-
-  String get label {
-    switch (this) {
-      case JobLevel.intern:
-        return 'Thực tập sinh (Intern)';
-      case JobLevel.fresher:
-        return 'Fresher';
-      case JobLevel.junior:
-        return 'Junior';
-    }
-  }
-
-  static JobLevel fromString(String value) {
-    switch (value.toLowerCase()) {
-      case 'fresher':
-        return JobLevel.fresher;
-      case 'junior':
-        return JobLevel.junior;
-      case 'intern':
-      default:
-        return JobLevel.intern;
-    }
-  }
-}
+export 'job_enums.dart';
+export 'job_labels.dart';
 
 /// Thực thể công việc thuần túy (Domain Entity)
 class JobEntity {
   final String id;
-  final String recruiterId;
+  final String recruiterId; // rỗng nếu job nguồn ngoài (không có recruiter)
   final String title;
   final String companyName;
   final String? companyLogoUrl;
@@ -75,6 +21,9 @@ class JobEntity {
   final List<String> niceToHave;
   final String status;
   final DateTime createdAt;
+  final String source; // internal | jsearch | serpapi | remotive
+  final String? applyUrl; // link nộp đơn gốc (job ngoài)
+  final String? salaryCurrency; // VND | USD | null
 
   const JobEntity({
     required this.id,
@@ -92,21 +41,19 @@ class JobEntity {
     required this.niceToHave,
     required this.status,
     required this.createdAt,
+    this.source = 'internal',
+    this.applyUrl,
+    this.salaryCurrency,
   });
 
-  /// Chuỗi hiển thị mức lương thân thiện
-  String get formattedSalary {
-    if (salaryMin == null && salaryMax == null) {
-      return 'Thỏa thuận';
-    }
-    if (salaryMin != null && salaryMax != null) {
-      return '\$$salaryMin - \$$salaryMax/tháng';
-    }
-    if (salaryMin != null) {
-      return 'Từ \$$salaryMin/tháng';
-    }
-    return 'Lên tới \$$salaryMax/tháng';
-  }
+  /// Chuỗi hiển thị mức lương theo đơn vị tiền
+  String get formattedSalary => salaryLabel(salaryMin, salaryMax, salaryCurrency);
+
+  /// Tên nguồn để hiện badge (LinkedIn, Remotive...)
+  String get sourceName => sourceLabel(source, applyUrl);
+
+  /// Job nguồn ngoài: nộp đơn qua link gốc, không apply trong app
+  bool get isExternal => applyUrl != null && applyUrl!.isNotEmpty;
 
   /// Tính khoảng thời gian đăng tin (vd: "2 ngày trước")
   String get timeAgo {
