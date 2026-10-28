@@ -1,7 +1,6 @@
 const jobRepository = require("../repositories/job.repository");
 const cvRepository = require("../repositories/cv.repository");
 const aiClient = require("./ai/aiClient");
-const mockAiAdapter = require("./ai/mockAdapter");
 const { ApiError } = require("../middleware/error");
 const {
   VALID_WORK_MODES,
@@ -128,8 +127,8 @@ async function getJobDetail(
           try {
             matchResult = await ai.match(cvSkills, formattedJob);
           } catch (aiErr) {
-            console.warn("AI service match error (fallback to mock):", aiErr.message);
-            matchResult = await mockAiAdapter.match(cvSkills, formattedJob);
+            console.warn("AI service match error (fallback null):", aiErr.message);
+            matchResult = null;
           }
         }
       }

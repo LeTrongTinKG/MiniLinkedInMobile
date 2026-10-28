@@ -1,7 +1,6 @@
 const cvRepository = require("../repositories/cv.repository");
 const storageService = require("./storage/storage.service");
-const { analyzeCv } = require("./ai/aiClient");
-const mockAiAdapter = require("./ai/mockAdapter");
+const aiClient = require("./ai/aiClient");
 const { ApiError } = require("../middleware/error");
 
 /**
@@ -55,7 +54,7 @@ async function uploadCv(
   { userId, file },
   repo = cvRepository,
   storage = storageService,
-  ai = { analyzeCv }
+  ai = aiClient
 ) {
   if (!userId) {
     throw new ApiError(401, "UNAUTHORIZED", "Yêu cầu đăng nhập");
@@ -79,13 +78,12 @@ async function uploadCv(
     userId,
   });
 
-  // 2. Phân tích kỹ năng qua AI service (Nếu AI lỗi thì dùng mock B5, không trả 500)
+  // 2. Phân tích kỹ năng qua aiClient. Lỗi AI không chặn upload — lưu extractedSkills = null
   let extractedSkills = null;
   try {
     extractedSkills = await ai.analyzeCv(file.buffer, sanitizedFileName);
   } catch (aiErr) {
-    console.warn("AI service analyzeCv error (fallback to mock):", aiErr.message);
-    extractedSkills = await mockAiAdapter.analyzeCv(file.buffer, sanitizedFileName);
+    console.warn("AI service analyzeCv error (fallback null):", aiErr.message);
   }
 
   // 3. Kiểm tra xem sinh viên đã có CV nào chưa -> Nếu chưa có, tự động đặt làm CV mặc định

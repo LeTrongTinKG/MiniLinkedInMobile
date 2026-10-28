@@ -8,6 +8,7 @@ const {
   VALID_APPLICATION_STATUSES,
   ALLOWED_DECISION_STATUSES,
   WITHDRAWABLE_STATUSES,
+  assertCanUpdateStatus,
   extractCvSkills,
   findJobOrThrow,
   resolveTargetCv,
@@ -37,14 +38,14 @@ async function applyJob(user, { jobId, cvId }) {
 
   const targetCv = await resolveTargetCv(user.userId, cvId, cvRepository);
   const cvSkills = extractCvSkills(targetCv);
-  let matchResult = { score: 0, matchedSkills: [], missingSkills: [] };
+  let matchResult = null;
   try {
     matchResult = await aiClient.match(cvSkills, {
       requiredSkills: job.requiredSkills || [],
       niceToHave: job.niceToHave || [],
     });
   } catch (aiErr) {
-    console.warn("[applicationService] Lỗi tính AI match (fallback 0):", aiErr.message);
+    console.warn("[applicationService] Lỗi tính AI match (fallback null):", aiErr.message);
   }
 
   try {
@@ -52,7 +53,7 @@ async function applyJob(user, { jobId, cvId }) {
       jobId: job.id,
       studentId: user.userId,
       cvId: targetCv.id,
-      matchScore: typeof matchResult?.score === "number" ? matchResult.score : 0,
+      matchScore: typeof matchResult?.score === "number" ? matchResult.score : null,
       matchedSkills: Array.isArray(matchResult?.matchedSkills) ? matchResult.matchedSkills : [],
       missingSkills: Array.isArray(matchResult?.missingSkills) ? matchResult.missingSkills : [],
       status: "submitted",
@@ -131,6 +132,7 @@ async function updateApplicationStatus(user, applicationId, newStatus) {
   if (app.job.recruiterId !== user.userId) {
     throw new ApiError(403, "FORBIDDEN", "Bạn không có quyền cập nhật đơn ứng tuyển của công việc này");
   }
+  assertCanUpdateStatus(app.status, newStatus);
 
   return applicationRepository.updateStatus(app.id, newStatus);
 }

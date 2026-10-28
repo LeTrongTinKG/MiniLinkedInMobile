@@ -418,7 +418,7 @@ test("GET /api/v1/jobs/:id?cvId=... ưu tiên tính match theo đúng CV chỉ �
   assert.deepEqual(res.body.data.match.missingSkills, ["dart"]);
 });
 
-test("GET /api/v1/jobs/:id tự động fallback sang mock match khi AI service ném lỗi, không trả về 500", async () => {
+test("GET /api/v1/jobs/:id gán match null khi AI service ném lỗi, không trả về 500", async () => {
   const studentToken = generateAccessToken({
     id: "student-1",
     email: "student1@school.edu.vn",
@@ -449,9 +449,7 @@ test("GET /api/v1/jobs/:id tự động fallback sang mock match khi AI service 
     const res = await dispatch(jobController.getJobDetail, req, [optionalAuthenticate]);
 
     assert.equal(res.statusCode, 200);
-    // Vẫn tính được match nhờ mock adapter fallback
-    assert.ok(res.body.data.match);
-    assert.equal(res.body.data.match.score, 100);
+    assert.equal(res.body.data.match, null);
   } finally {
     aiClient.match = originalMatch;
   }

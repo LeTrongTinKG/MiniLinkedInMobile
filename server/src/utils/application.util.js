@@ -13,6 +13,44 @@ const ALLOWED_DECISION_STATUSES = ["viewed", "shortlisted", "accepted", "rejecte
 
 const WITHDRAWABLE_STATUSES = ["submitted", "viewed", "shortlisted"];
 
+const VALID_STATUS_TRANSITIONS = {
+  submitted: ["viewed", "shortlisted", "accepted", "rejected"],
+  viewed: ["shortlisted", "accepted", "rejected"],
+  shortlisted: ["accepted", "rejected"],
+  accepted: [],
+  rejected: [],
+  withdrawn: [],
+};
+
+function canTransitionStatus(currentStatus, newStatus) {
+  const allowed = VALID_STATUS_TRANSITIONS[currentStatus];
+  return Array.isArray(allowed) && allowed.includes(newStatus);
+}
+
+function assertCanUpdateStatus(currentStatus, newStatus) {
+  if (currentStatus === "withdrawn") {
+    throw new ApiError(
+      400,
+      "CANNOT_UPDATE_WITHDRAWN",
+      "Không thể duyệt hoặc từ chối đơn ứng tuyển đã được sinh viên rút"
+    );
+  }
+  if (currentStatus === "accepted" || currentStatus === "rejected") {
+    throw new ApiError(
+      400,
+      "CANNOT_UPDATE_FINALIZED",
+      "Đơn ứng tuyển đã có kết quả quyết định cuối cùng"
+    );
+  }
+  if (!canTransitionStatus(currentStatus, newStatus)) {
+    throw new ApiError(
+      400,
+      "INVALID_STATUS_TRANSITION",
+      `Không thể chuyển trạng thái từ ${currentStatus} sang ${newStatus}`
+    );
+  }
+}
+
 /**
  * Trích xuất mảng kỹ năng từ bản ghi CV
  */
@@ -68,6 +106,9 @@ module.exports = {
   VALID_APPLICATION_STATUSES,
   ALLOWED_DECISION_STATUSES,
   WITHDRAWABLE_STATUSES,
+  VALID_STATUS_TRANSITIONS,
+  canTransitionStatus,
+  assertCanUpdateStatus,
   extractCvSkills,
   findJobOrThrow,
   resolveTargetCv,

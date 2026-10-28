@@ -16,11 +16,7 @@ const studentSelect = {
   },
 };
 
-const cvSelect = {
-  id: true,
-  fileName: true,
-  fileUrl: true,
-};
+const cvSelect = { id: true, fileName: true, fileUrl: true };
 
 const jobSummarySelect = {
   id: true,
@@ -35,126 +31,67 @@ const jobSummarySelect = {
   status: true,
 };
 
-/**
- * Tìm đơn ứng tuyển theo cặp Job ID và Student ID (Compound Unique)
- */
+const candidateInclude = {
+  student: { select: studentSelect },
+  cv: { select: cvSelect },
+  job: { select: jobSummarySelect },
+};
+
+function withStatus(base, status) {
+  return status ? { ...base, status } : base;
+}
+
 async function findByJobAndStudent(jobId, studentId, db = prisma) {
   return db.application.findUnique({
-    where: {
-      jobId_studentId: {
-        jobId,
-        studentId,
-      },
-    },
+    where: { jobId_studentId: { jobId, studentId } },
   });
 }
 
-/**
- * Tạo mới đơn ứng tuyển
- */
 async function createApplication(data, db = prisma) {
   return db.application.create({
     data,
-    include: {
-      cv: { select: cvSelect },
-    },
+    include: { cv: { select: cvSelect } },
   });
 }
 
-/**
- * Lấy danh sách ứng viên của một tin tuyển dụng (sắp xếp giảm dần theo matchScore)
- */
 async function findApplicationsByJobId({ jobId, status, skip = 0, limit = 10 }, db = prisma) {
-  const where = {
-    jobId,
-    ...(status ? { status } : {}),
-  };
-
   return db.application.findMany({
-    where,
-    orderBy: [
-      { matchScore: "desc" },
-      { createdAt: "desc" },
-    ],
+    where: withStatus({ jobId }, status),
+    orderBy: [{ matchScore: "desc" }, { createdAt: "desc" }],
     skip,
     take: limit,
-    include: {
-      student: { select: studentSelect },
-      cv: { select: cvSelect },
-      job: { select: jobSummarySelect },
-    },
+    include: candidateInclude,
   });
 }
 
-/**
- * Đếm tổng số đơn ứng tuyển của một Job
- */
 async function countApplicationsByJobId({ jobId, status }, db = prisma) {
-  const where = {
-    jobId,
-    ...(status ? { status } : {}),
-  };
-
-  return db.application.count({ where });
+  return db.application.count({ where: withStatus({ jobId }, status) });
 }
 
-/**
- * Lấy danh sách đơn ứng tuyển của một sinh viên
- */
 async function findApplicationsByStudentId(
   { studentId, status, skip = 0, limit = 10 },
   db = prisma
 ) {
-  const where = {
-    studentId,
-    ...(status ? { status } : {}),
-  };
-
   return db.application.findMany({
-    where,
+    where: withStatus({ studentId }, status),
     orderBy: [{ createdAt: "desc" }],
     skip,
     take: limit,
-    include: {
-      job: { select: jobSummarySelect },
-      cv: { select: cvSelect },
-    },
+    include: { job: { select: jobSummarySelect }, cv: { select: cvSelect } },
   });
 }
 
-/**
- * Đếm tổng số đơn ứng tuyển của sinh viên
- */
 async function countApplicationsByStudentId({ studentId, status }, db = prisma) {
-  const where = {
-    studentId,
-    ...(status ? { status } : {}),
-  };
-
-  return db.application.count({ where });
+  return db.application.count({ where: withStatus({ studentId }, status) });
 }
 
-/**
- * Tìm đơn ứng tuyển theo ID (kèm thông tin Job để kiểm tra quyền sở hữu)
- */
 async function findById(id, db = prisma) {
   return db.application.findUnique({
     where: { id },
-    include: {
-      job: {
-        select: {
-          id: true,
-          recruiterId: true,
-          title: true,
-        },
-      },
-    },
+    include: { job: { select: { id: true, recruiterId: true, title: true } } },
   });
 }
 
-/**
- * Lấy chi tiết đơn ứng tuyển đầy đủ (kèm thông tin sinh viên, CV và Job)
- */
 async function findDetailById(id, db = prisma) {
   return db.application.findUnique({
     where: { id },
@@ -174,14 +111,8 @@ async function findDetailById(id, db = prisma) {
   });
 }
 
-/**
- * Cập nhật trạng thái đơn ứng tuyển
- */
 async function updateStatus(id, status, db = prisma) {
-  return db.application.update({
-    where: { id },
-    data: { status },
-  });
+  return db.application.update({ where: { id }, data: { status } });
 }
 
 module.exports = {

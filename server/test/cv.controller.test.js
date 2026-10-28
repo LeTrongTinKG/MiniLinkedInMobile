@@ -620,7 +620,7 @@ test("uploadCvMiddleware từ chối file sai định dạng không phải PDF v
 
 
 
-test("POST /api/v1/cvs tự động fallback sang mock khi AI service lỗi, vẫn lưu extractedSkills thành công và không trả 500", async () => {
+test("POST /api/v1/cvs lưu extractedSkills null khi AI service lỗi, không trả 500", async () => {
   const token = generateAccessToken({
     id: "student-1",
     email: "student1@school.edu.vn",
@@ -652,8 +652,7 @@ test("POST /api/v1/cvs tự động fallback sang mock khi AI service lỗi, v�
 
     assert.equal(res.statusCode, 201);
     assert.ok(res.body.data);
-    assert.ok(res.body.data.extractedSkills);
-    assert.deepEqual(res.body.data.extractedSkills.skills, ["flutter", "dart", "git"]);
+    assert.equal(res.body.data.extractedSkills, null);
   } finally {
     aiClient.analyzeCv = originalAnalyzeCv;
   }
