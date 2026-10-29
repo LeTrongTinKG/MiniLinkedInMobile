@@ -1,26 +1,44 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/config/app_config.dart';
 import '../providers/auth_provider.dart';
 import 'google_web_sign_in.dart';
 
+/// Thông báo khi chạy web mà chưa truyền GOOGLE_CLIENT_ID.
+const _missingClientIdMessage =
+    'Chưa cấu hình đăng nhập Google cho web. Chạy lại app với '
+    '--dart-define=GOOGLE_CLIENT_ID=<web client id> (xem app/README.md).';
+
 /// Nút bấm Google Sign-In tái sử dụng cho cả màn hình Đăng nhập và Đăng ký.
 /// Tuân thủ quy chuẩn thiết kế nút xác thực của Google & giao diện LinkedIn.
-/// Trên web Google không cho tự gọi hộp đăng nhập, nên thay bằng nút chính thức của Google
-/// (xem GoogleWebSignIn). Android và iOS giữ nguyên nút bên dưới.
+///
+/// - Web + đã có Client ID: hiện nút CHÍNH THỨC của Google (xem GoogleWebSignIn), vì trên web
+///   Google không cho app tự gọi hộp đăng nhập.
+/// - Android/iOS: nút bên dưới, bấm là mở hộp chọn tài khoản.
+/// - Web nhưng thiếu Client ID: vẫn hiện nút bên dưới để người dùng thấy, bấm vào thì báo cách cấu hình.
 class GoogleSignInButton extends StatelessWidget {
   final String label;
   final VoidCallback? onSuccess;
+
+  /// Chỉ dùng trong test: ép coi như đang chạy web / đã có Client ID. Bình thường để trống.
+  final bool? isWeb;
+  final bool? clientIdConfigured;
 
   const GoogleSignInButton({
     super.key,
     this.label = 'Tiếp tục với Google',
     this.onSuccess,
+    this.isWeb,
+    this.clientIdConfigured,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) return GoogleWebSignIn(onSuccess: onSuccess);
+    final web = isWeb ?? kIsWeb;
+    final configured = clientIdConfigured ?? AppConfig.googleClientId.isNotEmpty;
+
+    if (web && configured) return GoogleWebSignIn(onSuccess: onSuccess);
 
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
@@ -32,6 +50,16 @@ class GoogleSignInButton extends StatelessWidget {
             onPressed: isLoading
                 ? null
                 : () async {
+                    // Đến đây mà đang ở web nghĩa là thiếu Client ID: chỉ báo, không gọi Google
+                    if (web) {
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(
+                          content: Text(_missingClientIdMessage),
+                          duration: Duration(seconds: 8),
+                        ),
+                      );
+                      return;
+                    }
                     await authProvider.signInWithGoogle();
                     if (authProvider.isAuthenticated && onSuccess != null) {
                       onSuccess!();

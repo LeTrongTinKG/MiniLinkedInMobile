@@ -41,3 +41,12 @@ Không truyền `GOOGLE_CLIENT_ID` thì màn đăng nhập sẽ hiện dòng nh�
 | `origin_mismatch` | Cổng web khác cổng đã khai báo trong Google Cloud |
 | Server trả 401 `INVALID_GOOGLE_TOKEN` | `GOOGLE_CLIENT_ID` của server khác ID mà app dùng |
 | Email này đăng nhập được, email kia thì không | Consent screen đang ở Testing, email kia chưa vào Test users |
+
+**Cách chạy không phải dán ID bằng tay** (PowerShell, đứng trong thư mục `app`, đọc ID từ `server/.env`):
+
+```powershell
+$id = (Select-String -Path ..\server\.env -Pattern '^GOOGLE_CLIENT_ID=(.+)$').Matches[0].Groups[1].Value.Trim('"')
+flutter run -d chrome --web-port 3000 --dart-define=GOOGLE_CLIENT_ID=$id --dart-define=API_URL=http://localhost:5000/api/v1
+```
+
+Trên web, nếu chưa truyền `GOOGLE_CLIENT_ID` thì nút "Tiếp tục với Google" vẫn hiện, bấm vào sẽ báo thiếu cấu hình.
