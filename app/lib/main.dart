@@ -51,6 +51,10 @@ import 'features/interactions/data/repositories/interaction_repository_impl.dart
 import 'features/interactions/domain/repositories/interaction_repository.dart';
 import 'features/interactions/presentation/providers/interaction_provider.dart';
 
+// News Feature
+import 'features/news/data/datasources/news_remote_datasource.dart';
+import 'features/news/presentation/providers/news_provider.dart';
+
 // Home Features
 import 'features/student_home/student_home_screen.dart';
 import 'features/recruiter_home/recruiter_home_screen.dart';
@@ -104,6 +108,8 @@ void main() async {
 
   // 6. Applications Feature
   final applicationDataSource = ApplicationRemoteDataSource(dioClient.dio);
+  // 7. News Feature
+  final newsDataSource = NewsRemoteDataSource(dioClient.dio);
 
   runApp(
     MultiProvider(
@@ -148,6 +154,9 @@ void main() async {
             setDefault: setDefaultCvUseCase,
             deleteCv: deleteCvUseCase,
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NewsProvider(newsDataSource),
         ),
       ],
       child: const MiniLinkedInApp(),

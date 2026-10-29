@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+
 
 /// Cấu hình toàn cục của ứng dụng.
 /// Mặc định kết nối backend Render: https://minilinkedinmobile.onrender.com/api/v1
@@ -14,7 +14,7 @@ class AppConfig {
     }
 
     // Mặc định kết nối tới máy chủ Render của dự án
-    return 'https://minilinkedinmobile.onrender.com/api/v1';
+    return 'http://localhost:5000/api/v1';
   }
 
   // Timeout kết nối (milliseconds)
@@ -33,7 +33,7 @@ class AppConfig {
   // Trên Web: Cần Client ID dạng Web OAuth Client
   // Trên Android / iOS: Cần Server Client ID (Web Client ID) để backend verify được idToken
   static const String googleClientId =
-      String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: '');
+      String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: '380900817945-h1iooij3jlk7cakj6br9ok0g99o5jpvi.apps.googleusercontent.com');
   static const String googleServerClientId =
-      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '');
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '380900817945-h1iooij3jlk7cakj6br9ok0g99o5jpvi.apps.googleusercontent.com');
 }
