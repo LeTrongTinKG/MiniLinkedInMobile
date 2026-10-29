@@ -170,4 +170,17 @@ void main() {
     await openHome(tester);
     expect(find.byType(JobListScreen), findsOneWidget);
   });
+
+  testWidgets('(g) bấm nút menu ở header thì mở Drawer (Đã ứng tuyển, Hồ sơ & CV, Đăng xuất)',
+      (tester) async {
+    await openHome(tester);
+    expect(find.text('Hồ sơ & CV'), findsNothing); // Drawer chưa mở
+
+    await tester.tap(find.byIcon(Icons.menu_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Đã ứng tuyển'), findsOneWidget);
+    expect(find.text('Hồ sơ & CV'), findsOneWidget);
+    expect(find.text('Đăng xuất'), findsOneWidget);
+  });
 }

@@ -66,20 +66,29 @@ class PostImagesGrid extends StatelessWidget {
 
   Widget _tile(int index, double width, double height, {int extra = 0}) {
     final m = media[index];
+    final imageUrl = m.thumbnailUrl ?? m.url;
+    final isMock = imageUrl.contains('mock-supabase.storage.local') || !imageUrl.startsWith('http');
+
     return GestureDetector(
       onTap: () => onTap(index),
       child: SizedBox(
         width: width,
         height: height,
         child: Stack(fit: StackFit.expand, children: [
-          Image.network(
-            m.thumbnailUrl ?? m.url,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+          if (isMock)
+            Container(
               color: const Color(0xFFE4E6EB),
-              child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+              child: const Icon(Icons.image_outlined, color: Colors.grey),
+            )
+          else
+            Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: const Color(0xFFE4E6EB),
+                child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+              ),
             ),
-          ),
           if (extra > 0)
             Container(
               color: Colors.black54,

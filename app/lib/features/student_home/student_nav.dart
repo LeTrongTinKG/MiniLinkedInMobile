@@ -6,9 +6,6 @@ import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/profile/profile_page.dart';
 import 'package:app/features/student_home/logout_action.dart';
 
-/// Key của Scaffold chính trong StudentHomeScreen, để header mở được drawer.
-final GlobalKey<ScaffoldState> studentScaffoldKey = GlobalKey<ScaffoldState>();
-
 /// Nút hamburger mở drawer trượt từ trái.
 class StudentMenuButton extends StatelessWidget {
   const StudentMenuButton({super.key});
@@ -19,7 +16,7 @@ class StudentMenuButton extends StatelessWidget {
       tooltip: 'Menu',
       icon: const Icon(Icons.menu_rounded),
       color: AppColors.textPrimary,
-      onPressed: () => studentScaffoldKey.currentState?.openDrawer(),
+      onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
     );
   }
 }

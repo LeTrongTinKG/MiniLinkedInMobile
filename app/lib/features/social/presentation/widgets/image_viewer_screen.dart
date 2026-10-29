@@ -35,12 +35,14 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
             minScale: 1,
             maxScale: 4,
             child: Center(
-              child: Image.network(
-                widget.media[i].url,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 64),
-              ),
+              child: widget.media[i].url.contains('mock-supabase.storage.local')
+                  ? const Icon(Icons.image_outlined, color: Colors.white54, size: 64)
+                  : Image.network(
+                      widget.media[i].url,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 64),
+                    ),
             ),
           ),
         ),

@@ -60,7 +60,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: studentScaffoldKey,
       backgroundColor: AppColors.background,
       drawer: const StudentDrawer(),
       body: Column(
