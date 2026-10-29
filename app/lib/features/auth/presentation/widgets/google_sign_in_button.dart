@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import 'google_web_sign_in.dart';
 
 /// Nút bấm Google Sign-In tái sử dụng cho cả màn hình Đăng nhập và Đăng ký.
 /// Tuân thủ quy chuẩn thiết kế nút xác thực của Google & giao diện LinkedIn.
+/// Trên web Google không cho tự gọi hộp đăng nhập, nên thay bằng nút chính thức của Google
+/// (xem GoogleWebSignIn). Android và iOS giữ nguyên nút bên dưới.
 class GoogleSignInButton extends StatelessWidget {
   final String label;
   final VoidCallback? onSuccess;
@@ -16,6 +20,8 @@ class GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) return GoogleWebSignIn(onSuccess: onSuccess);
+
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
         final isLoading = authProvider.isLoading;
