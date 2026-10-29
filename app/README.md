@@ -31,7 +31,7 @@ Trên web, Google chỉ cho đăng nhập bằng **nút do chính Google vẽ**,
 **3. Chạy app** (cổng phải cố định và trùng origin đã khai báo):
 
 ```
-flutter run -d chrome --web-port 3000 --dart-define=GOOGLE_CLIENT_ID=<web client id> --dart-define=API_URL=http://localhost:5000/api/v1
+flutter run -d chrome --web-port 3000 --no-web-resources-cdn --dart-define=GOOGLE_CLIENT_ID=<web client id> --dart-define=API_URL=http://localhost:5000/api/v1
 ```
 
 Không truyền `GOOGLE_CLIENT_ID` thì màn đăng nhập sẽ hiện dòng nhắc thiếu cấu hình thay vì nút Google.
@@ -46,7 +46,11 @@ Không truyền `GOOGLE_CLIENT_ID` thì màn đăng nhập sẽ hiện dòng nh�
 
 ```powershell
 $id = (Select-String -Path ..\server\.env -Pattern '^GOOGLE_CLIENT_ID=(.+)$').Matches[0].Groups[1].Value.Trim('"')
-flutter run -d chrome --web-port 3000 --dart-define=GOOGLE_CLIENT_ID=$id --dart-define=API_URL=http://localhost:5000/api/v1
+flutter run -d chrome --web-port 3000 --no-web-resources-cdn --dart-define=GOOGLE_CLIENT_ID=$id --dart-define=API_URL=http://localhost:5000/api/v1
 ```
 
 Trên web, nếu chưa truyền `GOOGLE_CLIENT_ID` thì nút "Tiếp tục với Google" vẫn hiện, bấm vào sẽ báo thiếu cấu hình.
+
+**Cho gọn và nhanh:** đặt `GOOGLE_CLIENT_ID` và `API_URL` vào file `app/dart_defines.local.json` (đừng commit),
+rồi chạy `flutter run -d chrome --web-port 3000 --no-web-resources-cdn --dart-define-from-file=dart_defines.local.json`.
+Cờ `--no-web-resources-cdn` dùng CanvasKit có sẵn trong Flutter SDK thay vì tải từ internet mỗi lần mở trang.

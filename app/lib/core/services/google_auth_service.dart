@@ -38,10 +38,14 @@ class GoogleAuthService implements IGoogleAuthService {
   GoogleAuthService({GoogleSignIn? googleSignIn})
       : _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
 
-  @override
-  Future<void> initialize() async {
-    if (_initialized) return;
+  // Lời hứa "đang khởi tạo". Nhiều nơi gọi initialize() cùng lúc (khởi động app, nút Google...)
+  // thì đều chờ CHUNG một lần khởi tạo, không gọi SDK hai lần (web sẽ báo lỗi nếu gọi hai lần).
+  Future<void>? _initFuture;
 
+  @override
+  Future<void> initialize() => _initFuture ??= _initOnce();
+
+  Future<void> _initOnce() async {
     try {
       final params = googleInitParams(
         isWeb: kIsWeb,
@@ -56,6 +60,7 @@ class GoogleAuthService implements IGoogleAuthService {
       _initialized = true;
     } catch (e) {
       debugPrint('GoogleSignIn initialize warning: $e');
+      _initFuture = null; // lỗi thì cho phép thử lại lần sau
     }
   }
 

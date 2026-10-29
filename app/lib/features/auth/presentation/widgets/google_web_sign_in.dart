@@ -34,6 +34,7 @@ class GoogleWebSignIn extends StatefulWidget {
 class _GoogleWebSignInState extends State<GoogleWebSignIn> {
   StreamSubscription<String>? _subscription;
   bool _ready = false; // SDK đã khởi tạo xong chưa (giống useState(false))
+  Widget? _googleButton; // nút Google: tạo MỘT lần rồi dùng lại, vẽ lại giao diện không dựng lại nút
 
   bool get _configured => widget.clientIdConfigured ?? AppConfig.googleClientId.isNotEmpty;
 
@@ -95,7 +96,7 @@ class _GoogleWebSignInState extends State<GoogleWebSignIn> {
                 height: 22,
                 child: CircularProgressIndicator(strokeWidth: 2.2),
               )
-            : buildGoogleWebButton(),
+            : (_googleButton ??= buildGoogleWebButton()),
       ),
     );
   }
