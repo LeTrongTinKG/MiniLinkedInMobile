@@ -10,6 +10,26 @@ abstract interface class IGoogleAuthService {
   Future<void> signOut();
 }
 
+/// Chọn tham số khởi tạo Google SDK theo nền tảng (tách thành hàm riêng để test được).
+/// - Web: CHỈ truyền `clientId`. Tuyệt đối không truyền `serverClientId`, vì thư viện web
+///   từ chối ("serverClientId is not supported on Web"), SDK không khởi tạo xong và nút Google
+///   kẹt mãi ở chữ "Getting ready".
+/// - Android/iOS: không cần `clientId`; `serverClientId` dùng để lấy idToken cho server kiểm tra
+///   (mặc định lấy cùng Web client ID nếu không truyền riêng).
+({String? clientId, String? serverClientId}) googleInitParams({
+  required bool isWeb,
+  required String clientId,
+  required String serverClientId,
+}) {
+  if (isWeb) {
+    return (clientId: clientId.isNotEmpty ? clientId : null, serverClientId: null);
+  }
+  final server = serverClientId.isNotEmpty
+      ? serverClientId
+      : (clientId.isNotEmpty ? clientId : null);
+  return (clientId: null, serverClientId: server);
+}
+
 /// Triển khai dịch vụ Google Sign-In sử dụng package google_sign_in (v7.x)
 class GoogleAuthService implements IGoogleAuthService {
   final GoogleSignIn _googleSignIn;
@@ -23,19 +43,15 @@ class GoogleAuthService implements IGoogleAuthService {
     if (_initialized) return;
 
     try {
-      final clientId = kIsWeb && AppConfig.googleClientId.isNotEmpty
-          ? AppConfig.googleClientId
-          : null;
-
-      final serverClientId = AppConfig.googleServerClientId.isNotEmpty
-          ? AppConfig.googleServerClientId
-          : (AppConfig.googleClientId.isNotEmpty
-              ? AppConfig.googleClientId
-              : null);
+      final params = googleInitParams(
+        isWeb: kIsWeb,
+        clientId: AppConfig.googleClientId,
+        serverClientId: AppConfig.googleServerClientId,
+      );
 
       await _googleSignIn.initialize(
-        clientId: clientId,
-        serverClientId: serverClientId,
+        clientId: params.clientId,
+        serverClientId: params.serverClientId,
       );
       _initialized = true;
     } catch (e) {
