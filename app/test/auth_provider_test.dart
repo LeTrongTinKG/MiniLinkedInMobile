@@ -129,6 +129,10 @@ class FakeGitHubAuthService implements IGitHubAuthService {
   }
 
   @override
+  Uri buildAuthorizeUri() =>
+      Uri.parse('https://github.com/login/oauth/authorize?client_id=test');
+
+  @override
   Future<void> signOut() async {
     signOutCalled = true;
   }
