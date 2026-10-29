@@ -5,9 +5,7 @@ import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/profile/profile_page.dart';
 import 'package:app/features/news/presentation/screens/news_page.dart';
-
-/// Key của Scaffold chính trong StudentHomeScreen, để header mở được drawer.
-final GlobalKey<ScaffoldState> studentScaffoldKey = GlobalKey<ScaffoldState>();
+import 'package:app/features/student_home/logout_action.dart';
 
 /// Nút hamburger mở drawer trượt từ trái.
 class StudentMenuButton extends StatelessWidget {
@@ -19,12 +17,12 @@ class StudentMenuButton extends StatelessWidget {
       tooltip: 'Menu',
       icon: const Icon(Icons.menu_rounded),
       color: AppColors.textPrimary,
-      onPressed: () => studentScaffoldKey.currentState?.openDrawer(),
+      onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
     );
   }
 }
 
-/// Drawer trượt từ trái: "Đã ứng tuyển", "Hồ sơ & CV" và Đăng xuất.
+/// Drawer trượt từ trái: "Tin công nghệ & AI", "Đã ứng tuyển", "Hồ sơ & CV" và Đăng xuất.
 /// Chọn mục nào thì đóng drawer rồi mở trang đó đè lên shell (bấm Back để quay lại).
 class StudentDrawer extends StatelessWidget {
   const StudentDrawer({super.key});
@@ -96,15 +94,11 @@ class StudentDrawer extends StatelessWidget {
             ),
             const Spacer(),
             const Divider(height: 1),
-            // Đăng xuất rồi về màn đăng nhập.
+            // Đăng xuất: hỏi xác nhận rồi về màn đăng nhập (dùng chung với menu avatar ở header).
             _DrawerItem(
               icon: Icons.logout_rounded,
-              label: 'Đăng xuất',
-              onTap: () async {
-                final nav = Navigator.of(context);
-                await context.read<AuthProvider>().logout();
-                nav.pushNamedAndRemoveUntil('/login', (_) => false);
-              },
+              label: LogoutStrings.action,
+              onTap: () => confirmAndLogout(context),
             ),
             const SizedBox(height: 8),
           ],

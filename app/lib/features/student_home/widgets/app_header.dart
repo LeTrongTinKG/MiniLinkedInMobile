@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/features/student_home/logout_action.dart';
 import 'package:app/features/student_home/student_nav.dart';
+import 'package:app/ui_kit/ui_kit.dart';
 
 /// Header dùng chung cho cả 3 tab: nút menu (mở Drawer) + logo + tiêu đề + avatar.
 /// Giống 1 component <Header title="..."/> trong React.
@@ -73,33 +75,62 @@ class _Logo extends StatelessWidget {
   }
 }
 
-// Avatar tròn lấy chữ cái đầu của tên người dùng đang đăng nhập.
+// Avatar người dùng đang đăng nhập. Bấm vào thì mở menu nhỏ (giống Facebook):
+// tên + email ở trên, "Đăng xuất" ở dưới. Có ảnh đại diện thì hiện ảnh, không thì hiện chữ cái đầu.
 class _UserAvatar extends StatelessWidget {
   const _UserAvatar();
 
   @override
   Widget build(BuildContext context) {
-    final name = context.watch<AuthProvider>().currentUser?.displayName ?? '';
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    return Tooltip(
-      message: name.isNotEmpty ? name : 'Người dùng',
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: const BoxDecoration(
-          color: AppColors.primaryContainer,
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          initial,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.onPrimaryContainer,
+    final user = context.watch<AuthProvider>().currentUser;
+    final name = user?.displayName ?? '';
+
+    return PopupMenuButton<String>(
+      tooltip: name.isNotEmpty ? name : 'Tài khoản',
+      offset: const Offset(0, 44), // menu mở bên dưới avatar, không che avatar
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (value) {
+        if (value == _logoutValue) confirmAndLogout(context);
+      },
+      itemBuilder: (_) => [
+        // Dòng thông tin (không bấm được): tên và email
+        PopupMenuItem<String>(
+          enabled: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name.isNotEmpty ? name : 'Người dùng',
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              ),
+              if (user != null)
+                Text(
+                  user.email,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                ),
+            ],
           ),
         ),
-      ),
+        const PopupMenuDivider(),
+        // Dòng đăng xuất, icon và chữ màu đỏ để dễ nhận ra
+        const PopupMenuItem<String>(
+          value: _logoutValue,
+          child: Row(
+            children: [
+              Icon(Icons.logout_rounded, size: 20, color: AppColors.error),
+              SizedBox(width: 12),
+              Text(
+                LogoutStrings.action,
+                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.error),
+              ),
+            ],
+          ),
+        ),
+      ],
+      child: AppAvatar(imageUrl: user?.avatarUrl, name: name, size: 36),
     );
   }
 }
+
+const _logoutValue = 'logout';

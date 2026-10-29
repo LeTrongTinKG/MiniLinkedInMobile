@@ -187,4 +187,25 @@ void main() {
     await openHome(tester);
     expect(find.byType(JobListScreen), findsOneWidget);
   });
+
+  testWidgets('(g) bấm nút menu ở header thì mở Drawer (Đã ứng tuyển, Hồ sơ & CV, Đăng xuất)',
+      (tester) async {
+    await openHome(tester);
+    expect(find.text('Hồ sơ & CV'), findsNothing); // Drawer chưa mở
+
+    await tester.tap(find.byIcon(Icons.menu_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Đã ứng tuyển'), findsOneWidget);
+    expect(find.text('Hồ sơ & CV'), findsOneWidget);
+    expect(find.text('Đăng xuất'), findsOneWidget);
+  });
+
+  testWidgets('(h) tab Tin tức dùng header chung, KHÔNG có AppBar riêng (không bị hai thanh tiêu đề)',
+      (tester) async {
+    await openHome(tester);
+    await tapBar(tester, 'Tin tức');
+    expect(find.byType(AppHeader), findsOneWidget); // header chung của khung chính
+    expect(find.byType(AppBar), findsNothing); // trang tin tức không tự vẽ thêm AppBar
+  });
 }

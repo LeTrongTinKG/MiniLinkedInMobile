@@ -6,7 +6,11 @@ import '../widgets/news_filter_chips.dart';
 import 'package:app/core/theme/app_colors.dart';
 
 class NewsPage extends StatefulWidget {
-  const NewsPage({super.key});
+  const NewsPage({super.key, this.embedded = false});
+
+  /// true = đang nằm TRONG khung chính (tab dưới cùng): khung đã có header chung nên ẩn AppBar riêng.
+  /// false = mở thành trang riêng từ menu bên trái: giữ AppBar có nút quay lại và nút làm mới.
+  final bool embedded;
 
   @override
   State<NewsPage> createState() => _NewsPageState();
@@ -28,22 +32,24 @@ class _NewsPageState extends State<NewsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Tin công nghệ & AI',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        centerTitle: false,
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Làm mới',
-            onPressed: () => context.read<NewsProvider>().loadNews(),
-          ),
-        ],
-      ),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+            title: const Text(
+              'Tin công nghệ & AI',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            centerTitle: false,
+            backgroundColor: AppColors.surface,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Làm mới',
+                onPressed: () => context.read<NewsProvider>().loadNews(),
+              ),
+            ],
+            ),
       body: Column(
         children: [
           const NewsFilterChips(),

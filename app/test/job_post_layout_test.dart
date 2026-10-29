@@ -81,7 +81,6 @@ void main() {
   testWidgets('hamburger mở drawer', (t) async {
     await t.pumpWidget(MaterialApp(
       home: Scaffold(
-        key: studentScaffoldKey,
         drawer: const Drawer(child: Text('DRAWER_OPEN')),
         body: const StudentMenuButton(),
       ),

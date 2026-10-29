@@ -48,6 +48,9 @@ class SocialStrings {
   static const reactorsTitle = 'Cảm xúc';
   static const reactorsAll = 'Tất cả';
   static const reactorsEmpty = 'Chưa có ai thả cảm xúc';
+  static const reactorsLoading = 'Đang tải…';
+  static const reactorsLoadFailed = 'Không tải được danh sách';
+  static String reactorsMore(int n) => 'và $n người khác…';
 
   // ---- chia sẻ ----
   static const shareTitle = 'Chia sẻ bài viết';

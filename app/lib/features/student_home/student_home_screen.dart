@@ -27,7 +27,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   static const _pages = <Widget>[
     JobListScreen(),
     SocialPage(),
-    NewsPage(),
+    NewsPage(embedded: true), // nằm trong khung chính: dùng header chung, không có AppBar riêng
   ];
 
   // Giống useEffect(() => {...}, []): chạy 1 lần khi màn hình được tạo.
@@ -60,7 +60,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: studentScaffoldKey,
       backgroundColor: AppColors.background,
       drawer: const StudentDrawer(),
       body: Column(
