@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../ui_kit/ui_kit.dart';
 import '../../domain/entities/post.dart';
-import '../../domain/entities/reaction_kind.dart';
+import '../../domain/entities/reaction_summary.dart';
 import '../social_strings.dart';
 import 'reaction_icon.dart';
+import 'reactors_hover.dart';
 
 /// Dòng thống kê dưới bài: [icon cảm xúc chồng + tổng cảm xúc] ........ [N bình luận · N lượt chia sẻ].
 class PostStatsRow extends StatelessWidget {
@@ -41,9 +42,14 @@ class PostStatsRow extends StatelessWidget {
               onTap: onReactionsTap,
               behavior: HitTestBehavior.opaque,
               child: Row(children: [
-                _reactionStack(summary.top),
+                _reactionStack(summary),
                 const SizedBox(width: 6),
-                Text('${summary.total}', style: _grey),
+                // Rê chuột vào con số: hiện tên tất cả người đã react
+                ReactorsHover(
+                  postId: post.id,
+                  count: summary.total,
+                  child: Text('${summary.total}', style: _grey),
+                ),
               ]),
             ),
           const Spacer(),
@@ -57,8 +63,10 @@ class PostStatsRow extends StatelessWidget {
     );
   }
 
-  // Các icon cảm xúc chồng lên nhau một phần, viền trắng, cái đầu tiên nằm trên cùng như Facebook
-  Widget _reactionStack(List<ReactionKind> kinds) {
+  // Các icon cảm xúc chồng lên nhau một phần, viền trắng, cái đầu tiên nằm trên cùng như Facebook.
+  // Rê chuột vào từng icon: hiện tên những người đã thả đúng cảm xúc đó.
+  Widget _reactionStack(ReactionSummary summary) {
+    final kinds = summary.top;
     const icon = 18.0; // icon 18 + viền trắng 1.5 mỗi bên = 21
     const ring = 1.5;
     const step = 14.0;
@@ -71,12 +79,17 @@ class PostStatsRow extends StatelessWidget {
         for (var i = kinds.length - 1; i >= 0; i--)
           Positioned(
             left: i * step,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: ring),
+            child: ReactorsHover(
+              postId: post.id,
+              kind: kinds[i],
+              count: summary.counts[kinds[i]] ?? 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: ring),
+                ),
+                child: ReactionIcon(kind: kinds[i], size: icon),
               ),
-              child: ReactionIcon(kind: kinds[i], size: icon),
             ),
           ),
       ]),

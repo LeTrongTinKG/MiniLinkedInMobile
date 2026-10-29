@@ -12,6 +12,7 @@ import 'package:app/features/social/domain/entities/post_author.dart';
 import 'package:app/features/social/domain/entities/post_media.dart';
 import 'package:app/features/social/domain/entities/reaction_kind.dart';
 import 'package:app/features/social/domain/entities/reaction_summary.dart';
+import 'package:app/features/social/domain/entities/reactor.dart';
 import 'package:app/features/social/domain/repositories/social_repository.dart';
 import 'package:app/features/social/presentation/providers/social_providers.dart';
 import 'package:app/features/social/presentation/screens/create_post_screen.dart';
@@ -60,6 +61,15 @@ class _FakeRepo implements SocialRepository {
   Future<ReactionSummary> removeReaction(String postId) async {
     log.add('unreact:$postId');
     return ReactionSummary.empty;
+  }
+
+  // Danh sách người đã react (test tự gán); lọc theo loại cảm xúc như server
+  List<Reactor> reactors = [];
+
+  @override
+  Future<List<Reactor>> getReactions(String postId, {ReactionKind? kind}) async {
+    log.add('reactors:$postId:${kind?.api}');
+    return reactors.where((r) => kind == null || r.kind == kind).toList();
   }
 
   @override
@@ -126,6 +136,18 @@ Future<void> _openFeed(WidgetTester t, _FakeRepo repo, {double width = 400}) asy
   await t.pumpAndSettle();
 }
 
+// Bài có sẵn số liệu cảm xúc (để thử rê chuột vào dòng thống kê)
+Post _postWithReactions(String id, ReactionSummary summary) => Post(
+      id: id,
+      author: _other,
+      content: 'Nội dung $id',
+      createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+      reactionSummary: summary,
+    );
+
+Reactor _reactor(String name, ReactionKind kind) =>
+    Reactor(user: PostAuthor(id: name, fullName: name), kind: kind);
+
 // Tìm icon cảm xúc theo loại (thay cho tìm chữ emoji như trước)
 Finder _icon(ReactionKind kind) =>
     find.byWidgetPredicate((w) => w is ReactionIcon && w.kind == kind);
@@ -163,6 +185,79 @@ void main() {
     expect(repo.log.last, 'unreact:a');
     expect(find.descendant(of: find.byType(LikeLabel), matching: find.byIcon(Icons.thumb_up_outlined)),
         findsOneWidget); // về lại ngón cái rỗng
+  });
+
+  testWidgets('rê chuột vào con số cảm xúc: hiện tên tất cả người đã react, rời đi thì ẩn', (t) async {
+    final repo = _FakeRepo([
+      _postWithReactions('a', const ReactionSummary(
+          total: 3, counts: {ReactionKind.like: 2, ReactionKind.love: 1}, top: [ReactionKind.like, ReactionKind.love])),
+    ])
+      ..reactors = [
+        _reactor('An', ReactionKind.like),
+        _reactor('Chi', ReactionKind.like),
+        _reactor('Dung', ReactionKind.love),
+      ];
+    await _openFeed(t, repo);
+    expect(find.text('An'), findsNothing); // chưa rê thì chưa hiện
+
+    final mouse = await t.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+
+    await mouse.moveTo(t.getCenter(find.text('3')));
+    await t.pump(const Duration(milliseconds: 400)); // qua độ trễ 300ms
+    await t.pump(); // chờ tải tên
+    for (final name in ['An', 'Chi', 'Dung']) {
+      expect(find.text(name), findsOneWidget);
+    }
+    expect(repo.log, contains('reactors:a:null')); // null = lấy tất cả loại
+
+    await mouse.moveTo(Offset.zero); // rời đi
+    await t.pump();
+    expect(find.text('An'), findsNothing);
+  });
+
+  testWidgets('rê chuột vào từng icon: chỉ hiện người đã thả đúng cảm xúc đó', (t) async {
+    final repo = _FakeRepo([
+      _postWithReactions('a', const ReactionSummary(
+          total: 3, counts: {ReactionKind.like: 2, ReactionKind.love: 1}, top: [ReactionKind.like, ReactionKind.love])),
+    ])
+      ..reactors = [
+        _reactor('An', ReactionKind.like),
+        _reactor('Chi', ReactionKind.like),
+        _reactor('Dung', ReactionKind.love),
+      ];
+    await _openFeed(t, repo);
+
+    final mouse = await t.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+
+    await mouse.moveTo(t.getCenter(_icon(ReactionKind.love)));
+    await t.pump(const Duration(milliseconds: 400));
+    await t.pump();
+    expect(find.text('Dung'), findsOneWidget); // người thả Yêu thích
+    expect(find.text('An'), findsNothing); // người thả Thích thì không có
+    expect(repo.log, contains('reactors:a:LOVE'));
+  });
+
+  testWidgets('hơn 10 người: chỉ hiện 10 tên rồi ghi "và N người khác"', (t) async {
+    final repo = _FakeRepo([
+      _postWithReactions('a', const ReactionSummary(total: 12, counts: {ReactionKind.like: 12}, top: [ReactionKind.like])),
+    ])
+      ..reactors = [for (var i = 1; i <= 12; i++) _reactor('Nguoi$i', ReactionKind.like)];
+    await _openFeed(t, repo);
+
+    final mouse = await t.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+
+    await mouse.moveTo(t.getCenter(find.text('12')));
+    await t.pump(const Duration(milliseconds: 400));
+    await t.pump();
+    expect(find.text('Nguoi10'), findsOneWidget);
+    expect(find.text('Nguoi11'), findsNothing); // vượt 10 tên đầu thì không hiện
+    expect(find.text('và 2 người khác…'), findsOneWidget);
   });
 
   testWidgets('rê chuột vào emoji thì hiện tên cảm xúc', (t) async {

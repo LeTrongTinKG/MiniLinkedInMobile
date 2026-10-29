@@ -4,6 +4,7 @@ import 'package:app/core/theme/app_colors.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/profile/profile_page.dart';
+import 'package:app/features/student_home/logout_action.dart';
 
 /// Key của Scaffold chính trong StudentHomeScreen, để header mở được drawer.
 final GlobalKey<ScaffoldState> studentScaffoldKey = GlobalKey<ScaffoldState>();
@@ -90,15 +91,11 @@ class StudentDrawer extends StatelessWidget {
             ),
             const Spacer(),
             const Divider(height: 1),
-            // Đăng xuất rồi về màn đăng nhập.
+            // Đăng xuất: hỏi xác nhận rồi về màn đăng nhập (dùng chung với menu avatar ở header).
             _DrawerItem(
               icon: Icons.logout_rounded,
-              label: 'Đăng xuất',
-              onTap: () async {
-                final nav = Navigator.of(context);
-                await context.read<AuthProvider>().logout();
-                nav.pushNamedAndRemoveUntil('/login', (_) => false);
-              },
+              label: LogoutStrings.action,
+              onTap: () => confirmAndLogout(context),
             ),
             const SizedBox(height: 8),
           ],
