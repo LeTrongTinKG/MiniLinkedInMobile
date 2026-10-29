@@ -13,8 +13,9 @@ class AppConfig {
       return customUrl;
     }
 
-    // Mặc định kết nối tới máy chủ Render của dự án
-    return 'http://localhost:5000/api/v1';
+    // Mặc định kết nối tới máy chủ Render của dự án (dùng khi trình bày).
+    // Chạy với server trên máy mình thì truyền --dart-define=API_URL=http://localhost:5000/api/v1
+    return 'https://minilinkedinmobile.onrender.com/api/v1';
   }
 
   // Timeout kết nối (milliseconds)

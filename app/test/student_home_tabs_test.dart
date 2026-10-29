@@ -200,4 +200,12 @@ void main() {
     expect(find.text('Hồ sơ & CV'), findsOneWidget);
     expect(find.text('Đăng xuất'), findsOneWidget);
   });
+
+  testWidgets('(h) tab Tin tức dùng header chung, KHÔNG có AppBar riêng (không bị hai thanh tiêu đề)',
+      (tester) async {
+    await openHome(tester);
+    await tapBar(tester, 'Tin tức');
+    expect(find.byType(AppHeader), findsOneWidget); // header chung của khung chính
+    expect(find.byType(AppBar), findsNothing); // trang tin tức không tự vẽ thêm AppBar
+  });
 }
