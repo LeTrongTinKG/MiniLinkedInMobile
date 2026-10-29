@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/storage/preferences_storage.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
-import 'package:app/features/news/news_page.dart';
+import 'package:app/features/news/presentation/screens/news_page.dart';
 import 'package:app/features/social/social_page.dart';
 import 'package:app/features/student_home/student_nav.dart';
 import 'package:app/features/student_home/widgets/app_header.dart';

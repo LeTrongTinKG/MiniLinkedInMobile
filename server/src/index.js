@@ -107,6 +107,8 @@ if (require.main === module) {
     try {
       await prisma.$connect();
       console.log("✅ Đã kết nối cơ sở dữ liệu Supabase thành công!");
+      const { startNewsCron } = require("./services/news/news-cron");
+      startNewsCron();
     } catch (error) {
       console.error("❌ Lỗi kết nối Supabase:", error);
     }

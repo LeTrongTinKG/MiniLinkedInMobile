@@ -13,3 +13,4 @@ const getNews = asyncHandler(async (req, res) => {
 module.exports = {
   getNews,
 };
+

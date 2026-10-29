@@ -88,3 +88,4 @@ class NewsProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

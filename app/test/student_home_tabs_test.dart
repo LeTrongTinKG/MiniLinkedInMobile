@@ -15,7 +15,10 @@ import 'package:app/features/jobs/domain/repositories/job_repository.dart';
 import 'package:app/features/jobs/domain/usecases/job_usecases.dart';
 import 'package:app/features/jobs/presentation/providers/job_provider.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
-import 'package:app/features/news/news_page.dart';
+import 'package:app/features/news/data/datasources/news_remote_datasource.dart';
+import 'package:app/features/news/data/models/news_article_model.dart';
+import 'package:app/features/news/presentation/providers/news_provider.dart';
+import 'package:app/features/news/presentation/screens/news_page.dart';
 import 'package:app/features/social/social_page.dart';
 import 'package:app/features/student_home/student_home_screen.dart';
 import 'package:app/features/student_home/widgets/app_header.dart';
@@ -44,6 +47,18 @@ class _FakeGoogle implements IGoogleAuthService {
   dynamic noSuchMethod(Invocation invocation) => null;
 }
 
+class _FakeNewsDataSource extends NewsRemoteDataSource {
+  _FakeNewsDataSource() : super(Dio());
+  @override
+  Future<List<NewsArticleModel>> getNews({
+    String? lang,
+    String? category,
+    String? query,
+    int page = 1,
+    int limit = 30,
+  }) async => [];
+}
+
 // Dựng StudentHomeScreen thật, bọc trong các Provider (giống Context của React).
 Widget _buildHome() {
   final jobRepo = _FakeJobRepo();
@@ -66,6 +81,9 @@ Widget _buildHome() {
           getJobsUseCase: GetJobsUseCase(jobRepo),
           getAvailableSkillsUseCase: GetAvailableSkillsUseCase(jobRepo),
         ),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => NewsProvider(_FakeNewsDataSource()),
       ),
     ],
     // Gốc app giống main.dart (ShadApp bọc MaterialApp) vì tab Mạng xã hội dùng ui_kit
@@ -139,12 +157,11 @@ void main() {
     }
   });
 
-  testWidgets('(d) trang Tin tức trắng: không có chữ nào', (tester) async {
+  testWidgets('(d) trang Tin tức hiện giao diện tin tức (NewsPage)',
+      (tester) async {
     await openHome(tester);
     await tapBar(tester, 'Tin tức');
-    final news = find.byType(NewsPage);
-    expect(news, findsOneWidget);
-    expect(find.descendant(of: news, matching: find.byType(Text)), findsNothing);
+    expect(find.byType(NewsPage), findsOneWidget);
   });
 
   testWidgets('(e) header chung hiện ở cả 3 tab, tiêu đề đổi theo tab',

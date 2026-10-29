@@ -9,3 +9,4 @@ const router = express.Router();
 router.get("/", newsController.getNews);
 
 module.exports = router;
+

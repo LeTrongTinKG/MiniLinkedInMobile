@@ -1,92 +1,68 @@
-const { newsCache } = require("./news/news-cache");
-const hnClient = require("./news/hn.client");
-const vnClient = require("./news/vn.client");
+const newsRepository = require("../repositories/news.repository");
+const { runNewsSync } = require("./news/news-cron");
 
 const VALID_LANGUAGES = ["en", "vi"];
-const VALID_CATEGORIES = ["ai", "tech", "jobs"];
-
-let activeFetchPromise = null;
+const VALID_CATEGORIES = ["ai", "tech", "career", "jobs"];
 
 /**
- * Làm mới dữ liệu từ các API ngoài (HN + Google News VN)
+ * Lấy danh sách tin tức từ cơ sở dữ liệu Supabase kèm bộ lọc và phân trang
  */
-async function refreshNewsSources({ cache = newsCache, hn = hnClient, vn = vnClient } = {}) {
-  if (activeFetchPromise) {
-    if (cache.articles.length > 0) {
-      return cache.getArticles();
-    }
-    return activeFetchPromise;
-  }
+async function getNews(query = {}, repo = newsRepository) {
+  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 30));
+  const skip = (page - 1) * limit;
 
-  activeFetchPromise = (async () => {
-    try {
-      const [hnArticles, vnArticles] = await Promise.all([
-        hn.fetchHnNews(),
-        vn.fetchVnNews(),
-      ]);
-
-      const combined = [...hnArticles, ...vnArticles];
-      combined.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-
-      if (combined.length > 0) {
-        cache.setArticles(combined);
-      }
-      return cache.getArticles();
-    } catch (err) {
-      console.warn("[NewsService] Lỗi khi làm mới tin tức ngoài, dùng cache cũ:", err.message);
-      return cache.getArticles();
-    } finally {
-      activeFetchPromise = null;
-    }
-  })();
-
-  return activeFetchPromise;
-}
-
-/**
- * Lấy danh sách tin tức công nghệ, AI & Jobs kèm bộ lọc
- */
-async function getNews(query = {}, deps = {}) {
-  const cache = deps.cache || newsCache;
-  let allArticles = cache.getArticles();
-
-  if (!cache.isFresh()) {
-    allArticles = await refreshNewsSources({ ...deps, cache });
-  }
-
-  let filtered = allArticles;
+  const where = {};
 
   // 1. Lọc theo ngôn ngữ (en / vi)
   const lang = (query.lang || "").toLowerCase();
   if (VALID_LANGUAGES.includes(lang)) {
-    filtered = filtered.filter((item) => item.language === lang);
+    where.language = lang;
   }
 
-  // 2. Lọc theo chủ đề (ai / tech / jobs)
+  // 2. Lọc theo chủ đề (ai / tech / career / jobs)
   const category = (query.category || "").toLowerCase();
   if (VALID_CATEGORIES.includes(category)) {
-    filtered = filtered.filter((item) => item.category === category);
+    where.category = category === "jobs" ? "career" : category;
   }
 
-  // 3. Tìm kiếm theo từ khóa
-  const keyword = (query.q || "").trim().toLowerCase();
+  // 3. Tìm kiếm theo từ khóa trong tiêu đề
+  const keyword = (query.q || "").trim();
   if (keyword) {
-    filtered = filtered.filter((item) =>
-      item.title.toLowerCase().includes(keyword) ||
-      (item.summary && item.summary.toLowerCase().includes(keyword))
-    );
+    where.title = { contains: keyword, mode: "insensitive" };
   }
 
-  // 4. Phân trang
-  const page = Math.max(1, parseInt(query.page, 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 30));
-  const total = filtered.length;
+  let [items, total] = await Promise.all([
+    repo.findArticles({ where, skip, limit }),
+    repo.countArticles(where),
+  ]);
+
+  // Nếu DB trống (lần đầu tiên), kích hoạt đồng bộ ngay lập tức
+  if (total === 0 && !keyword && !lang && !category) {
+    await runNewsSync(repo);
+    [items, total] = await Promise.all([
+      repo.findArticles({ where, skip, limit }),
+      repo.countArticles(where),
+    ]);
+  }
+
   const totalPages = Math.ceil(total / limit) || 1;
-  const skip = (page - 1) * limit;
-  const items = filtered.slice(skip, skip + limit);
+
+  // Chuẩn hóa dữ liệu trả về cho Client (map career -> jobs để tương thích giao diện)
+  const formattedItems = items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    summary: item.summary,
+    sourceUrl: item.sourceUrl,
+    sourceName: item.sourceName,
+    imageUrl: item.imageUrl,
+    category: item.category === "career" ? "jobs" : item.category,
+    language: item.language,
+    publishedAt: item.publishedAt ? new Date(item.publishedAt).toISOString() : new Date().toISOString(),
+  }));
 
   return {
-    items,
+    items: formattedItems,
     meta: {
       page,
       limit,
@@ -94,14 +70,12 @@ async function getNews(query = {}, deps = {}) {
       totalPages,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1,
-      ...cache.getMeta(),
     },
   };
 }
 
 module.exports = {
   getNews,
-  refreshNewsSources,
   VALID_LANGUAGES,
   VALID_CATEGORIES,
 };
