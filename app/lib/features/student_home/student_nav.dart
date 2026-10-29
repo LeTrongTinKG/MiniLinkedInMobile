@@ -4,6 +4,7 @@ import 'package:app/core/theme/app_colors.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/profile/profile_page.dart';
+import 'package:app/features/news/presentation/screens/news_page.dart';
 import 'package:app/features/student_home/logout_action.dart';
 
 /// Nút hamburger mở drawer trượt từ trái.
@@ -21,7 +22,7 @@ class StudentMenuButton extends StatelessWidget {
   }
 }
 
-/// Drawer trượt từ trái: "Đã ứng tuyển", "Hồ sơ & CV" và Đăng xuất.
+/// Drawer trượt từ trái: "Tin công nghệ & AI", "Đã ứng tuyển", "Hồ sơ & CV" và Đăng xuất.
 /// Chọn mục nào thì đóng drawer rồi mở trang đó đè lên shell (bấm Back để quay lại).
 class StudentDrawer extends StatelessWidget {
   const StudentDrawer({super.key});
@@ -75,7 +76,12 @@ class StudentDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
             const SizedBox(height: 8),
-            // Hai trang phụ: mở bằng cách push route.
+            // Các trang phụ: mở bằng cách push route.
+            _DrawerItem(
+              icon: Icons.newspaper_rounded,
+              label: 'Tin công nghệ & AI',
+              onTap: () => _openPage(context, const NewsPage()),
+            ),
             _DrawerItem(
               icon: Icons.assignment_turned_in_outlined,
               label: 'Đã ứng tuyển',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -49,6 +51,10 @@ import 'features/interactions/data/repositories/interaction_repository_impl.dart
 import 'features/interactions/domain/repositories/interaction_repository.dart';
 import 'features/interactions/presentation/providers/interaction_provider.dart';
 
+// News Feature
+import 'features/news/data/datasources/news_remote_datasource.dart';
+import 'features/news/presentation/providers/news_provider.dart';
+
 // Home Features
 import 'features/student_home/student_home_screen.dart';
 import 'features/recruiter_home/recruiter_home_screen.dart';
@@ -61,7 +67,10 @@ void main() async {
   final preferencesStorage = AppPreferencesStorage.defaultStorage();
   final dioClient = DioClient.create(tokenStorage);
   final googleAuthService = GoogleAuthService();
-  await googleAuthService.initialize();
+  // KHÔNG `await`: trên web bước này phải tải script của Google từ mạng, chờ nó sẽ làm app
+  // trắng màn hình lúc khởi động. Cứ chạy nền; chỗ nào cần Google (nút đăng nhập) sẽ tự chờ
+  // đúng lần khởi tạo đó (initialize() dùng chung một lời hứa nên không bị gọi hai lần).
+  unawaited(googleAuthService.initialize());
 
   // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);
@@ -99,6 +108,8 @@ void main() async {
 
   // 6. Applications Feature
   final applicationDataSource = ApplicationRemoteDataSource(dioClient.dio);
+  // 7. News Feature
+  final newsDataSource = NewsRemoteDataSource(dioClient.dio);
 
   runApp(
     MultiProvider(
@@ -143,6 +154,9 @@ void main() async {
             setDefault: setDefaultCvUseCase,
             deleteCv: deleteCvUseCase,
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => NewsProvider(newsDataSource),
         ),
       ],
       child: const MiniLinkedInApp(),
