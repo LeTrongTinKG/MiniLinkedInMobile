@@ -4,6 +4,7 @@ import 'package:app/core/theme/app_colors.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/profile/profile_page.dart';
+import 'package:app/features/news/presentation/screens/news_page.dart';
 
 /// Key của Scaffold chính trong StudentHomeScreen, để header mở được drawer.
 final GlobalKey<ScaffoldState> studentScaffoldKey = GlobalKey<ScaffoldState>();
@@ -77,7 +78,12 @@ class StudentDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
             const SizedBox(height: 8),
-            // Hai trang phụ: mở bằng cách push route.
+            // Các trang phụ: mở bằng cách push route.
+            _DrawerItem(
+              icon: Icons.newspaper_rounded,
+              label: 'Tin công nghệ & AI',
+              onTap: () => _openPage(context, const NewsPage()),
+            ),
             _DrawerItem(
               icon: Icons.assignment_turned_in_outlined,
               label: 'Đã ứng tuyển',
