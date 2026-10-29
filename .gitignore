@@ -1,5 +1,7 @@
 node_modules/
 .env
+# Spec nội bộ chứa key/secret thật — không bao giờ commit
+server/JOB_AGGREGATOR_SPEC.md
 build/
 .dart_tool/
 .packages
@@ -12,3 +14,10 @@ __pycache__/
 
 # IDE
 app/android/.settings/
+server/.cache/
+
+# File thông tin đăng nhập demo (nội bộ)
+server/scripts/social/*.local.txt
+
+# Ghi chú cá nhân ở thư mục gốc (không đẩy lên git)
+/*.local.md

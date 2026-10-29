@@ -238,12 +238,14 @@ class _CommentTile extends StatelessWidget {
           CircleAvatar(
             radius: 18,
             backgroundColor: AppColors.primaryContainer,
-            backgroundImage: a.avatarUrl != null ? NetworkImage(a.avatarUrl!) : null,
-            child: a.avatarUrl == null
-                ? Text(initials,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onPrimaryContainer))
+            // Ảnh đè lên chữ cái đầu; lỗi tải thì hiện chữ cái đầu, không in lỗi đỏ ra console
+            foregroundImage: a.avatarUrl != null
+                ? NetworkImage(a.avatarUrl!, webHtmlElementStrategy: WebHtmlElementStrategy.prefer)
                 : null,
+            onForegroundImageError: a.avatarUrl != null ? (_, __) {} : null,
+            child: Text(initials,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onPrimaryContainer)),
           ),
           const SizedBox(width: 8),
           Flexible(

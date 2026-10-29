@@ -24,6 +24,9 @@ class JobModel {
   final List<String> niceToHave;
   final String status;
   final DateTime createdAt;
+  final String source;
+  final String? applyUrl;
+  final String? salaryCurrency;
 
   const JobModel({
     required this.id,
@@ -41,16 +44,20 @@ class JobModel {
     required this.niceToHave,
     required this.status,
     required this.createdAt,
+    this.source = 'internal',
+    this.applyUrl,
+    this.salaryCurrency,
   });
 
   factory JobModel.fromJson(Map<String, dynamic> json) {
     return JobModel(
       id: json['id']?.toString() ?? '',
+      // recruiter null (job ngoài) -> không có recruiterId, để rỗng
       recruiterId: json['recruiterId'] as String? ?? '',
-      title: json['title'] as String,
-      companyName: json['companyName'] as String,
+      title: json['title'] as String? ?? '',
+      companyName: json['companyName'] as String? ?? '',
       companyLogoUrl: json['companyLogoUrl'] as String?,
-      location: json['location'] as String,
+      location: json['location'] as String? ?? '',
       workMode: json['workMode'] as String? ?? 'onsite',
       level: json['level'] as String? ?? 'intern',
       salaryMin: _readInt(json['salaryMin']),
@@ -67,6 +74,9 @@ class JobModel {
       status: json['status'] as String? ?? 'open',
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
           DateTime.now(),
+      source: json['source'] as String? ?? 'internal',
+      applyUrl: json['applyUrl'] as String?,
+      salaryCurrency: json['salaryCurrency'] as String?,
     );
   }
 
@@ -87,6 +97,9 @@ class JobModel {
       'niceToHave': niceToHave,
       'status': status,
       'createdAt': createdAt.toIso8601String(),
+      'source': source,
+      'applyUrl': applyUrl,
+      'salaryCurrency': salaryCurrency,
     };
   }
 
@@ -108,6 +121,9 @@ class JobModel {
       niceToHave: niceToHave,
       status: status,
       createdAt: createdAt,
+      source: source,
+      applyUrl: applyUrl,
+      salaryCurrency: salaryCurrency,
     );
   }
 }

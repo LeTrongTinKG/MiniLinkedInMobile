@@ -131,7 +131,6 @@ class _JobListScreenState extends State<JobListScreen> {
 
     return Column(
       children: [
-        if (provider.isUsingMockData) const JobMockDataBanner(),
         Expanded(
           child: _grid(
             itemCount: provider.jobs.length,

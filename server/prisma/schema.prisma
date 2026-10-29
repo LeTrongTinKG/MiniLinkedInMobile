@@ -25,11 +25,22 @@ enum JobLevel {
   intern
   fresher
   junior
+  mid
+  senior
+  lead
 }
 
 enum JobStatus {
   open
   closed
+}
+
+// Nguồn của job: tự đăng (internal) hoặc kéo từ API ngoài
+enum JobSource {
+  internal
+  jsearch
+  serpapi
+  remotive
 }
 
 enum ApplicationStatus {
@@ -54,6 +65,7 @@ model User {
   // Rate Limiting
   loginAttempts    Int       @default(0)
   loginLockedUntil DateTime?
+  tokenVersion     Int       @default(0)
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -194,7 +206,7 @@ model Cv {
 
 model Job {
   id             String    @id @default(uuid())
-  recruiterId    String
+  recruiterId    String?   // null = job kéo từ nguồn ngoài
   title          String
   companyName    String
   companyLogoUrl String?
@@ -210,13 +222,34 @@ model Job {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  // Job Sync: thông tin nguồn ngoài
+  source         JobSource @default(internal)
+  externalId     String?
+  applyUrl       String?
+  salaryCurrency String?   // VND | USD
+  dedupeKey      String?
+  lastSeenAt     DateTime?
+
+  recruiter    User?         @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   applications Application[]
   reactions    Reaction[]
   comments     Comment[]
 
+  @@unique([source, externalId])
   @@index([recruiterId])
+  @@index([dedupeKey])
   @@map("jobs")
+}
+
+// Nhật ký mỗi lượt kéo job
+model JobSyncRun {
+  id         String    @id @default(uuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  dryRun     Boolean   @default(false)
+  stats      Json?     // request/nguồn, số job, lý do loại, hiệu suất từ khóa
+
+  @@map("job_sync_runs")
 }
 
 model Application {
@@ -282,4 +315,29 @@ model Comment {
   @@index([jobId, createdAt])
   @@index([userId])
   @@map("comments")
+}
+
+enum NewsCategory {
+  ai
+  tech
+  career
+}
+
+model NewsArticle {
+  id          String       @id @default(uuid())
+  title       String
+  summary     String?
+  sourceUrl   String       @unique
+  sourceName  String
+  imageUrl    String?
+  category    NewsCategory @default(tech)
+  language    String       @default("en")
+  publishedAt DateTime
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([publishedAt(sort: Desc)])
+  @@index([category])
+  @@index([language])
+  @@map("news_articles")
 }

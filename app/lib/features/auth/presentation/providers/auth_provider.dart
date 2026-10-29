@@ -150,6 +150,12 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Khởi tạo Google SDK (nút Google chính thức trên web cần làm việc này trước khi hiện).
+  /// Gọi nhiều lần vẫn an toàn vì service chỉ khởi tạo một lần.
+  Future<void> prepareGoogleSignIn() async {
+    await _googleAuthService?.initialize();
+  }
+
   /// Kích hoạt luồng đăng nhập / đăng ký qua Google SDK
   Future<void> signInWithGoogle() async {
     if (_googleAuthService == null) {

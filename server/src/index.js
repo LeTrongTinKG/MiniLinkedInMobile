@@ -8,6 +8,7 @@ const jobRoutes = require("./routes/job.routes");
 const recruiterRoutes = require("./routes/recruiter.routes");
 const cvRoutes = require("./routes/cv.routes");
 const applicationRoutes = require("./routes/application.routes");
+const newsRoutes = require("./routes/news.routes");
 const interactionsRoutes = require("./routes/interaction.routes");
 const healthRoutes = require("./routes/health.routes");
 
@@ -26,8 +27,10 @@ app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/recruiter", recruiterRoutes);
 app.use("/api/v1/cvs", cvRoutes);
 app.use("/api/v1/applications", applicationRoutes);
+app.use("/api/v1/news", newsRoutes);
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1", interactionsRoutes);
+app.use("/api/social", require("./routes/social"));
 
 // Health check endpoint tổng quan
 app.get("/health", async (_req, res) => {
@@ -69,6 +72,7 @@ app.get("/", (_req, res) => {
       recruiter: "/api/v1/recruiter",
       cvs: "/api/v1/cvs",
       applications: "/api/v1/applications",
+      news: "/api/v1/news",
     },
   });
 });
@@ -103,6 +107,8 @@ if (require.main === module) {
     try {
       await prisma.$connect();
       console.log("✅ Đã kết nối cơ sở dữ liệu Supabase thành công!");
+      const { startNewsCron } = require("./services/news/news-cron");
+      startNewsCron();
     } catch (error) {
       console.error("❌ Lỗi kết nối Supabase:", error);
     }

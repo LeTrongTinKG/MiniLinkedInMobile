@@ -38,18 +38,21 @@ class ProfileHeader extends StatelessWidget {
               CircleAvatar(
                 radius: 32,
                 backgroundColor: const Color(0xFFCFDAF7),
-                backgroundImage:
-                    avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-                child: avatarUrl == null
-                    ? Text(
-                        _initials,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryBlue,
-                        ),
-                      )
+                // Ảnh nằm ĐÈ lên chữ cái đầu: tải được thì thấy ảnh, lỗi (vd Google trả 429 vì
+                // tải quá nhiều) thì chữ cái đầu hiện ra và không in lỗi đỏ ra console.
+                foregroundImage: avatarUrl != null
+                    ? NetworkImage(avatarUrl!,
+                        webHtmlElementStrategy: WebHtmlElementStrategy.prefer)
                     : null,
+                onForegroundImageError: avatarUrl != null ? (_, __) {} : null,
+                child: Text(
+                  _initials,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryBlue,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
