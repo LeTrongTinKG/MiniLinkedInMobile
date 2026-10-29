@@ -8,9 +8,6 @@ class GetJobsUseCase {
 
   const GetJobsUseCase(this._repository);
 
-  /// Cho biết dữ liệu hiện tại có đang rơi về nguồn mock dự phòng hay không
-  bool get isUsingMockData => _repository.isUsingMockData;
-
   Future<List<JobEntity>> call({JobFilter? filter}) {
     return _repository.getJobs(filter: filter);
   }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/student_home/student_nav.dart';
 import 'presentation/providers/student_applications_provider.dart';
 import 'presentation/widgets/student_application_card.dart';
 
@@ -43,7 +42,7 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Row(
         children: [
-          const StudentMenuButton(),
+          const BackButton(),
           const SizedBox(width: 4),
           const Expanded(
             child: Text(

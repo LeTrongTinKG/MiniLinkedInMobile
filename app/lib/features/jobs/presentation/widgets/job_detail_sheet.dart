@@ -6,6 +6,7 @@ import '../../data/datasources/job_match_remote_datasource.dart';
 import '../../domain/entities/job_entity.dart';
 import '../../domain/entities/job_match.dart';
 import 'job_apply_button.dart';
+import 'job_badge.dart';
 import 'job_match_section.dart';
 
 class JobDetailSheet extends StatefulWidget {
@@ -82,9 +83,16 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
+                // Badge nguồn + badge cấp bậc
+                Wrap(spacing: 6, runSpacing: 4, children: [
+                  JobBadge(job.sourceName, highlight: true),
+                  JobBadge(job.level.label),
+                ]),
+                const SizedBox(height: 8),
+                // Địa điểm + hình thức (bỏ phần trống nếu job ngoài thiếu địa điểm)
                 Text(
-                  '${job.location} · ${job.workMode.label}',
+                  [job.location, job.workMode.label].where((e) => e.isNotEmpty).join(' · '),
                   style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 16),
@@ -125,8 +133,9 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                 const SizedBox(height: 20),
                 _sectionTitle('Mô tả công việc'),
                 const SizedBox(height: 8),
+                // Hiện đầy đủ, giữ nguyên xuống dòng của mô tả
                 Text(
-                  job.description,
+                  job.description.isEmpty ? 'Chưa có mô tả' : job.description,
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -136,7 +145,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
               ],
             ),
           ),
-          JobApplyButton(jobId: job.id),
+          JobApplyButton(job: job),
         ],
       ),
     );

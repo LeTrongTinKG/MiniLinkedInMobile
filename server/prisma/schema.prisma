@@ -25,11 +25,22 @@ enum JobLevel {
   intern
   fresher
   junior
+  mid
+  senior
+  lead
 }
 
 enum JobStatus {
   open
   closed
+}
+
+// Nguồn của job: tự đăng (internal) hoặc kéo từ API ngoài
+enum JobSource {
+  internal
+  jsearch
+  serpapi
+  remotive
 }
 
 enum ApplicationStatus {
@@ -193,7 +204,7 @@ model Cv {
 
 model Job {
   id             String    @id @default(uuid())
-  recruiterId    String
+  recruiterId    String?   // null = job kéo từ nguồn ngoài
   title          String
   companyName    String
   companyLogoUrl String?
@@ -209,13 +220,34 @@ model Job {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  // Job Sync: thông tin nguồn ngoài
+  source         JobSource @default(internal)
+  externalId     String?
+  applyUrl       String?
+  salaryCurrency String?   // VND | USD
+  dedupeKey      String?
+  lastSeenAt     DateTime?
+
+  recruiter    User?         @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   applications Application[]
   reactions    Reaction[]
   comments     Comment[]
 
+  @@unique([source, externalId])
   @@index([recruiterId])
+  @@index([dedupeKey])
   @@map("jobs")
+}
+
+// Nhật ký mỗi lượt kéo job
+model JobSyncRun {
+  id         String    @id @default(uuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  dryRun     Boolean   @default(false)
+  stats      Json?     // request/nguồn, số job, lý do loại, hiệu suất từ khóa
+
+  @@map("job_sync_runs")
 }
 
 model Application {

@@ -32,6 +32,9 @@ const jobSummarySelect = {
   level: true,
   salaryMin: true,
   salaryMax: true,
+  salaryCurrency: true,
+  source: true,
+  applyUrl: true,
   status: true,
 };
 

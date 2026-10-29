@@ -6,8 +6,10 @@
  */
 
 class ApiError extends Error {
-  constructor(statusCode, code, message) {
+  // details (tuỳ chọn): trường bổ sung đưa vào body lỗi, vd { applyUrl }
+  constructor(statusCode, code, message, details) {
     super(message);
+    this.details = details;
     this.name = "ApiError";
     this.statusCode = statusCode;
     this.code = code;
@@ -24,6 +26,7 @@ function errorHandler(err, _req, res, _next) {
       error: {
         code: err.code,
         message: err.message,
+        ...(err.details || {}),
       },
     });
   }

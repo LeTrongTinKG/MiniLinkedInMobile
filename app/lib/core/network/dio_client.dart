@@ -124,12 +124,18 @@ class DioClient {
 
         String errorCode = 'UNKNOWN_ERROR';
         String message = 'Đã có lỗi xảy ra';
+        String? applyUrl;
 
         if (data is Map) {
           final errorObj = data['error'];
           if (errorObj is Map) {
             errorCode = errorObj['code']?.toString() ?? 'UNKNOWN_ERROR';
             message = errorObj['message']?.toString() ?? message;
+            // Server spread { applyUrl } thẳng vào error (đọc thêm details cho chắc)
+            final details = errorObj['details'];
+            applyUrl = (errorObj['applyUrl'] ??
+                    (details is Map ? details['applyUrl'] : null))
+                ?.toString();
           } else if (errorObj is String && errorObj.isNotEmpty) {
             message = errorObj;
           }
@@ -153,6 +159,7 @@ class DioClient {
           statusCode: statusCode,
           errorCode: errorCode,
           message: message,
+          applyUrl: applyUrl,
         );
       default:
         return const UnknownException();

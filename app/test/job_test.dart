@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app/features/jobs/data/models/job_model.dart';
 import 'package:app/features/jobs/domain/entities/job_entity.dart';
 import 'package:app/features/jobs/domain/entities/job_filter.dart';
-import 'package:app/features/jobs/data/datasources/job_mock_datasource.dart';
 
 void main() {
   group('JobEntity & JobModel Tests', () {
@@ -32,7 +31,7 @@ void main() {
       expect(entity.companyName, 'Google VN');
       expect(entity.workMode, WorkMode.hybrid);
       expect(entity.level, JobLevel.intern);
-      expect(entity.formattedSalary, '\$500 - \$800/tháng');
+      expect(entity.formattedSalary, '\$500–800');
       expect(entity.requiredSkills, contains('Flutter'));
     });
 
@@ -94,33 +93,6 @@ void main() {
       final resetFilter = filter.reset();
       expect(resetFilter.hasFilter, false);
       expect(resetFilter.activeFilterCount, 0);
-    });
-
-    test('JobMockDataSource filters jobs correctly by keyword and skills', () async {
-      final dataSource = JobMockDataSource();
-
-      // Lấy toàn bộ jobs
-      final allJobs = await dataSource.getJobs();
-      expect(allJobs.isNotEmpty, true);
-
-      // Lọc theo từ khóa 'Flutter'
-      final flutterJobs = await dataSource.getJobs(
-        filter: const JobFilter(keyword: 'Flutter'),
-      );
-      expect(flutterJobs.isNotEmpty, true);
-      for (final job in flutterJobs) {
-        final match = job.title.toLowerCase().contains('flutter') ||
-            job.requiredSkills.any((s) => s.toLowerCase().contains('flutter'));
-        expect(match, true);
-      }
-
-      // Lọc theo WorkMode 'remote'
-      final remoteJobs = await dataSource.getJobs(
-        filter: const JobFilter(workMode: WorkMode.remote),
-      );
-      for (final job in remoteJobs) {
-        expect(job.workMode, 'remote');
-      }
     });
   });
 }

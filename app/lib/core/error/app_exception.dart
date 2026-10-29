@@ -10,10 +10,14 @@ class ApiException extends AppException {
   final int statusCode;
   final String errorCode;
 
+  // Link ứng tuyển gốc, chỉ có khi server trả lỗi EXTERNAL_JOB_APPLY
+  final String? applyUrl;
+
   const ApiException({
     required this.statusCode,
     required this.errorCode,
     required String message,
+    this.applyUrl,
   }) : super(message);
 
   @override

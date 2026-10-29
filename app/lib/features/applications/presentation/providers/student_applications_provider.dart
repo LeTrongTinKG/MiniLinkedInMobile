@@ -13,6 +13,9 @@ class StudentApplicationsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Link gốc khi lần apply gần nhất bị server từ chối vì job nguồn ngoài
+  String? lastExternalApplyUrl;
+
   List<ApplicationEntity> get applications => _applications;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -43,12 +46,16 @@ class StudentApplicationsProvider extends ChangeNotifier {
 
   /// Trả về null nếu thành công, ngược lại là thông báo lỗi để hiện cho người dùng
   Future<String?> apply(String jobId) async {
+    lastExternalApplyUrl = null;
     try {
       await _dataSource.apply(jobId);
       await load();
       return null;
     } on AppException catch (e) {
       if (e is ApiException && e.errorCode == 'ALREADY_APPLIED') await load();
+      if (e is ApiException && e.errorCode == 'EXTERNAL_JOB_APPLY') {
+        lastExternalApplyUrl = e.applyUrl;
+      }
       return e.message;
     }
   }
