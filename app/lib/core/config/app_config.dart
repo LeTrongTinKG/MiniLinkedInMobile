@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
+
 /// Cấu hình toàn cục của ứng dụng.
-/// Mặc định kết nối backend Render: https://minilinkedinmobile.onrender.com/api/v1
-/// Đổi máy chủ: flutter run --dart-define=API_URL=http://localhost:5000/api/v1
+/// Mặc định khi debug local sẽ kết nối tới backend máy chủ: http://localhost:5000/api/v1
+/// Khi build production hoặc chỉ định: flutter run --dart-define=API_URL=https://minilinkedinmobile.onrender.com/api/v1
 class AppConfig {
   AppConfig._(); // Không cho khởi tạo
 
@@ -11,7 +13,13 @@ class AppConfig {
       return customUrl;
     }
 
-    // Mặc định kết nối tới máy chủ Render của dự án
+    // Khi debug local (ví dụ: npm run dev trên server và flutter run trên app),
+    // tự động kết nối backend local port 5000 để phản hồi tức thì
+    if (kDebugMode) {
+      return 'http://localhost:5000/api/v1';
+    }
+
+    // Mặc định khi build release kết nối tới máy chủ Render của dự án
     return 'https://minilinkedinmobile.onrender.com/api/v1';
   }
 
@@ -36,9 +44,13 @@ class AppConfig {
       String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '');
 
   // Cấu hình GitHub OAuth
-  // Truyền qua cờ: flutter run --dart-define=GITHUB_CLIENT_ID=...
-  static const String githubClientId =
-      String.fromEnvironment('GITHUB_CLIENT_ID', defaultValue: '');
+  // Mặc định lấy theo Client ID đã cấu hình trong .env: Ov23liVnRc4PYkJuD1Pz
+  // Có thể ghi đè qua: flutter run --dart-define=GITHUB_CLIENT_ID=...
+  static const String githubClientId = String.fromEnvironment(
+    'GITHUB_CLIENT_ID',
+    defaultValue: 'Ov23liVnRc4PYkJuD1Pz',
+  );
+
   static const String githubRedirectUri = String.fromEnvironment(
     'GITHUB_REDIRECT_URI',
     defaultValue: 'minilinkedin://oauth-callback',
