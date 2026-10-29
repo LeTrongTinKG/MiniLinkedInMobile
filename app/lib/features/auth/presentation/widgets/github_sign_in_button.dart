@@ -142,3 +142,4 @@ class _GitHubLogoPainter extends CustomPainter {
   bool shouldRepaint(covariant _GitHubLogoPainter oldDelegate) =>
       oldDelegate.color != color;
 }
+
