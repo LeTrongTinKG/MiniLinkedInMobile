@@ -4,6 +4,7 @@ import 'package:app/core/storage/preferences_storage.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 import 'package:app/features/news/presentation/screens/news_page.dart';
 import 'package:app/features/social/social_page.dart';
+import 'package:app/features/coach/presentation/coach_sheet.dart';
 import 'package:app/features/student_home/student_nav.dart';
 import 'package:app/features/student_home/widgets/app_header.dart';
 import 'package:app/features/student_home/widgets/student_bottom_bar.dart';
@@ -27,7 +28,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   static const _pages = <Widget>[
     JobListScreen(),
     SocialPage(),
-    NewsPage(embedded: true), // nằm trong khung chính: dùng header chung, không có AppBar riêng
+    NewsPage(
+        embedded:
+            true), // nằm trong khung chính: dùng header chung, không có AppBar riêng
   ];
 
   // Giống useEffect(() => {...}, []): chạy 1 lần khi màn hình được tạo.
@@ -74,6 +77,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => openCoachSheet(context),
+        icon: const Icon(Icons.chat_bubble_outline),
+        label: const Text('Trợ lý kỹ năng'),
       ),
       bottomNavigationBar: StudentBottomBar(
         selectedIndex: _selectedIndex,
