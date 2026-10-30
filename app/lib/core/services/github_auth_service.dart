@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
 import '../error/app_exception.dart';
+import 'github_web_callback.dart';
 
 /// Interface định nghĩa tương tác với dịch vụ GitHub OAuth (Dependency Inversion Principle - DIP).
 abstract interface class IGitHubAuthService {
@@ -31,16 +33,16 @@ class GitHubAuthService implements IGitHubAuthService {
       'scope': 'read:user user:email',
     };
 
-    // Nếu trên web và có redirect_uri tùy chỉnh không phải custom scheme
+    // Web: GitHub trả người dùng về chính trang web này (vd http://localhost:3000).
+    // Địa chỉ này phải trùng "Authorization callback URL" của GitHub OAuth App.
+    // Mobile: trả về theo địa chỉ riêng của app (minilinkedin://oauth-callback).
     if (kIsWeb) {
-      if (AppConfig.githubRedirectUri.isNotEmpty &&
-          !AppConfig.githubRedirectUri.startsWith('minilinkedin://')) {
-        queryParams['redirect_uri'] = AppConfig.githubRedirectUri;
-      }
-    } else {
-      if (AppConfig.githubRedirectUri.isNotEmpty) {
-        queryParams['redirect_uri'] = AppConfig.githubRedirectUri;
-      }
+      final origin = currentWebOrigin();
+      if (origin != null) queryParams['redirect_uri'] = origin;
+      final state = newGithubState();
+      if (state != null) queryParams['state'] = state;
+    } else if (AppConfig.githubRedirectUri.isNotEmpty) {
+      queryParams['redirect_uri'] = AppConfig.githubRedirectUri;
     }
 
     return Uri.https('github.com', '/login/oauth/authorize', queryParams);
@@ -58,15 +60,12 @@ class GitHubAuthService implements IGitHubAuthService {
       );
     }
 
-    // flutter_appauth chỉ hoàn tất callback OAuth trên mobile.
-    // Web/Desktop hiện chưa có callback receiver nên không được coi là đăng nhập thành công.
+    // Web: chuyển cả trang sang GitHub (giống window.location.href = url trong React).
+    // Bấm đồng ý xong GitHub đưa về lại trang này kèm ?code=..., màn đăng nhập sẽ lấy mã
+    // đó (takeGithubCode) rồi gửi cho server. Ở đây chưa có mã nên trả null.
     if (kIsWeb) {
-      throw const ApiException(
-        statusCode: 501,
-        errorCode: 'GITHUB_PLATFORM_UNSUPPORTED',
-        message:
-            'Đăng nhập GitHub trên Web chưa được cấu hình callback. Hãy chạy app trên Android/iOS hoặc cấu hình GITHUB_REDIRECT_URI cho Web.',
-      );
+      await launchUrl(buildAuthorizeUri(), webOnlyWindowName: '_self');
+      return null;
     }
 
     // Windows/Linux cũng không có deep-link receiver trong cấu hình hiện tại.

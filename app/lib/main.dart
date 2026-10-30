@@ -68,15 +68,11 @@ void main() async {
   final preferencesStorage = AppPreferencesStorage.defaultStorage();
   final dioClient = DioClient.create(tokenStorage);
   final googleAuthService = GoogleAuthService();
-<<<<<<< HEAD
-  await googleAuthService.initialize();
-  final githubAuthService = GitHubAuthService();
-=======
-  // KHÔNG `await`: trên web bước này phải tải script của Google từ mạng, chờ nó sẽ làm app
+  // KHÔNG wait: trên web bước này phải tải script của Google từ mạng, chờ nó sẽ làm app
   // trắng màn hình lúc khởi động. Cứ chạy nền; chỗ nào cần Google (nút đăng nhập) sẽ tự chờ
   // đúng lần khởi tạo đó (initialize() dùng chung một lời hứa nên không bị gọi hai lần).
   unawaited(googleAuthService.initialize());
->>>>>>> dev
+  final githubAuthService = GitHubAuthService();
 
   // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);

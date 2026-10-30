@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../widgets/google_sign_in_button.dart';
+import '../../../../core/services/github_web_callback.dart';
 import '../widgets/github_sign_in_button.dart';
 
 /// Màn hình đăng nhập với form email/password và tùy chọn Google/GitHub Sign-In
@@ -39,6 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       _authProvider = context.read<AuthProvider>();
       _authProvider?.addListener(_onAuthStatusChanged);
+
+      // Web: vừa được GitHub đưa về kèm ?code=... thì đăng nhập luôn bằng mã đó.
+      final githubCode = takeGithubCode();
+      if (githubCode != null) _authProvider?.githubLogin(githubCode);
     });
   }
 

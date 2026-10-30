@@ -1,5 +1,3 @@
-
-
 /// Cấu hình toàn cục của ứng dụng.
 /// Mặc định khi debug local sẽ kết nối tới backend máy chủ: http://localhost:5000/api/v1
 /// Khi build production hoặc chỉ định: flutter run --dart-define=API_URL=https://minilinkedinmobile.onrender.com/api/v1
@@ -13,18 +11,8 @@ class AppConfig {
       return customUrl;
     }
 
-<<<<<<< HEAD
-    // Khi debug local (ví dụ: npm run dev trên server và flutter run trên app),
-    // tự động kết nối backend local port 5000 để phản hồi tức thì
-    if (kDebugMode) {
-      return 'http://localhost:5000/api/v1';
-    }
-
-    // Mặc định khi build release kết nối tới máy chủ Render của dự án
-=======
     // Mặc định kết nối tới máy chủ Render của dự án (dùng khi trình bày).
     // Chạy với server trên máy mình thì truyền --dart-define=API_URL=http://localhost:5000/api/v1
->>>>>>> dev
     return 'https://minilinkedinmobile.onrender.com/api/v1';
   }
 
@@ -46,8 +34,7 @@ class AppConfig {
   static const String googleClientId =
       String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: '380900817945-h1iooij3jlk7cakj6br9ok0g99o5jpvi.apps.googleusercontent.com');
   static const String googleServerClientId =
-<<<<<<< HEAD
-      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '');
+      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '380900817945-h1iooij3jlk7cakj6br9ok0g99o5jpvi.apps.googleusercontent.com');
 
   // Cấu hình GitHub OAuth
   // Mặc định lấy theo Client ID đã cấu hình trong .env: Ov23liVnRc4PYkJuD1Pz
@@ -61,7 +48,4 @@ class AppConfig {
     'GITHUB_REDIRECT_URI',
     defaultValue: 'minilinkedin://oauth-callback',
   );
-=======
-      String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '380900817945-h1iooij3jlk7cakj6br9ok0g99o5jpvi.apps.googleusercontent.com');
->>>>>>> dev
 }
