@@ -28,7 +28,9 @@ Quyết định kỹ thuật: [ADR-0008](../adr/0008-skill-roadmap-coach-ollama.
 | Frontend (React) | [frontend-react.md](../../server/src/services/coach/roadmaps/frontend-react.md) | khoảng 20 tuần |
 | Dữ liệu và AI (Python) | [data-ai.md](../../server/src/services/coach/roadmaps/data-ai.md) | khoảng 21 tuần |
 
-Chỉ file có `status: reviewed` mới được server nạp. File nằm ở `server/src/services/coach/roadmaps/`.
+Chỉ file có `status: reviewed` mới được server nạp. Bảng bước nằm ở `server/src/services/coach/roadmaps/`.
+
+Ngữ cảnh và giọng (hơn 500 câu, đã duyệt) nằm ở `server/src/services/coach/knowledge/`. Mỗi bước có một câu giọng. Câu trả lời về việc đang học được gắn câu giọng của đúng bước hiện tại, nếu còn trong giới hạn 150 từ. Cả kho không được đưa vào model.
 
 ## Câu hỏi mẫu (nút bấm sẵn)
 

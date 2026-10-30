@@ -3,12 +3,23 @@ const assert = require("node:assert/strict");
 const coachService = require("../src/services/coach.service");
 const { classify } = require("../src/services/coach/intent");
 const { reviewedRoadmaps, findRoadmap, canonicalSkill } = require("../src/services/coach/roadmaps");
+const { sentenceCount, voiceHint } = require("../src/services/coach/knowledge");
 const { createOllamaWriter, acceptable } = require("../src/services/coach/ollamaWriter");
 const { CASES, PERSONAS, personaFor, fakeCoachRepo } = require("../scripts/coach-eval-cases");
+const { BAIT, ATTACK } = require("../scripts/coach-probe-cases");
 
 const rulesWriter = createOllamaWriter({ mode: "rules" });
 const askAs = (persona, body, repo = fakeCoachRepo(persona)) =>
   coachService.ask("u1", body, { repo, writer: rulesWriter });
+
+test("kho ngữ cảnh đủ 500 câu và mỗi bước có một câu giọng", () => {
+  assert.ok(sentenceCount() >= 500);
+  for (const roadmap of reviewedRoadmaps()) {
+    for (const step of roadmap.steps) {
+      assert.ok(voiceHint(roadmap.id, step.number), `${roadmap.id} bước ${step.number}`);
+    }
+  }
+});
 
 test("nạp đủ 4 lộ trình đã duyệt, bước 5 Flutter là nhóm 'bloc hoặc state management'", () => {
   assert.deepEqual(reviewedRoadmaps().map((r) => r.id).sort(), ["backend-node", "data-ai", "flutter-mobile", "frontend-react"]);
@@ -16,6 +27,17 @@ test("nạp đủ 4 lộ trình đã duyệt, bước 5 Flutter là nhóm 'bloc 
   assert.equal(flutter.steps.length, 6);
   assert.deepEqual(flutter.steps[4].groups, [["bloc", "state management"]]);
   assert.equal(canonicalSkill("Provider"), "state management");
+});
+
+test("câu tấn công và câu hỏi lương bị chặn trước khi tới model", () => {
+  for (const item of ATTACK) {
+    assert.ok(classify(item.q).refuse, item.id);
+  }
+  assert.equal(classify(BAIT.find((item) => item.id === "D3").q).refuse, "off_topic");
+  for (const id of ["D1", "D4", "D5", "D7", "D8"]) {
+    assert.equal(classify(BAIT.find((item) => item.id === id).q).refuse, "off_topic", id);
+  }
+  assert.equal(classify(BAIT.find((item) => item.id === "D6").q).intent, "job_gap");
 });
 
 test("không nhầm câu hỏi hợp lệ có chữ AI hay 'số lượng' thành tấn công hoặc lạc đề", () => {

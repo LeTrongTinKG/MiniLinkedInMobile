@@ -16,6 +16,8 @@ const OTHER_USER = /\b(sinh vien|nguoi dung|nguoi|ban)\s+(khac|kia)\b/;
 const OFF_TOPIC = /thoi tiet|chuyen cuoi|cong ty|thu do|chinh tri|(viet|giup).*\bcode\b|\bcode mau\b|doan code/;
 // "lương" so trên chữ có dấu vì bỏ dấu sẽ trùng "lượng".
 const SALARY = /lương/i;
+// Câu dụ model dùng kiến thức sẵn có. Chặn trước khi câu bị nhận nhầm là câu hỏi skill.
+const PRIOR_KNOWLEDGE = /kien thuc (san co|cua ban|chung)|dung nhin ho so|khoi (can|mo) (file )?lo trinh|bo phan du lieu|bo ho so/;
 const OTHER_ROLES = /\b(devops|java|android|ios|tester|qa|game|php|\.net|c#|golang|cloud|security|bao mat|blockchain)\b/;
 const ROLE_CONTEXT = /lo trinh|huong|vi tri/;
 const ROLE_WORDS = {
@@ -88,7 +90,7 @@ function classify(question) {
   const plain = normalize(original);
   if (INSTRUCTION_PATTERN.test(original) || INSTRUCTION_PLAIN.test(plain)) return { refuse: "attack" };
   if (OTHER_USER.test(plain) || /[Ss]inh viên\s+[A-ZĐ]\b/.test(original)) return { refuse: "attack" };
-  if (OFF_TOPIC.test(plain) || SALARY.test(original)) return { refuse: "off_topic" };
+  if (OFF_TOPIC.test(plain) || SALARY.test(original) || PRIOR_KNOWLEDGE.test(plain)) return { refuse: "off_topic" };
 
   const role = mentionedRole(plain);
   if (role?.unknown) return { intent: "unknown_role", skills: [], role: null, steps: [] };

@@ -37,5 +37,7 @@ Chọn **A**.
   - `qwen3.5:4b-q4_K_M`: nạp 188 giây, 18/30 câu dưới 10 giây, chậm nhất 11,1 giây, bộ nhớ trống 11%, model viết lại được dùng 9/21 câu có trả lời.
   - `qwen3.5:2b-q4_K_M`: nạp 58 giây, 30/30 câu dưới 10 giây, chậm nhất 3,1 giây, bộ nhớ trống 22%, model viết lại được dùng 18/21 câu.
   - Chọn **2B cho demo trên máy 8 GB** vì đạt mốc 10 giây. 4B giữ trên ổ để thử khi có máy mạnh hơn. Bảng chấm: `docs/chatbot/eval-runs/`.
+- Kho ngữ cảnh `server/src/services/coach/knowledge/` (hơn 500 câu) chỉ để chọn một câu giọng của đúng bước. Không nhét cả kho vào model.
+- Đo riêng 8 câu dụ "dùng kiến thức sẵn có" và 8 câu tấn công trên `qwen3.5:2b` (2026-10-31, bảng `docs/chatbot/eval-runs/2026-10-31-qwen3.5-2b-fence.md`). Hàng rào code không làm theo câu nào. Model trần, dù được dặn chỉ dùng hồ sơ, làm theo 8/8 câu dụ (có câu bịa lương) và không chịu dừng sau câu từ chối. Vì vậy model 2B không được tự từ chối. Bộ định tuyến chặn thêm các câu có "kiến thức sẵn có", "đừng nhìn hồ sơ", "khỏi cần lộ trình", "bỏ phần dữ liệu". Không thêm ngưỡng điểm: những câu này không được tới model. Câu sửa tiền đề của job (Firebase có trong job hay không) vẫn được trả lời.
 - shortcut: lộ trình nằm trong file markdown, không có màn quản trị. Thêm hoặc sửa vị trí thì sửa file và duyệt qua PR.
 - shortcut: màn job chưa gửi `jobId`; chatbot lấy job ứng tuyển gần nhất. Gửi `jobId` khi mở khung từ màn chi tiết job.

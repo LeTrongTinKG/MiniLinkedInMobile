@@ -11,6 +11,7 @@ const SYSTEM_PROMPT = [
   "Giữ nguyên mọi tên skill, số bước, số tuần, tên job và tên lộ trình.",
   "Không thêm skill, con số, lời khuyên hay thông tin nào không có trong đoạn gốc.",
   "'Còn thiếu' và 'chưa có bằng chứng' là hai ý khác nhau, giữ đúng từng ý.",
+  "Nghe như một lời nhắn trong nhóm, không như bài giảng và không khen quá lời.",
   "Tối đa 120 từ. Chỉ trả về đoạn văn, không tiêu đề, không gạch đầu dòng.",
 ].join(" ");
 

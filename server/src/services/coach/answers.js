@@ -1,5 +1,6 @@
 const { roadmapProgress, has } = require("./progress");
 const { canonicalSkill, reviewedRoadmaps } = require("./roadmaps");
+const { voiceHint } = require("./knowledge");
 
 /**
  * Câu trả lời bằng quy tắc (ADR-0008). Mọi con số và tên skill đều lấy từ dữ liệu người dùng
@@ -160,8 +161,23 @@ function buildAnswer(ctx, parsed) {
   if (NEEDS_ROADMAP.has(parsed.intent) && !ctx.roadmap) {
     return { text: `Bạn chưa chọn vị trí muốn theo. Hãy chọn một trong: ${roleList()}.`, sources: [], needsRole: true };
   }
-  const text = BUILDERS[parsed.intent]({ ...ctx, skills: parsed.skills ?? [], steps: parsed.steps ?? [] });
+  const text = withVoice(
+    BUILDERS[parsed.intent]({ ...ctx, skills: parsed.skills ?? [], steps: parsed.steps ?? [] }),
+    ctx,
+    parsed.intent,
+  );
   return { text, sources: sourcesFor(ctx, parsed.intent) };
+}
+
+const VOICE_INTENTS = new Set(["missing_skills", "current_step", "next_learn", "how_evidence", "project_for", "time_left"]);
+
+function withVoice(text, ctx, intent) {
+  if (!VOICE_INTENTS.has(intent) || !ctx.roadmap) return text;
+  const step = roadmapProgress(ctx.roadmap, ctx.states).current?.number;
+  const hint = voiceHint(ctx.roadmap.id, step);
+  if (!hint) return text;
+  const joined = `${text} ${hint}`;
+  return joined.split(/\s+/).length <= 140 ? joined : text;
 }
 
 module.exports = { buildAnswer, refusal };
