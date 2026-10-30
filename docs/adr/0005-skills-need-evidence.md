@@ -23,8 +23,7 @@ Chọn **A**:
 3. Đề xuất lưu ở `skill_suggestions` với bằng chứng `[{ repo, url, signals }]`; database từ chối đề xuất không có bằng chứng. Skill chỉ vào `user_skills` khi người dùng bấm "Thêm vào hồ sơ" (`source = 'github'`, bằng chứng chép theo).
 
 ## Hệ quả
-- Không cần khóa API AI. GitHub không có token cho 60 lượt gọi/giờ mỗi IP; một lần quét tốn tối đa 27 lượt. Đặt `GITHUB_READ_TOKEN` (token chỉ đọc, không cần quyền gì) trong `.env` của server để lên 5.000 lượt/giờ.
+- Không cần khóa API AI. Không có `GITHUB_READ_TOKEN` thì GitHub cho 60 lượt gọi/giờ mỗi IP. Đặt token chỉ đọc trong `.env` của server để lên 5.000 lượt/giờ. Số lời gọi mỗi lần quét: [ADR-0007](0007-confidence-quota-and-match.md).
 - Skill đã bấm "Bỏ qua" sẽ không được đề xuất lại, kể cả khi có repo mới (Atom đề xuất lại khi bằng chứng đổi; để sau).
-- Chưa làm (đều có ở Atom): chấm độ tin cậy theo lịch sử commit (ADR-0011 của Atom), hạn mức số lần quét, hỏi đồng ý trước khi phân tích.
-- Chấm điểm job vẫn dùng skill trong CV, chưa dùng skill đã duyệt từ GitHub. Muốn dùng thì cần quyết định riêng.
+- Độ tin cậy, hạn mức quét và chấm job: [ADR-0007](0007-confidence-quota-and-match.md). Chưa làm: hỏi đồng ý trước khi phân tích.
 - Chạy `prisma/skill_evidence_ext.sql` (hoặc `prisma db push`) rồi `prisma/rls_lockdown.sql` trên database thật.

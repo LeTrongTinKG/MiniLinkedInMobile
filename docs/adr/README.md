@@ -11,6 +11,7 @@ Muốn làm ngược một quyết định thì viết ADR mới thay thế, kh�
 | [0004](0004-ai-adapter-mock-default.md) | Gọi AI qua một lớp adapter, mặc định chạy mock | Ghi lại sau (đã áp dụng) |
 | [0005](0005-skills-need-evidence.md) | Skill phải có bằng chứng; trích skill bằng quy tắc | Đề xuất |
 | [0006](0006-close-database-backdoor.md) | Đóng cửa sau database bằng khóa dòng (RLS) | Đề xuất |
+| [0007](0007-confidence-quota-and-match.md) | Độ tin cậy theo commit, hạn mức quét, chấm job bằng skill đã duyệt | Đề xuất |
 
 "Ghi lại sau" nghĩa là nhóm đã làm vậy từ trước; ADR chỉ chép lại lý do từ code và tài liệu hiện có.
 "Đề xuất" chờ nhóm duyệt qua PR rồi đổi thành "Được chấp nhận".

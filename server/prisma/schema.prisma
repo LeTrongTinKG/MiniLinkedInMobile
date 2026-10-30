@@ -79,6 +79,7 @@ model User {
   educations      Education[]
   skills          UserSkill[]
   skillSuggestions SkillSuggestion[]
+  skillScans      SkillScan[]
   cvs             Cv[]
   applications    Application[]
 
@@ -179,7 +180,9 @@ model UserSkill {
   userId    String
   skillName String
   source    String   @default("self") // "self" | "github" (ADR-0005)
-  evidence  Json?    // [{ repo, url, signals }] khi skill đến từ đề xuất đã duyệt
+  evidence  Json?    // [{ repo, url, signals, commits? }] khi skill đến từ đề xuất đã duyệt
+  confidence String  @default("self_claimed") // "self_claimed" | "evidenced" (ADR-0007)
+  confidenceReason String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -212,6 +215,20 @@ model SkillSuggestion {
   @@unique([userId, skillName])
   @@index([userId, status])
   @@map("skill_suggestions")
+}
+
+// Mỗi lần bấm "Quét GitHub". Chỉ status succeeded tính vào hạn mức tháng (ADR-0007).
+model SkillScan {
+  id         String    @id @default(uuid())
+  userId     String
+  status     String    // "running" | "succeeded" | "failed"
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@map("skill_scans")
 }
 
 model Cv {

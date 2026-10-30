@@ -1,4 +1,6 @@
 const { prisma } = require("../lib/prisma");
+// shortcut: hạn mức nằm trong repository vì khóa và đếm phải cùng một transaction.
+const { SCAN_LIMIT, monthWindow } = require("../services/skills/scanQuota");
 
 const suggestionFields = {
   id: true,
@@ -18,7 +20,7 @@ async function listSkills(userId, db = prisma) {
   return db.userSkill.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
-    select: { id: true, skillName: true, source: true, evidence: true, createdAt: true },
+    select: { id: true, skillName: true, source: true, evidence: true, confidence: true, confidenceReason: true, createdAt: true },
   });
 }
 
@@ -43,13 +45,47 @@ async function findSuggestionById(id, db = prisma) {
   return db.skillSuggestion.findUnique({ where: { id }, select: suggestionFields });
 }
 
-async function acceptSuggestion(suggestion, db = prisma) {
+async function listApprovedNames(userId, db = prisma) {
+  const rows = await db.userSkill.findMany({
+    where: { userId, source: "github" },
+    select: { skillName: true },
+  });
+  return rows.map((row) => row.skillName);
+}
+
+// Lượt đang chạy quá 3 phút coi như chết (request đã đứt), không khóa người dùng mãi.
+const STALE_SCAN_MS = 3 * 60 * 1000;
+
+async function beginScan(userId, db = prisma) {
+  const { start, resetsAt } = monthWindow();
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`skill-scan:${userId}`}))`;
+    await tx.skillScan.updateMany({
+      where: { userId, status: "running", createdAt: { lt: new Date(Date.now() - STALE_SCAN_MS) } },
+      data: { status: "failed", finishedAt: new Date() },
+    });
+    const running = await tx.skillScan.count({ where: { userId, status: "running" } });
+    if (running > 0) return { ok: false, code: "SCAN_ALREADY_RUNNING" };
+    const used = await tx.skillScan.count({
+      where: { userId, status: "succeeded", createdAt: { gte: start } },
+    });
+    if (used >= SCAN_LIMIT) return { ok: false, code: "QUOTA_EXCEEDED", resetsAt };
+    const scan = await tx.skillScan.create({ data: { userId, status: "running" }, select: { id: true } });
+    return { ok: true, scan };
+  });
+}
+
+async function finishScan(id, status, db = prisma) {
+  return db.skillScan.update({ where: { id }, data: { status, finishedAt: new Date() } });
+}
+
+async function acceptSuggestion(suggestion, level, db = prisma) {
   const { userId, skillName, evidence } = suggestion;
   const [skill] = await db.$transaction([
     db.userSkill.upsert({
       where: { userId_skillName: { userId, skillName } },
-      create: { userId, skillName, source: "github", evidence },
-      update: { source: "github", evidence },
+      create: { userId, skillName, source: "github", evidence, confidence: level.confidence, confidenceReason: level.reason },
+      update: { source: "github", evidence, confidence: level.confidence, confidenceReason: level.reason },
     }),
     db.skillSuggestion.update({
       where: { id: suggestion.id },
@@ -73,6 +109,9 @@ module.exports = {
   listSuggestions,
   upsertPending,
   findSuggestionById,
+  listApprovedNames,
+  beginScan,
+  finishScan,
   acceptSuggestion,
   rejectSuggestion,
 };

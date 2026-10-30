@@ -1,6 +1,7 @@
 const applicationRepository = require("../repositories/application.repository");
 const jobRepository = require("../repositories/job.repository");
 const cvRepository = require("../repositories/cv.repository");
+const skillRepository = require("../repositories/skill.repository");
 const aiClient = require("./ai/aiClient");
 const { ApiError } = require("../middleware/error");
 const { parsePagination } = require("../utils/job.util");
@@ -9,6 +10,7 @@ const {
   ALLOWED_DECISION_STATUSES,
   WITHDRAWABLE_STATUSES,
   extractCvSkills,
+  mergeMatchSkills,
   findJobOrThrow,
   resolveTargetCv,
 } = require("../utils/application.util");
@@ -41,7 +43,10 @@ async function applyJob(user, { jobId, cvId }) {
   }
 
   const targetCv = await resolveTargetCv(user.userId, cvId, cvRepository);
-  const cvSkills = extractCvSkills(targetCv);
+  const cvSkills = mergeMatchSkills(
+    extractCvSkills(targetCv),
+    await skillRepository.listApprovedNames(user.userId),
+  );
   let matchResult = { score: 0, matchedSkills: [], missingSkills: [] };
   try {
     matchResult = await aiClient.match(cvSkills, {

@@ -4,7 +4,7 @@ const skillService = require("../src/services/skill.service");
 const { GithubError } = require("../src/services/skills/githubReader");
 
 function fakeRepo({ githubId = "42", skills = [], suggestions = [] } = {}) {
-  const calls = { upserts: [], accepted: [], rejected: [] };
+  const calls = { upserts: [], accepted: [], rejected: [], finished: [] };
   return {
     calls,
     findGithubId: async () => githubId,
@@ -14,9 +14,13 @@ function fakeRepo({ githubId = "42", skills = [], suggestions = [] } = {}) {
       calls.upserts.push({ userId, skillName, evidence });
     },
     findSuggestionById: async (id) => suggestions.find((s) => s.id === id) ?? null,
-    acceptSuggestion: async (s) => {
-      calls.accepted.push(s.id);
-      return { skillName: s.skillName, source: "github", evidence: s.evidence };
+    beginScan: async () => ({ ok: true, scan: { id: "scan-1" } }),
+    finishScan: async (_id, status) => {
+      calls.finished.push(status);
+    },
+    acceptSuggestion: async (s, level) => {
+      calls.accepted.push({ id: s.id, ...level });
+      return { skillName: s.skillName, source: "github", evidence: s.evidence, ...level };
     },
     rejectSuggestion: async (id) => calls.rejected.push(id),
   };
@@ -47,6 +51,7 @@ test("quét GitHub lưu đề xuất kèm bằng chứng, bỏ skill đã có ho
   assert.deepEqual(repo.calls.upserts[0].evidence, [
     { repo: "me/app", url: "https://github.com/me/app", signals: ["language:Dart"] },
   ]);
+  assert.deepEqual(repo.calls.finished, ["succeeded"]);
 });
 
 test("GitHub giới hạn lượt gọi thì trả 429", async () => {
@@ -58,6 +63,23 @@ test("không duyệt được đề xuất của người khác", async () => {
   const repo = fakeRepo({ suggestions: [{ id: "s1", userId: "u2", status: "pending" }] });
   await assert.rejects(skillService.decideSuggestion("u1", "s1", true, repo), { statusCode: 403 });
   assert.deepEqual(repo.calls.accepted, []);
+});
+
+test("hết lượt quét thì không gọi GitHub", async () => {
+  let called = false;
+  const repo = fakeRepo();
+  repo.beginScan = async () => ({ ok: false, code: "QUOTA_EXCEEDED", resetsAt: new Date("2026-11-01T00:00:00+07:00") });
+  await assert.rejects(
+    skillService.scanGithub("u1", repo, { readOwnRepos: async () => { called = true; return []; } }),
+    { code: "QUOTA_EXCEEDED", statusCode: 429 },
+  );
+  assert.equal(called, false);
+});
+
+test("không có repo công khai thì lượt quét không tính", async () => {
+  const repo = fakeRepo();
+  await assert.rejects(skillService.scanGithub("u1", repo, reader([])), { code: "NO_REPOS", statusCode: 422 });
+  assert.deepEqual(repo.calls.finished, ["failed"]);
 });
 
 test("đề xuất đã duyệt rồi thì không duyệt lại", async () => {
@@ -75,8 +97,9 @@ test("đồng ý thì skill vào hồ sơ kèm bằng chứng; từ chối thì 
   });
   const skill = await skillService.decideSuggestion("u1", "s1", true, repo);
   assert.deepEqual(skill.evidence, evidence);
+  assert.equal(skill.confidence, "self_claimed");
   await skillService.decideSuggestion("u1", "s2", false, repo);
-  assert.deepEqual(repo.calls.accepted, ["s1"]);
+  assert.deepEqual(repo.calls.accepted, [{ id: "s1", confidence: "self_claimed", reason: "weak_only" }]);
   assert.deepEqual(repo.calls.rejected, ["s2"]);
 });
 

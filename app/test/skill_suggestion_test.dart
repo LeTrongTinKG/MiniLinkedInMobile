@@ -52,6 +52,16 @@ void main() {
       ],
     });
     expect(s.evidence.single.repo, 'me/app');
+    expect(s.confidenceLabel, isNull);
+    expect(
+      const SkillSuggestion(
+        id: 's2',
+        skillName: 'Dart',
+        evidence: [],
+        confidence: 'evidenced',
+      ).confidenceLabel,
+      'Có hoạt động mã nguồn đáng kể',
+    );
     expect(signalLabel(s.evidence.single.signals.single),
         'dùng thư viện provider');
   });

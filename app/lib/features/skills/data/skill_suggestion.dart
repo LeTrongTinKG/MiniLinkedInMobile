@@ -24,11 +24,13 @@ class SkillSuggestion {
   final String id;
   final String skillName;
   final List<SkillEvidence> evidence;
+  final String confidence;
 
   const SkillSuggestion({
     required this.id,
     required this.skillName,
     required this.evidence,
+    this.confidence = 'self_claimed',
   });
 
   factory SkillSuggestion.fromJson(Map<String, dynamic> json) =>
@@ -39,7 +41,12 @@ class SkillSuggestion {
             .whereType<Map<String, dynamic>>()
             .map(SkillEvidence.fromJson)
             .toList(),
+        confidence: json['confidence']?.toString() ?? 'self_claimed',
       );
+
+  /// ADR-0007: không viết "thành thạo". Chỉ nói khi commit đủ ngưỡng.
+  String? get confidenceLabel =>
+      confidence == 'evidenced' ? 'Có hoạt động mã nguồn đáng kể' : null;
 }
 
 /// Đổi mã dấu hiệu của server ("dependency:pub:provider") thành câu dễ đọc.

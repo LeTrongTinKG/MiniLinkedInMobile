@@ -97,7 +97,7 @@ function createGithubReader({ fetchImpl = fetch, token = process.env.GITHUB_READ
     return sources;
   }
 
-  return { readOwnRepos };
+  return { readOwnRepos, loginFor: loginForId };
 }
 
 module.exports = { createGithubReader, GithubError, MAX_REPOS };

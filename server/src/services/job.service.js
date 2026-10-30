@@ -1,5 +1,6 @@
 const jobRepository = require("../repositories/job.repository");
 const cvRepository = require("../repositories/cv.repository");
+const skillRepository = require("../repositories/skill.repository");
 const aiClient = require("./ai/aiClient");
 const mockAiAdapter = require("./ai/mockAdapter");
 const { ApiError } = require("../middleware/error");
@@ -11,6 +12,7 @@ const {
   parsePagination,
   formatJob,
 } = require("../utils/job.util");
+const { extractCvSkills, mergeMatchSkills } = require("../utils/application.util");
 
 /**
  * Lấy danh sách việc làm công khai (chỉ việc làm đang mở / status = open)
@@ -77,7 +79,8 @@ async function getJobDetail(
   context = {},
   repo = jobRepository,
   cvRepo = cvRepository,
-  ai = aiClient
+  ai = aiClient,
+  skillRepo = skillRepository
 ) {
   if (typeof id !== "string" || id.trim().length === 0) {
     throw new ApiError(404, "JOB_NOT_FOUND", "Không tìm thấy job");
@@ -116,21 +119,16 @@ async function getJobDetail(
         targetCv = await cvRepo.findDefaultByUserId(user.userId);
       }
 
-      if (targetCv && targetCv.extractedSkills) {
-        let cvSkills = [];
-        if (Array.isArray(targetCv.extractedSkills.skills)) {
-          cvSkills = targetCv.extractedSkills.skills;
-        } else if (Array.isArray(targetCv.extractedSkills)) {
-          cvSkills = targetCv.extractedSkills;
-        }
-
-        if (cvSkills.length > 0) {
-          try {
-            matchResult = await ai.match(cvSkills, formattedJob);
-          } catch (aiErr) {
-            console.warn("AI service match error (fallback to mock):", aiErr.message);
-            matchResult = await mockAiAdapter.match(cvSkills, formattedJob);
-          }
+      const skills = mergeMatchSkills(
+        extractCvSkills(targetCv),
+        await skillRepo.listApprovedNames(user.userId),
+      );
+      if (skills.length > 0) {
+        try {
+          matchResult = await ai.match(skills, formattedJob);
+        } catch (aiErr) {
+          console.warn("AI service match error (fallback to mock):", aiErr.message);
+          matchResult = await mockAiAdapter.match(skills, formattedJob);
         }
       }
     } catch (matchErr) {

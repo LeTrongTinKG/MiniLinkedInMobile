@@ -77,6 +77,12 @@ class _SuggestionCard extends StatelessWidget {
             suggestion.skillName,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
+          if (suggestion.confidenceLabel != null)
+            Text(
+              suggestion.confidenceLabel!,
+              style:
+                  const TextStyle(fontSize: 12, color: AppTheme.successGreen),
+            ),
           const SizedBox(height: 4),
           for (final e in suggestion.evidence)
             Text(

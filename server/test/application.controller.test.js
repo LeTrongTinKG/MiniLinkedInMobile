@@ -12,6 +12,11 @@ let applications = [];
 let appIdCounter = 0;
 
 const prisma = {
+  userSkill: {
+    async findMany() {
+      return [];
+    },
+  },
   job: {
     async findUnique({ where: { id } }) {
       const found = jobs.find((j) => j.id === id);
