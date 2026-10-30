@@ -68,6 +68,19 @@ class AuthRemoteDataSource {
     }
   }
 
+  /// POST /auth/github → trả về {user, accessToken, refreshToken, isNewUser}
+  Future<Map<String, dynamic>> githubLogin(String code) async {
+    try {
+      final response = await _dio.post(
+        '/auth/github',
+        data: {'code': code},
+      );
+      return _extractData(response);
+    } on DioException catch (e) {
+      throw DioClient.handleDioError(e);
+    }
+  }
+
   /// POST /auth/logout
   Future<void> logout(String refreshToken) async {
     try {
@@ -82,4 +95,3 @@ class AuthRemoteDataSource {
     return response.data['data'] as Map<String, dynamic>;
   }
 }
-

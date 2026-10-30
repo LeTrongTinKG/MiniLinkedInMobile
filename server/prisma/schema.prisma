@@ -57,6 +57,7 @@ model User {
   email        String   @unique
   passwordHash String?
   googleId     String?  @unique
+  githubId     String?  @unique
   role         Role     @default(student)
   fullName     String
   avatarUrl    String?

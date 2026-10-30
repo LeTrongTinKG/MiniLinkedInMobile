@@ -11,6 +11,7 @@ import 'ui_kit/app_shad_theme.dart';
 // Core
 import 'core/network/dio_client.dart';
 import 'core/services/google_auth_service.dart';
+import 'core/services/github_auth_service.dart';
 import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
@@ -67,10 +68,11 @@ void main() async {
   final preferencesStorage = AppPreferencesStorage.defaultStorage();
   final dioClient = DioClient.create(tokenStorage);
   final googleAuthService = GoogleAuthService();
-  // KHÔNG `await`: trên web bước này phải tải script của Google từ mạng, chờ nó sẽ làm app
+  // KHÔNG wait: trên web bước này phải tải script của Google từ mạng, chờ nó sẽ làm app
   // trắng màn hình lúc khởi động. Cứ chạy nền; chỗ nào cần Google (nút đăng nhập) sẽ tự chờ
   // đúng lần khởi tạo đó (initialize() dùng chung một lời hứa nên không bị gọi hai lần).
   unawaited(googleAuthService.initialize());
+  final githubAuthService = GitHubAuthService();
 
   // 2. Auth Feature
   final authDataSource = AuthRemoteDataSource(dioClient.dio);
@@ -82,6 +84,7 @@ void main() async {
   final registerUseCase = RegisterUseCase(authRepository);
   final getMeUseCase = GetMeUseCase(authRepository);
   final googleLoginUseCase = GoogleLoginUseCase(authRepository);
+  final githubLoginUseCase = GitHubLoginUseCase(authRepository);
   final logoutUseCase = LogoutUseCase(authRepository);
 
   // 3. Jobs: luôn lấy dữ liệu thật từ API GET /jobs.
@@ -136,8 +139,10 @@ void main() async {
             registerUseCase: registerUseCase,
             getMeUseCase: getMeUseCase,
             googleLoginUseCase: googleLoginUseCase,
+            githubLoginUseCase: githubLoginUseCase,
             logoutUseCase: logoutUseCase,
             googleAuthService: googleAuthService,
+            githubAuthService: githubAuthService,
           ),
         ),
         ChangeNotifierProvider(

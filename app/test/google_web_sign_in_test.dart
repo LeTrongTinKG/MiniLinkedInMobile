@@ -24,6 +24,8 @@ class _FakeAuthRepo implements AuthRepository {
   );
 
   @override
+  Future<UserEntity> githubLogin(String code) async => user;
+  @override
   Future<UserEntity> googleLogin(String idToken) async {
     lastIdToken = idToken;
     if (reject) {
