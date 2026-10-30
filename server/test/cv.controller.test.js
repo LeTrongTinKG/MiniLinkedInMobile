@@ -653,7 +653,9 @@ test("POST /api/v1/cvs tự động fallback sang mock khi AI service lỗi, v�
     assert.equal(res.statusCode, 201);
     assert.ok(res.body.data);
     assert.ok(res.body.data.extractedSkills);
-    assert.deepEqual(res.body.data.extractedSkills.skills, ["flutter", "dart", "git"]);
+    // ADR-0005: PDF giả không đọc được nên không có kỹ năng nào có bằng chứng
+    assert.deepEqual(res.body.data.extractedSkills.skills, []);
+    assert.deepEqual(res.body.data.extractedSkills.evidence, []);
   } finally {
     aiClient.analyzeCv = originalAnalyzeCv;
   }

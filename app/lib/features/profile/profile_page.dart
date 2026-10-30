@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,9 @@ import 'package:app/features/cv/presentation/providers/cv_provider.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
 import 'package:app/features/profile/widgets/cv_section.dart';
 import 'package:app/features/profile/edit_profile_page.dart';
+import 'package:app/features/skills/data/skill_remote_datasource.dart';
+import 'package:app/features/skills/presentation/github_skill_section.dart';
+import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -45,10 +49,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final success = await context.read<CvProvider>().uploadCv(file);
     if (!mounted) return;
     if (!success) {
-      final msg =
-          context.read<CvProvider>().errorMessage ?? 'Tải lên thất bại';
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(msg)));
+      final msg = context.read<CvProvider>().errorMessage ?? 'Tải lên thất bại';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
@@ -70,8 +72,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       ProfileHeader(
                         name: user?.displayName ?? 'Người dùng',
-                        headline:
-                            'Sinh viên CNTT năm 4 · tìm thực tập Flutter',
+                        headline: 'Sinh viên CNTT năm 4 · tìm thực tập Flutter',
                         location: 'TP. Hồ Chí Minh',
                         onEditProfile: () {
                           Navigator.of(context).push(
@@ -98,6 +99,15 @@ class _ProfilePageState extends State<ProfilePage> {
                           );
                         },
                       ),
+                      if (auth.isStudent) ...[
+                        const Divider(height: 1),
+                        ChangeNotifierProvider(
+                          create: (c) => SkillSuggestionProvider(
+                            SkillRemoteDataSource(c.read<Dio>()),
+                          )..load(),
+                          child: const GithubSkillSection(),
+                        ),
+                      ],
                     ],
                   ),
                 ),

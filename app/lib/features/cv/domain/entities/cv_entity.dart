@@ -3,6 +3,8 @@ class CvEntity {
   final String fileName;
   final String fileUrl;
   final List<String> skills;
+  // Câu trích trong CV làm bằng chứng cho từng skill (ADR-0005)
+  final Map<String, String> evidence;
   final bool isDefault;
   final DateTime createdAt;
 
@@ -11,6 +13,7 @@ class CvEntity {
     required this.fileName,
     required this.fileUrl,
     required this.skills,
+    this.evidence = const {},
     required this.isDefault,
     required this.createdAt,
   });
@@ -25,6 +28,7 @@ class CvEntity {
         fileName: fileName,
         fileUrl: fileUrl,
         skills: skills,
+        evidence: evidence,
         isDefault: isDefault ?? this.isDefault,
         createdAt: createdAt,
       );

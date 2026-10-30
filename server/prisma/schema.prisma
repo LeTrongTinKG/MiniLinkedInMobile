@@ -78,6 +78,7 @@ model User {
   workExperiences WorkExperience[]
   educations      Education[]
   skills          UserSkill[]
+  skillSuggestions SkillSuggestion[]
   cvs             Cv[]
   applications    Application[]
 
@@ -177,6 +178,8 @@ model UserSkill {
   id        String   @id @default(uuid())
   userId    String
   skillName String
+  source    String   @default("self") // "self" | "github" (ADR-0005)
+  evidence  Json?    // [{ repo, url, signals }] khi skill đến từ đề xuất đã duyệt
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -185,6 +188,30 @@ model UserSkill {
   @@unique([userId, skillName])
   @@index([userId])
   @@map("user_skills")
+}
+
+enum SuggestionStatus {
+  pending
+  accepted
+  rejected
+}
+
+// Skill trích từ GitHub bằng quy tắc, chờ người dùng duyệt (ADR-0005)
+model SkillSuggestion {
+  id        String           @id @default(uuid())
+  userId    String
+  skillName String
+  evidence  Json             // [{ repo, url, signals }], không bao giờ rỗng
+  status    SuggestionStatus @default(pending)
+  decidedAt DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillName])
+  @@index([userId, status])
+  @@map("skill_suggestions")
 }
 
 model Cv {

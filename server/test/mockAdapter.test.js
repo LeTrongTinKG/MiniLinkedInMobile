@@ -75,9 +75,10 @@ test("match: kỹ năng trùng trong đầu vào chỉ tính 1 lần", async () 
   assert.deepEqual(result.matchedSkills, ["flutter"]);
 });
 
-test("analyzeCv: luôn trả đúng cấu trúc mock", async () => {
+test("analyzeCv: file không đọc được vẫn trả đúng cấu trúc, không bịa kỹ năng", async () => {
   const result = await analyzeCv(Buffer.from("fake"), "cv.pdf");
   assert.ok(Array.isArray(result.skills));
-  assert.ok(result.skills.length > 0);
+  // ADR-0005: file không đọc được thì không có kỹ năng nào, không bịa sẵn
+  assert.deepEqual(result.skills, []);
   assert.ok(typeof result.experienceMonths === "number");
 });
