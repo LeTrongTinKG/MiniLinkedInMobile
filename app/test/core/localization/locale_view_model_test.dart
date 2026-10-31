@@ -54,3 +54,4 @@ void main() {
     expect(vm.locale.languageCode, 'en');
   });
 }
+

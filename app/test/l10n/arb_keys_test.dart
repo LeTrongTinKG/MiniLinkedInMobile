@@ -22,3 +22,4 @@ Set<String> _keys(File file) {
   final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
   return json.keys.where((key) => !key.startsWith('@')).toSet();
 }
+

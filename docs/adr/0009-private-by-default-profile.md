@@ -17,3 +17,4 @@ Khi người dùng (đặc biệt là sinh viên công nghệ thông tin) tham g
 ## Hệ quả
 - **Tích cực**: Bảo vệ quyền riêng tư ứng viên tối đa, tăng độ tin cậy của nền tảng.
 - **Tiêu cực**: Nhà tuyển dụng cần nhận được ứng tuyển hoặc sự đồng ý từ ứng viên mới có thể xem toàn bộ chi tiết hồ sơ.
+

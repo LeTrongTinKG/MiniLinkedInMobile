@@ -55,3 +55,4 @@ module.exports = {
   findProfileByUserId,
   upsertProfile,
 };
+

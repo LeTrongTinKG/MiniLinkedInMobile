@@ -59,3 +59,4 @@ if [[ $fail -eq 0 ]]; then
 fi
 
 exit $fail
+

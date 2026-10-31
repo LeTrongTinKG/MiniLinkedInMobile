@@ -25,3 +25,4 @@ if [[ $found -eq 0 ]]; then
   echo "next-ticket: Không có ticket nào ở trạng thái ready-for-agent đã giải phóng toàn bộ blocker." >&2
   exit 1
 fi
+

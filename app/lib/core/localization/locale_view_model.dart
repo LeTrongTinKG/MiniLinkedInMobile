@@ -33,3 +33,4 @@ class LocaleViewModel extends ChangeNotifier {
     await setLocale(next);
   }
 }
+

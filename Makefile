@@ -20,3 +20,4 @@ check: docs-check check-app check-server
 
 check-all: doctor docs-check check-app check-server
 	@echo "Full system check completed cleanly!"
+

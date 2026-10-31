@@ -7,3 +7,4 @@
 Cho phép ứng viên dán URL repo GitHub của mình thay cho CV truyền thống.
 Hệ thống sử dụng bộ phân tích quy tắc nội bộ chi phí 0 USD để quét file manifests và gán nhãn evidenced.
 Đã hoàn thành RepoUploadScreen và RepoUploadViewModel.
+

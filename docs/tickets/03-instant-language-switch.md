@@ -6,3 +6,4 @@
 Chuyển đổi ngôn ngữ tức thì tại runtime qua cơ chế ARB chuẩn của Flutter.
 100% chuỗi UI được quản lý tập trung trong file .arb.
 Có bài test tự động arb_keys_test.dart kiểm tra tính đối xứng tuyệt đối.
+

@@ -5,3 +5,4 @@ abstract interface class ProfileRepository {
   Future<Result<ProfileData>> getProfile();
   Future<Result<ProfileData>> updateProfile(ProfileData data);
 }
+

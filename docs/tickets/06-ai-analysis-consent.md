@@ -7,3 +7,4 @@
 Màn hình xin phép phân tích tự động minh bạch dữ liệu nào được đọc và không bao giờ đọc.
 Hỗ trợ rút lại sự đồng ý bất kỳ lúc nào. Vùng bấm tối thiểu 48x48 dp.
 Đã hoàn thành AnalysisConsentScreen và ConsentViewModel.
+

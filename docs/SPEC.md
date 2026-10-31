@@ -43,3 +43,4 @@ Tài liệu đặc tả các tính năng chính thức của nền tảng Mini L
 ### F-019 · Chuẩn tiếp cận (A11y Baseline)
 - **Mô tả:** Vùng bấm tối thiểu 48x48 dp, gắn nhãn Semantics cho trình đọc màn hình TalkBack/VoiceOver.
 - **Quy chuẩn:** Áp dụng trên toàn bộ thành phần giao diện.
+

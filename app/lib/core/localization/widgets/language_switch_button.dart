@@ -47,3 +47,4 @@ class LanguageSwitchButton extends StatelessWidget {
     );
   }
 }
+

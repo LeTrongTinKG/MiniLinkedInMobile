@@ -18,3 +18,4 @@ class ProfileRemoteDataSource {
     return ProfileData.fromJson(data);
   }
 }
+

@@ -17,3 +17,4 @@ Khi ứng viên tải lên kho mã nguồn GitHub (Up Repo thay vì CV) hoặc t
 ## Hệ quả
 - **Tích cực**: Thời gian trích xuất giảm xuống dưới 100ms, chi phí vận hành 0 USD, hoàn toàn độc lập với các dịch vụ đám mây bên thứ ba.
 - **Tiêu cực**: Không nhận diện được những kỹ năng nằm ngoài từ điển nếu chưa được bổ sung vào tập quy tắc.
+
