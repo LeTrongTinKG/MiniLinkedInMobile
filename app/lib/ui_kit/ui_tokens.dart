@@ -22,8 +22,13 @@ class UiTokens {
   static const Color border = Color(0xFFE2E8F0);
 
   // Độ bo góc
-  static const double radius = 10;
+  static const double radius = 12;
   static const double radiusLarge = 16;
+  static const double radiusPill = 20;
+  static const double radiusDock = 28;
+
+  // Kích thước trợ năng tối thiểu (A11y Baseline)
+  static const double minTouchTarget = 48;
 
   // Khoảng cách chuẩn
   static const double gap = 8;

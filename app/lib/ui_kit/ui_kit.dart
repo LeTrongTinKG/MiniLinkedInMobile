@@ -11,6 +11,7 @@ export 'app_confirm_dialog.dart';
 export 'app_divider.dart';
 export 'app_empty_state.dart';
 export 'app_icon_button.dart';
+export 'app_segmented_tab.dart';
 export 'app_skeleton.dart';
 export 'app_text_area.dart';
 export 'app_text_field.dart';

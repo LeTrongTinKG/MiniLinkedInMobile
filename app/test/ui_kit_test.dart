@@ -49,6 +49,11 @@ void main() {
         const AppBadge('x'),
         const AppCard(title: 'T', child: Text('c')),
         const AppTextField(placeholder: 'p'),
+        AppSegmentedTab(
+          tabs: const ['T1', 'T2'],
+          selectedIndex: 0,
+          onTabChanged: (_) {},
+        ),
         const AppTextArea(placeholder: 'p', maxLength: 50),
         const AppDivider(),
         const AppSkeleton(height: 10),
@@ -114,5 +119,41 @@ void main() {
     // Theme Material của nhóm không bị đổi bởi shad
     final ctx = t.element(find.byType(JobCard));
     expect(Theme.of(ctx).colorScheme.primary, AppTheme.lightTheme.colorScheme.primary);
+  });
+
+  testWidgets('AppTextField hien errorText inline va trailingIcon', (t) async {
+    var trailingTapped = false;
+    await t.pumpWidget(_app(AppTextField(
+      placeholder: 'Nhap email',
+      errorText: 'Email khong hop le',
+      trailingIcon: Icons.visibility,
+      onTrailingTap: () => trailingTapped = true,
+    )));
+    expect(find.text('Email khong hop le'), findsOneWidget);
+    expect(find.byIcon(Icons.visibility), findsOneWidget);
+    await t.tap(find.byIcon(Icons.visibility));
+    expect(trailingTapped, isTrue);
+  });
+
+  testWidgets('AppSegmentedTab chuyen tab khi bam', (t) async {
+    var index = 0;
+    await t.pumpWidget(_app(StatefulBuilder(
+      builder: (ctx, setState) => AppSegmentedTab(
+        tabs: const ['Dang nhap', 'Dang ky'],
+        selectedIndex: index,
+        onTabChanged: (i) => setState(() => index = i),
+      ),
+    )));
+    expect(find.text('Dang nhap'), findsOneWidget);
+    expect(find.text('Dang ky'), findsOneWidget);
+    await t.tap(find.text('Dang ky'));
+    await t.pumpAndSettle();
+    expect(index, 1);
+  });
+
+  testWidgets('AppButton vung cham toi thieu >= 48dp', (t) async {
+    await t.pumpWidget(_app(AppButton(label: 'Bam', onPressed: () {})));
+    final size = t.getSize(find.byType(AppButton));
+    expect(size.height, greaterThanOrEqualTo(48.0));
   });
 }
