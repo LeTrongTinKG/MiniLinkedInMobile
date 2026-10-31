@@ -13,6 +13,7 @@ import 'package:app/features/skills/presentation/github_skill_section.dart';
 import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
 import 'package:app/features/skills/presentation/screens/repo_upload_screen.dart';
 import 'package:app/features/skills/presentation/screens/skills_screen.dart';
+import '../../core/localization/widgets/language_switch_button.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -166,6 +167,8 @@ class _ProfileAppBar extends StatelessWidget {
               ),
             ),
           ),
+          const LanguageSwitchButton(),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.settings_outlined,
                 color: AppTheme.textSecondary),

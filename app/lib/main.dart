@@ -56,9 +56,12 @@ import 'features/recruiter_home/recruiter_home_screen.dart';
 
 // MVVM & New Atom Features
 import 'core/di/app_providers.dart';
+import 'core/localization/locale_view_model.dart';
+import 'l10n/app_localizations.dart';
 import 'features/skills/presentation/screens/skills_screen.dart';
 import 'features/skills/presentation/screens/repo_upload_screen.dart';
 import 'features/consent/presentation/screens/analysis_consent_screen.dart';
+import 'features/profile/edit_profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,6 +150,7 @@ void main() async {
         jobProvider: jobProvider,
         cvProvider: cvProvider,
         newsDataSource: newsDataSource,
+        preferencesStorage: preferencesStorage,
       ),
       child: const MiniLinkedInApp(),
     ),
@@ -158,12 +162,17 @@ class MiniLinkedInApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeVm = context.watch<LocaleViewModel>();
+
     return ShadApp.custom(
       theme: buildAppShadTheme(),
       appBuilder: (context) => MaterialApp(
         title: 'Mini LinkedIn',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        locale: localeVm.locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => ShadAppBuilder(child: child!),
         initialRoute: '/',
         routes: {
@@ -175,6 +184,7 @@ class MiniLinkedInApp extends StatelessWidget {
           '/skills': (context) => const SkillsScreen(),
           '/analysis-consent': (context) => const AnalysisConsentScreen(),
           '/repo-evidence': (context) => const RepoUploadScreen(),
+          '/edit-profile': (context) => const EditProfilePage(),
         },
       ),
     );

@@ -13,6 +13,7 @@ const interactionsRoutes = require("./routes/interaction.routes");
 const healthRoutes = require("./routes/health.routes");
 const skillRoutes = require("./routes/skill.routes");
 const coachRoutes = require("./routes/coach.routes");
+const profileRoutes = require("./routes/profile.routes");
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use("/api/v1/news", newsRoutes);
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1/skills", skillRoutes);
 app.use("/api/v1/coach", coachRoutes);
+app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1", interactionsRoutes);
 app.use("/api/social", require("./routes/social"));
 

@@ -1,88 +1,110 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:app/core/theme/app_colors.dart';
-import 'package:app/core/theme/app_theme.dart';
-import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import '../../core/theme/app_colors.dart';
+import 'domain/repositories/profile_repository.dart';
+import 'presentation/viewmodels/profile_edit_view_model.dart';
+import 'domain/models/profile_data.dart';
+import '../auth/presentation/providers/auth_provider.dart';
 
-class EditProfilePage extends StatefulWidget {
+class EditProfilePage extends StatelessWidget {
   const EditProfilePage({super.key});
 
   @override
-  State<EditProfilePage> createState() => _EditProfilePageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (c) {
+        final repo = c.read<ProfileRepository>();
+        final vm = ProfileEditViewModel(repo);
+        final user = c.read<AuthProvider>().currentUser;
+        vm.init(ProfileData(
+          fullName: user?.displayName ?? '',
+          headline: 'Sinh viên CNTT · tìm thực tập',
+          location: 'TP. Hồ Chí Minh',
+          school: 'Đại học Khoa học Tự nhiên',
+          major: 'Công nghệ Thông tin',
+          about: 'Đam mê lập trình Flutter, muốn tìm cơ hội thực tập thực tế.',
+          isPrivate: true, // Mặc định riêng tư (Ticket 02)
+        ));
+        return vm;
+      },
+      child: const _EditProfileForm(),
+    );
+  }
 }
 
-class _EditProfilePageState extends State<EditProfilePage> {
+class _EditProfileForm extends StatefulWidget {
+  const _EditProfileForm();
+
+  @override
+  State<_EditProfileForm> createState() => _EditProfileFormState();
+}
+
+class _EditProfileFormState extends State<_EditProfileForm> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _headlineController;
-  late final TextEditingController _locationController;
-  late final TextEditingController _schoolController;
-  late final TextEditingController _majorController;
-  late final TextEditingController _aboutController;
-  bool _isSaving = false;
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _headlineCtrl;
+  late final TextEditingController _locationCtrl;
+  late final TextEditingController _schoolCtrl;
+  late final TextEditingController _majorCtrl;
+  late final TextEditingController _aboutCtrl;
 
   @override
   void initState() {
     super.initState();
-    final user = context.read<AuthProvider>().currentUser;
-    _nameController = TextEditingController(text: user?.displayName ?? '');
-    _headlineController = TextEditingController(
-      text: 'Sinh viên CNTT năm 4 · tìm thực tập Flutter',
-    );
-    _locationController = TextEditingController(text: 'TP. Hồ Chí Minh');
-    _schoolController = TextEditingController(text: 'Đại học Khoa học Tự nhiên');
-    _majorController = TextEditingController(text: 'Công nghệ Thông tin');
-    _aboutController = TextEditingController(
-      text: 'Đam mê lập trình di động Flutter, đang tìm cơ hội thực tập.',
-    );
+    final p = context.read<ProfileEditViewModel>().profile;
+    _nameCtrl = TextEditingController(text: p.fullName);
+    _headlineCtrl = TextEditingController(text: p.headline);
+    _locationCtrl = TextEditingController(text: p.location);
+    _schoolCtrl = TextEditingController(text: p.school);
+    _majorCtrl = TextEditingController(text: p.major);
+    _aboutCtrl = TextEditingController(text: p.about);
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _headlineController.dispose();
-    _locationController.dispose();
-    _schoolController.dispose();
-    _majorController.dispose();
-    _aboutController.dispose();
+    _nameCtrl.dispose();
+    _headlineCtrl.dispose();
+    _locationCtrl.dispose();
+    _schoolCtrl.dispose();
+    _majorCtrl.dispose();
+    _aboutCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSave() async {
+  Future<void> _save(ProfileEditViewModel vm) async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isSaving = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã cập nhật hồ sơ thành công!')),
+    vm.updateField(
+      fullName: _nameCtrl.text,
+      headline: _headlineCtrl.text,
+      location: _locationCtrl.text,
+      school: _schoolCtrl.text,
+      major: _majorCtrl.text,
+      about: _aboutCtrl.text,
     );
-    Navigator.of(context).pop();
+    final ok = await vm.save();
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã cập nhật hồ sơ thành công!')),
+      );
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<ProfileEditViewModel>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Chỉnh sửa hồ sơ'),
         actions: [
           TextButton(
-            onPressed: _isSaving ? null : _handleSave,
-            child: _isSaving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text(
-                    'Lưu',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: AppColors.primary,
-                    ),
-                  ),
+            onPressed: vm.saving ? null : () => _save(vm),
+            child: vm.saving
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
           const SizedBox(width: 8),
         ],
@@ -94,20 +116,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildAvatarSection(),
+              _buildPrivacyCard(vm),
               const SizedBox(height: 16),
               _buildSectionTitle('Thông tin cơ bản'),
-              _buildTextField('Họ và tên', _nameController, isRequired: true),
-              _buildTextField('Chức danh / Headline', _headlineController),
-              _buildTextField('Khu vực', _locationController),
+              _buildTextField('Họ và tên', _nameCtrl, isRequired: true),
+              _buildTextField('Chức danh / Headline', _headlineCtrl),
+              _buildTextField('Khu vực', _locationCtrl),
               const SizedBox(height: 16),
               _buildSectionTitle('Học vấn'),
-              _buildTextField('Trường đại học', _schoolController),
-              _buildTextField('Chuyên ngành', _majorController),
+              _buildTextField('Trường đại học', _schoolCtrl),
+              _buildTextField('Chuyên ngành', _majorCtrl),
               const SizedBox(height: 16),
               _buildSectionTitle('Giới thiệu bản thân'),
-              _buildTextField('Mô tả ngắn', _aboutController, maxLines: 3),
-              const SizedBox(height: 24),
+              _buildTextField('Mô tả ngắn', _aboutCtrl, maxLines: 3),
             ],
           ),
         ),
@@ -115,33 +136,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildAvatarSection() {
-    return Center(
-      child: Stack(
-        children: [
-          const CircleAvatar(
-            radius: 44,
-            backgroundColor: Color(0xFFCFDAF7),
-            child: Icon(Icons.person, size: 50, color: AppTheme.primaryBlue),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: CircleAvatar(
-              radius: 15,
-              backgroundColor: AppColors.primary,
-              child: IconButton(
-                icon: const Icon(Icons.camera_alt, size: 15, color: Colors.white),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tính năng chọn avatar đang cập nhật')),
-                  );
-                },
-                padding: EdgeInsets.zero,
-              ),
+  Widget _buildPrivacyCard(ProfileEditViewModel vm) {
+    return Card(
+      elevation: 0,
+      color: vm.profile.isPrivate ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: vm.profile.isPrivate ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A)),
+      ),
+      child: SwitchListTile(
+        title: Row(
+          children: [
+            Icon(
+              vm.profile.isPrivate ? Icons.lock : Icons.lock_open,
+              size: 18,
+              color: vm.profile.isPrivate ? const Color(0xFF16A34A) : const Color(0xFFD97706),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            const Text('Hồ sơ riêng tư (Mặc định)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          ],
+        ),
+        subtitle: const Text(
+          'Khi bật, hồ sơ được bảo vệ riêng tư theo chuẩn Atom. Nhà tuyển dụng cần bạn đồng ý trước khi xem chi tiết.',
+          style: TextStyle(fontSize: 12),
+        ),
+        value: vm.profile.isPrivate,
+        onChanged: (val) => vm.updateField(isPrivate: val),
       ),
     );
   }
@@ -149,45 +169,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-        ),
-      ),
+      child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    bool isRequired = false,
-    int maxLines = 1,
-  }) {
+  Widget _buildTextField(String label, TextEditingController ctrl, {bool isRequired = false, int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        controller: controller,
+        controller: ctrl,
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
           fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        validator: isRequired
-            ? (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng không để trống' : null
-            : null,
+        validator: isRequired ? (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng không để trống' : null : null,
       ),
     );
   }

@@ -8,6 +8,8 @@ abstract interface class IAppPreferences {
   Future<void> saveJobFilterJson(String jsonStr);
   Future<String?> getJobFilterJson();
   Future<void> clearJobFilter();
+  Future<void> saveLocale(String languageCode);
+  Future<String?> getLocale();
 }
 
 /// Triển khai lưu trữ Preferences dùng FlutterSecureStorage (hoạt động tốt trên cả Web localStorage và Mobile)
@@ -52,6 +54,16 @@ class AppPreferencesStorage implements IAppPreferences {
   @override
   Future<void> clearJobFilter() async {
     await _storage.delete(key: AppConfig.keyJobFilter);
+  }
+
+  @override
+  Future<void> saveLocale(String languageCode) async {
+    await _storage.write(key: 'app_locale', value: languageCode);
+  }
+
+  @override
+  Future<String?> getLocale() {
+    return _storage.read(key: 'app_locale');
   }
 }
 
