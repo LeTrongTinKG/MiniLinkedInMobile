@@ -17,6 +17,7 @@
 | `PostCard` | `features/social/.../post_card.dart:18` | `post`, `onLike`, `onComment`, `onShare` | S-06 (Social Feed) |
 | `ReactionBar` | `features/social/.../reaction_bar.dart:15` | `reactions`, `userReaction`, `onReact` (6 loại tym/like)| S-06 (Feed), M-05 (Reactors) |
 | `CommentBar` | `features/social/.../comment_bar.dart:12` | `commentCount`, `onOpenComments` | S-06, M-04 (CommentsSheet) |
+| `ChatSuggestions` | `features/coach/.../chat_suggestions.dart:7` | `header`, `content`, `padding` (chuẩn 21st.dev) | M-01 (CoachSheet) |
 | `CoachSheet` | `features/coach/.../coach_sheet.dart:25` | `CoachProvider`, `dailyLimit = 10` | S-04 (Màn chính) |
 
 ## 2. Các Widget Trùng Lặp Cần Gom Gọn (Duplication Audit)
