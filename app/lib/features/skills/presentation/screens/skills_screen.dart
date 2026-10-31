@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../ui_kit/ui_kit.dart';
 import '../viewmodels/skills_view_model.dart';
 import '../widgets/confidence_badge.dart';
 import 'repo_upload_screen.dart';
@@ -35,7 +37,11 @@ class _SkillsScreenState extends State<SkillsScreen> {
     final vm = context.watch<SkillsViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Kỹ năng & Bằng chứng')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Kỹ năng & Bằng chứng'),
+        backgroundColor: AppColors.surface,
+      ),
       body: SafeArea(
         child: vm.loading && vm.skills.isEmpty
             ? const Center(child: CircularProgressIndicator())
@@ -46,61 +52,86 @@ class _SkillsScreenState extends State<SkillsScreen> {
                   const SizedBox(height: 16),
                   const Text(
                     'Kỹ năng của bạn',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (vm.skills.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Text('Chưa có kỹ năng nào. Bạn có thể tự thêm hoặc up repo bên dưới.'),
+                      child: Text(
+                        'Chưa có kỹ năng nào. Bạn có thể tự thêm hoặc up repo bên dưới.',
+                        style: TextStyle(color: AppColors.textMuted),
+                      ),
                     )
                   else
                     for (final s in vm.skills)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: ConfidenceBadge(confidence: s.confidence, compact: true),
-                          ),
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+                          border: Border.all(color: AppColors.border, width: 1),
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: AppTheme.errorRed),
-                          tooltip: 'Xóa kỹ năng',
-                          onPressed: vm.saving ? null : () => vm.delete(s),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    s.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  ConfidenceBadge(confidence: s.confidence, compact: true),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                              tooltip: 'Xóa kỹ năng',
+                              onPressed: vm.saving ? null : () => vm.delete(s),
+                            ),
+                          ],
                         ),
                       ),
                   const Divider(height: 32),
                   const Text(
                     'Tự khai báo kỹ năng (Self-claimed)',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: TextField(
+                        child: AppTextField(
                           controller: _input,
-                          decoration: InputDecoration(
-                            hintText: 'Nhập tên kỹ năng (VD: Docker, SQL...)',
-                            errorText: vm.failure?.message,
-                          ),
+                          placeholder: 'Nhập tên kỹ năng (VD: Docker, SQL...)',
+                          errorText: vm.failure?.message,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      SizedBox(
-                        height: 48,
-                        child: FilledButton(
-                          onPressed: vm.saving
-                              ? null
-                              : () async {
-                                  final ok = await vm.addSkill(_input.text);
-                                  if (ok) _input.clear();
-                                },
-                          child: Text(vm.saving ? 'Đang lưu...' : 'Thêm'),
-                        ),
+                      AppButton(
+                        label: vm.saving ? 'Đang lưu...' : 'Thêm',
+                        loading: vm.saving,
+                        onPressed: () async {
+                          final ok = await vm.addSkill(_input.text);
+                          if (ok) _input.clear();
+                        },
                       ),
                     ],
                   ),
@@ -112,36 +143,34 @@ class _SkillsScreenState extends State<SkillsScreen> {
 
   Widget _buildHeaderCard(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryBlue.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
+        color: AppColors.primaryContainer.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+        border: Border.all(color: AppColors.primaryContainer),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             '3 cấp độ tin cậy của kỹ năng:',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 6),
           const Text('• 👤 Tự khai (Self-claimed): Tự bạn thêm thủ công.'),
           const Text('• 🔗 Có bằng chứng (Evidenced): Trích xuất từ GitHub repo / dự án.'),
           const Text('• 🛡️ Được xác nhận (Endorsed): Đồng nghiệp có chuyên môn xác nhận.'),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.code),
-              label: const Text('Up Repo GitHub thay vì CV'),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RepoUploadScreen()),
-                );
-              },
-            ),
+          AppButton(
+            label: 'Up Repo GitHub thay vì CV',
+            icon: Icons.code,
+            variant: AppButtonVariant.outline,
+            fullWidth: true,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const RepoUploadScreen()),
+              );
+            },
           ),
         ],
       ),
