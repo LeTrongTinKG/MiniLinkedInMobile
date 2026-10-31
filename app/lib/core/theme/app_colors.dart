@@ -20,6 +20,7 @@ class AppColors {
   static const Color error = Color(0xFFEF4444); // Red 500
   static const Color warning = Color(0xFFF59E0B); // Amber 500
   static const Color iconMuted = Color(0xFF94A3B8); // Slate 400
+  static const Color cardShadow = Color(0x0A0F172A); // 4% Slate 900 soft shadow
 
   // 3-Level Confidence Micro-Tokens
   static const Color verified = Color(0xFF10B981); // Emerald 500

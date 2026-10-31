@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:app/core/theme/app_spacing.dart';
+import 'package:app/ui_kit/app_empty_state.dart';
 import 'presentation/providers/student_applications_provider.dart';
 import 'presentation/widgets/student_application_card.dart';
 
@@ -24,22 +25,25 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          _buildHeader(context),
-          const Divider(height: 1),
-          Expanded(child: _buildBody()),
-        ],
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildHeader(context),
+            const Divider(height: 1, color: AppColors.border),
+            Expanded(child: _buildBody()),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      color: AppColors.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Row(
         children: [
           const BackButton(),
@@ -50,13 +54,13 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
           IconButton(
             tooltip: 'Tải lại',
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
             onPressed: () => context.read<StudentApplicationsProvider>().load(),
           ),
         ],
@@ -71,18 +75,38 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
           return const Center(child: CircularProgressIndicator());
         }
         if (provider.errorMessage != null && provider.applications.isEmpty) {
-          return _message(Icons.error_outline, provider.errorMessage!);
+          return AppEmptyState(
+            icon: Icons.error_outline,
+            title: 'Lỗi tải đơn ứng tuyển',
+            message: provider.errorMessage!,
+            actionLabel: 'Thử lại',
+            onAction: () => provider.load(),
+          );
         }
         if (provider.applications.isEmpty) {
-          return _message(
-            Icons.assignment_turned_in_outlined,
-            'Bạn chưa ứng tuyển công việc nào.\nVào tab Việc làm để bắt đầu.',
+          return AppEmptyState(
+            icon: Icons.assignment_turned_in_outlined,
+            title: 'Chưa có đơn ứng tuyển',
+            message:
+                'Bạn chưa nộp đơn cho vị trí nào.\nHãy khám phá cơ hội việc làm IT ngay hôm nay!',
+            actionLabel: 'Khám phá việc làm',
+            onAction: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
           );
         }
         return RefreshIndicator(
+          color: AppColors.primary,
           onRefresh: provider.load,
           child: ListView.builder(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.bottomContentPadding,
+            ),
             itemCount: provider.applications.length,
             itemBuilder: (_, i) =>
                 StudentApplicationCard(application: provider.applications[i]),
@@ -91,22 +115,4 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
       },
     );
   }
-
-  Widget _message(IconData icon, String text) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 64, color: AppColors.primary),
-              const SizedBox(height: 12),
-              Text(
-                text,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ),
-      );
 }

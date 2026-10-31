@@ -10,6 +10,7 @@ class AppSpacing {
 
   static const double radiusChip = 8;
   static const double radiusInput = 12;
+  static const double radiusMd = 12;
   static const double radiusButton = 12;
   static const double radiusLogo = 12;
   static const double radiusCard = 16;

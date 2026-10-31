@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/core/utils/link_opener.dart';
 import 'package:app/features/applications/presentation/providers/student_applications_provider.dart';
 import '../../domain/entities/job_entity.dart';
@@ -9,7 +10,11 @@ import '../../domain/entities/job_entity.dart';
 /// - Job ngoài (có applyUrl): mở link gốc bằng trình duyệt
 /// - Job nội bộ: nộp đơn qua API, xong đổi thành "Đã nộp đơn"
 class JobApplyButton extends StatefulWidget {
-  const JobApplyButton({super.key, required this.job, this.opener = openExternalLink});
+  const JobApplyButton({
+    super.key,
+    required this.job,
+    this.opener = openExternalLink,
+  });
 
   final JobEntity job;
   final LinkOpener opener; // mặc định mở thật; test truyền hàm giả
@@ -48,8 +53,9 @@ class _JobApplyButtonState extends State<JobApplyButton> {
   @override
   Widget build(BuildContext context) {
     final job = widget.job;
-    final existing =
-        context.watch<StudentApplicationsProvider>().activeApplicationFor(job.id);
+    final existing = context
+        .watch<StudentApplicationsProvider>()
+        .activeApplicationFor(job.id);
 
     // Chọn chữ và hành động cho nút
     final VoidCallback? onPressed;
@@ -66,7 +72,7 @@ class _JobApplyButtonState extends State<JobApplyButton> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
@@ -77,12 +83,31 @@ class _JobApplyButtonState extends State<JobApplyButton> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+              ),
+              elevation: 0,
+            ),
             onPressed: onPressed,
             child: _submitting
                 ? const SizedBox(
-                    width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(label,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ),
       ),

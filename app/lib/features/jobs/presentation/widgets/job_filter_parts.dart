@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 
 /// Tiêu đề từng nhóm trong bảng lọc (vd: "Cấp bậc công việc")
 class FilterSectionTitle extends StatelessWidget {
@@ -10,11 +11,14 @@ class FilterSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: Text(title,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary)),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
       );
 }
 
@@ -39,8 +43,50 @@ class FilterChoiceChip extends StatelessWidget {
         ),
         backgroundColor: AppColors.background,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: isSelected ? AppColors.primary : Colors.transparent),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+          side: BorderSide(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
         ),
       );
+}
+
+/// Thanh áp dụng bộ lọc dính ở chân sheet
+class FilterApplyFooter extends StatelessWidget {
+  const FilterApplyFooter({super.key, required this.onApply});
+
+  final VoidCallback onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+              ),
+              elevation: 0,
+            ),
+            onPressed: onApply,
+            child: const Text(
+              'Áp dụng bộ lọc',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

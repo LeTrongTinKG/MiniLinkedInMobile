@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/applications/presentation/providers/student_applications_provider.dart';
 import '../../data/datasources/job_match_remote_datasource.dart';
 import '../../domain/entities/job_entity.dart';
 import '../../domain/entities/job_match.dart';
 import 'job_apply_button.dart';
 import 'job_badge.dart';
+import 'job_detail_helpers.dart';
 import 'job_match_section.dart';
 
 class JobDetailSheet extends StatefulWidget {
@@ -27,7 +29,6 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   void initState() {
     super.initState();
     _matchFuture = _loadMatch();
-    // Cần biết đã ứng tuyển job này chưa để hiện đúng nút
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StudentApplicationsProvider>().load();
     });
@@ -44,17 +45,19 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery.of(context).size.height * 0.78,
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusSheet),
+        ),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Center(
             child: Container(
-              width: 40,
+              width: 48,
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.border,
@@ -64,7 +67,7 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
                 Text(
                   job.title,
@@ -84,29 +87,33 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // Badge nguồn + badge cấp bậc
                 Wrap(spacing: 6, runSpacing: 4, children: [
                   JobBadge(job.sourceName, highlight: true),
                   JobBadge(job.level.label),
                 ]),
                 const SizedBox(height: 8),
-                // Địa điểm + hình thức (bỏ phần trống nếu job ngoài thiếu địa điểm)
                 Text(
-                  [job.location, job.workMode.label].where((e) => e.isNotEmpty).join(' · '),
-                  style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                  [job.location, job.workMode.label]
+                      .where((e) => e.isNotEmpty)
+                      .join(' · '),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
                     color: AppColors.background,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _infoCol('Mức lương', job.formattedSalary),
-                      _infoCol('Cấp bậc', job.level.label),
+                      JobInfoCol(label: 'Mức lương', value: job.formattedSalary),
+                      JobInfoCol(label: 'Cấp bậc', value: job.level.label),
                     ],
                   ),
                 ),
@@ -121,21 +128,30 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
                   },
                 ),
                 const SizedBox(height: 20),
-                _sectionTitle('Kỹ năng bắt buộc'),
+                const JobDetailSectionTitle('Kỹ năng bắt buộc'),
                 const SizedBox(height: 8),
-                _skillsWrap(job.requiredSkills, AppColors.primaryContainer, AppColors.onPrimaryContainer),
+                JobSkillsWrap(
+                  skills: job.requiredSkills,
+                  backgroundColor: AppColors.primaryContainer,
+                  foregroundColor: AppColors.onPrimaryContainer,
+                ),
                 if (job.niceToHave.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _sectionTitle('Kỹ năng ưu tiên'),
+                  const JobDetailSectionTitle('Kỹ năng ưu tiên'),
                   const SizedBox(height: 8),
-                  _skillsWrap(job.niceToHave, AppColors.background, AppColors.textSecondary),
+                  JobSkillsWrap(
+                    skills: job.niceToHave,
+                    backgroundColor: AppColors.background,
+                    foregroundColor: AppColors.textSecondary,
+                  ),
                 ],
                 const SizedBox(height: 20),
-                _sectionTitle('Mô tả công việc'),
+                const JobDetailSectionTitle('Mô tả công việc'),
                 const SizedBox(height: 8),
-                // Hiện đầy đủ, giữ nguyên xuống dòng của mô tả
                 Text(
-                  job.description.isEmpty ? 'Chưa có mô tả' : job.description,
+                  job.description.isEmpty
+                      ? 'Chưa có mô tả'
+                      : job.description,
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -150,38 +166,4 @@ class _JobDetailSheetState extends State<JobDetailSheet> {
       ),
     );
   }
-
-  Widget _sectionTitle(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-        ),
-      );
-
-  Widget _skillsWrap(List<String> skills, Color bg, Color fg) => Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: skills
-            .map((s) => Chip(
-                  label: Text(s),
-                  backgroundColor: bg,
-                  labelStyle: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w500),
-                  side: BorderSide.none,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                ))
-            .toList(),
-      );
-
-  Widget _infoCol(String label, String value) => Column(
-        children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-          ),
-        ],
-      );
 }
