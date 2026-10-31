@@ -76,3 +76,4 @@ class JobInfoCol extends StatelessWidget {
         ],
       );
 }
+

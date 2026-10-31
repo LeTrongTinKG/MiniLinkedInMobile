@@ -31,7 +31,7 @@ class StudentDrawer extends StatelessWidget {
   void _openPage(BuildContext context, Widget page) {
     final nav = Navigator.of(context);
     nav.pop();
-    nav.push(MaterialPageRoute(builder: (_) => Scaffold(body: page)));
+    nav.push(MaterialPageRoute(builder: (_) => page));
   }
 
   @override

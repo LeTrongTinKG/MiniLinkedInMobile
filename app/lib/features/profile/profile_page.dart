@@ -59,88 +59,91 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          final user = auth.currentUser;
-          return Column(
-            children: [
-              ProfileAppBar(onSettings: () {}),
-              const Divider(height: 1),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, AppSpacing.bottomContentPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPrivacyBanner(),
-                      const SizedBox(height: 12),
-                      ProfileHeader(
-                        name: user?.displayName ?? 'Người dùng',
-                        headline: 'Sinh viên CNTT · tìm thực tập Flutter',
-                        location: 'TP. Hồ Chí Minh',
-                        onEditProfile: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const EditProfilePage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 24),
-                      Consumer<CvProvider>(
-                        builder: (context, cv, _) {
-                          if (cv.isLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 48),
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-                          return CvSection(
-                            cvs: cv.cvs,
-                            onUpload: _handleUpload,
-                            onUploadRepo: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const RepoUploadScreen(),
-                                ),
-                              );
-                            },
-                            onDelete: (id) => cv.deleteCv(id),
-                            onSetDefault: (id) => cv.setDefault(id),
-                          );
-                        },
-                      ),
-                      if (auth.isStudent) ...[
-                        const Divider(height: 24),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.stars_outlined, color: AppColors.primary),
-                          title: const Text('Kỹ năng & Bằng chứng (3 cấp độ)', style: TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: const Text('Tự khai, có bằng chứng repo, hoặc được xác nhận', style: TextStyle(fontSize: 12)),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            final user = auth.currentUser;
+            return Column(
+              children: [
+                ProfileAppBar(onSettings: () {}),
+                const Divider(height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, AppSpacing.bottomContentPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPrivacyBanner(),
+                        const SizedBox(height: 12),
+                        ProfileHeader(
+                          name: user?.displayName ?? 'Người dùng',
+                          headline: 'Sinh viên CNTT · tìm thực tập Flutter',
+                          location: 'TP. Hồ Chí Minh',
+                          onEditProfile: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const SkillsScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfilePage(),
+                              ),
                             );
                           },
                         ),
                         const Divider(height: 24),
-                        ChangeNotifierProvider(
-                          create: (c) => SkillSuggestionProvider(
-                            SkillRemoteDataSource(c.read<Dio>()),
-                          )..load(),
-                          child: const GithubSkillSection(),
+                        Consumer<CvProvider>(
+                          builder: (context, cv, _) {
+                            if (cv.isLoading) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 48),
+                                child: Center(child: CircularProgressIndicator()),
+                              );
+                            }
+                            return CvSection(
+                              cvs: cv.cvs,
+                              onUpload: _handleUpload,
+                              onUploadRepo: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const RepoUploadScreen(),
+                                  ),
+                                );
+                              },
+                              onDelete: (id) => cv.deleteCv(id),
+                              onSetDefault: (id) => cv.setDefault(id),
+                            );
+                          },
                         ),
+                        if (auth.isStudent) ...[
+                          const Divider(height: 24),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.stars_outlined, color: AppColors.primary),
+                            title: const Text('Kỹ năng & Bằng chứng (3 cấp độ)', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Tự khai, có bằng chứng repo, hoặc được xác nhận', style: TextStyle(fontSize: 12)),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const SkillsScreen()),
+                              );
+                            },
+                          ),
+                          const Divider(height: 24),
+                          ChangeNotifierProvider(
+                            create: (c) => SkillSuggestionProvider(
+                              SkillRemoteDataSource(c.read<Dio>()),
+                            )..load(),
+                            child: const GithubSkillSection(),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
