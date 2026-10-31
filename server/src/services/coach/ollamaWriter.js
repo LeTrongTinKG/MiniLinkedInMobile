@@ -31,6 +31,8 @@ function createOllamaWriter({
   url = process.env.OLLAMA_URL ?? "http://localhost:11434",
   model = process.env.OLLAMA_MODEL ?? "qwen3.5:2b-q4_K_M",
   timeoutMs = 10_000,
+  // Production (Render/Railway): 5m để tiết kiệm RAM; local dev: 30m cho phản hồi nhanh
+  keepAlive = process.env.OLLAMA_KEEP_ALIVE ?? (process.env.NODE_ENV === "production" ? "5m" : "30m"),
 } = {}) {
   const enabled = mode === "ollama";
 
@@ -43,7 +45,7 @@ function createOllamaWriter({
         messages,
         stream: false,
         think: false,
-        keep_alive: "30m",
+        keep_alive: keepAlive,
         options: { temperature: 0.2, num_predict: 300 },
       }),
       signal: AbortSignal.timeout(timeoutMs),
@@ -73,7 +75,7 @@ function createOllamaWriter({
       await fetchImpl(`${url}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages: [], keep_alive: "30m" }),
+        body: JSON.stringify({ model, messages: [], keep_alive: keepAlive }),
         signal: AbortSignal.timeout(60_000),
       });
       return true;

@@ -3,8 +3,13 @@ import 'package:app/core/theme/app_theme.dart';
 
 class CvEmptyState extends StatelessWidget {
   final VoidCallback onUpload;
+  final VoidCallback? onUploadRepo;
 
-  const CvEmptyState({super.key, required this.onUpload});
+  const CvEmptyState({
+    super.key,
+    required this.onUpload,
+    this.onUploadRepo,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +63,14 @@ class CvEmptyState extends StatelessWidget {
               'Chỉ nhận PDF, tối đa 5 MB',
               style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
+            if (onUploadRepo != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onUploadRepo,
+                icon: const Icon(Icons.code, size: 16),
+                label: const Text('Hoặc Up Repo GitHub thay vì CV'),
+              ),
+            ],
           ],
         ),
       ),

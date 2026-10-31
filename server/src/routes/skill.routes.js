@@ -14,6 +14,10 @@ router.use(authenticate, authorize("student"));
  * POST /api/v1/skills/suggestions/:id/reject   - Từ chối
  */
 router.get("/", skillController.getMySkills);
+router.post("/", skillController.addSkill);
+router.delete("/:name", skillController.deleteSkill);
+router.post("/repo", skillController.scanRepo);
+router.post("/:name/endorse", skillController.endorseSkill);
 router.get("/suggestions", skillController.getSuggestions);
 router.post("/suggestions/github", skillController.scanGithub);
 router.post("/suggestions/:id/accept", skillController.acceptSuggestion);

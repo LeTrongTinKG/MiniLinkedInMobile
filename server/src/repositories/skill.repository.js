@@ -103,6 +103,37 @@ async function rejectSuggestion(id, db = prisma) {
   });
 }
 
+async function addSelfClaimed(userId, skillName, db = prisma) {
+  return db.userSkill.upsert({
+    where: { userId_skillName: { userId, skillName } },
+    create: {
+      userId,
+      skillName,
+      source: "self",
+      confidence: "self_claimed",
+      confidenceReason: "Kỹ năng do ứng viên tự khai báo",
+    },
+    update: {},
+    select: { id: true, skillName: true, source: true, evidence: true, confidence: true, confidenceReason: true, createdAt: true },
+  });
+}
+
+async function deleteSkill(userId, skillName, db = prisma) {
+  return db.userSkill.deleteMany({
+    where: { userId, skillName },
+  });
+}
+
+async function endorseSkill(endorserId, targetUserId, skillName, db = prisma) {
+  return db.userSkill.updateMany({
+    where: { userId: targetUserId, skillName },
+    data: {
+      confidence: "endorsed",
+      confidenceReason: `Được xác nhận bởi người dùng ${endorserId.slice(0, 8)}`,
+    },
+  });
+}
+
 module.exports = {
   findGithubId,
   listSkills,
@@ -114,4 +145,7 @@ module.exports = {
   finishScan,
   acceptSuggestion,
   rejectSuggestion,
+  addSelfClaimed,
+  deleteSkill,
+  endorseSkill,
 };
