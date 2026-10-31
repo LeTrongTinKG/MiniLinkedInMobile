@@ -35,6 +35,7 @@ class AppTheme {
         error: AppColors.error,
         onError: AppColors.surface,
         outline: AppColors.border,
+        surfaceContainerHighest: AppColors.surfaceSubtle,
       ),
       scaffoldBackgroundColor: AppColors.background,
       textTheme: base.copyWith(

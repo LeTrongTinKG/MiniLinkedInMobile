@@ -3,20 +3,28 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
+  // Clay-inspired Executive Minimalist Palette
   static const Color primary = Color(0xFF2952CC);
-  static const Color primaryContainer = Color(0xFFDCE4F7);
-  static const Color onPrimaryContainer = Color(0xFF1E3E9E);
-  static const Color background = Color(0xFFF3F5F8);
+  static const Color primaryContainer = Color(0xFFEEF2FF); // Indigo nhạt 50
+  static const Color onPrimaryContainer = Color(0xFF1E40AF); // Indigo đậm 800
+  static const Color background = Color(0xFFF8FAFC); // Slate 50
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color border = Color(0xFFE2E6EC);
-  static const Color textPrimary = Color(0xFF18202B);
-  static const Color textSecondary = Color(0xFF4A5565);
-  static const Color textMuted = Color(0xFF5B6676);
-  static const Color salary = Color(0xFF0F7B4A);
+  static const Color surfaceSubtle = Color(0xFFF1F5F9); // Slate 100
+  static const Color border = Color(0xFFE2E8F0); // Slate 200
+  static const Color textPrimary = Color(0xFF0F172A); // Slate 900
+  static const Color textSecondary = Color(0xFF475569); // Slate 600
+  static const Color textMuted = Color(0xFF64748B); // Slate 500
+  static const Color salary = Color(0xFF10B981); // Emerald 500
   static const Color accent = Color(0xFFC2410C);
   static const Color accentContainer = Color(0xFFFAEFEA);
-  static const Color error = Color(0xFFB00020);
-  static const Color iconMuted = Color(0xFFBBC3CE);
+  static const Color error = Color(0xFFEF4444); // Red 500
+  static const Color warning = Color(0xFFF59E0B); // Amber 500
+  static const Color iconMuted = Color(0xFF94A3B8); // Slate 400
+
+  // 3-Level Confidence Micro-Tokens
+  static const Color verified = Color(0xFF10B981); // Emerald 500
+  static const Color evidence = Color(0xFF6366F1); // Indigo 500
+  static const Color selfClaimed = Color(0xFF64748B); // Slate 500
 
   // 8 stable logo colors: [background, foreground]
   static const List<List<Color>> _logoPalette = [
