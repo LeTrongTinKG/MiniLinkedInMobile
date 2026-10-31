@@ -2,6 +2,7 @@ const cvRepository = require("../repositories/cv.repository");
 const storageService = require("./storage/storage.service");
 const { analyzeCv } = require("./ai/aiClient");
 const mockAiAdapter = require("./ai/mockAdapter");
+const { withEvidence } = require("./ai/cvTextAnalyzer");
 const { ApiError } = require("../middleware/error");
 
 /**
@@ -87,6 +88,7 @@ async function uploadCv(
     console.warn("AI service analyzeCv error (fallback to mock):", aiErr.message);
     extractedSkills = await mockAiAdapter.analyzeCv(file.buffer, sanitizedFileName);
   }
+  extractedSkills = await withEvidence(file.buffer, extractedSkills);
 
   // 3. Kiểm tra xem sinh viên đã có CV nào chưa -> Nếu chưa có, tự động đặt làm CV mặc định
   const currentCount = await repo.countByUserId(userId);

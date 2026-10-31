@@ -16,6 +16,19 @@ const WITHDRAWABLE_STATUSES = ["submitted", "viewed", "shortlisted"];
 /**
  * Trích xuất mảng kỹ năng từ bản ghi CV
  */
+// Skill trong CV cộng skill GitHub đã duyệt. Trùng tên (khác hoa thường) chỉ tính một lần.
+function mergeMatchSkills(cvSkills, approvedNames) {
+  const seen = new Set();
+  const merged = [];
+  for (const name of [...(cvSkills ?? []), ...(approvedNames ?? [])]) {
+    const key = String(name).trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    merged.push(String(name).trim());
+  }
+  return merged;
+}
+
 function extractCvSkills(cv) {
   if (!cv || !cv.extractedSkills) return [];
   if (Array.isArray(cv.extractedSkills.skills)) {
@@ -68,6 +81,7 @@ module.exports = {
   VALID_APPLICATION_STATUSES,
   ALLOWED_DECISION_STATUSES,
   WITHDRAWABLE_STATUSES,
+  mergeMatchSkills,
   extractCvSkills,
   findJobOrThrow,
   resolveTargetCv,

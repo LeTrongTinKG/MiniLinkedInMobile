@@ -8,7 +8,14 @@ let jobs = [];
 let users = [];
 let cvs = [];
 
+const userSkills = [];
+
 const prisma = {
+  userSkill: {
+    async findMany({ where = {} }) {
+      return userSkills.filter((row) => row.userId === where.userId && (!where.source || row.source === where.source));
+    },
+  },
   cv: {
     async findUnique({ where: { id } }) {
       const found = cvs.find((c) => c.id === id);
@@ -256,6 +263,7 @@ test.beforeEach(() => {
   ];
 
   cvs = [];
+  userSkills.length = 0;
 });
 
 test("GET /api/v1/jobs trả về danh sách job đang open kèm pagination meta chuẩn (chỉ có total)", async () => {
@@ -375,6 +383,35 @@ test("GET /api/v1/jobs/:id trả về match kèm điểm số khi sinh viên đ�
   assert.equal(res.body.data.match.score, 100);
   assert.deepEqual(res.body.data.match.matchedSkills, ["flutter", "dart"]);
   assert.deepEqual(res.body.data.match.missingSkills, []);
+});
+
+test("GET /api/v1/jobs/:id cộng skill GitHub đã duyệt vào điểm, dù CV không có skill đó", async () => {
+  const studentToken = generateAccessToken({
+    id: "student-1",
+    email: "student1@school.edu.vn",
+    role: "student",
+  });
+  cvs.push({
+    id: "cv-empty",
+    userId: "student-1",
+    fileName: "cv.pdf",
+    fileUrl: "https://example.com/cv.pdf",
+    extractedSkills: { skills: [] },
+    isDefault: true,
+    createdAt: new Date(),
+  });
+  userSkills.push({ userId: "student-1", source: "github", skillName: "Flutter" });
+
+  const res = await dispatch(jobController.getJobDetail, {
+    headers: { authorization: `Bearer ${studentToken}` },
+    params: { id: "job-1" },
+    query: {},
+  }, [optionalAuthenticate]);
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.data.match.score, 50);
+  assert.deepEqual(res.body.data.match.matchedSkills, ["flutter"]);
+  assert.deepEqual(res.body.data.match.missingSkills, ["dart"]);
 });
 
 test("GET /api/v1/jobs/:id?cvId=... ưu tiên tính match theo đúng CV chỉ định trên query", async () => {

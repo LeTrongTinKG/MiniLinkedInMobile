@@ -1,4 +1,5 @@
 node_modules/
+graphify-out/
 .env
 # Spec nội bộ chứa key/secret thật — không bao giờ commit
 server/JOB_AGGREGATOR_SPEC.md

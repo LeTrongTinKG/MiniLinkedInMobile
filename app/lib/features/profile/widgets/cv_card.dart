@@ -90,7 +90,9 @@ class CvCard extends StatelessWidget {
             Wrap(
               spacing: 6,
               runSpacing: 4,
-              children: cv.skills.map((s) => _SkillChip(skill: s)).toList(),
+              children: cv.skills
+                  .map((s) => _SkillChip(skill: s, quote: cv.evidence[s]))
+                  .toList(),
             ),
           const SizedBox(height: 8),
           Row(
@@ -99,8 +101,8 @@ class CvCard extends StatelessWidget {
                 OutlinedButton(
                   onPressed: onSetDefault,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     side: const BorderSide(color: AppTheme.textPrimary),
@@ -164,11 +166,12 @@ class _PdfIcon extends StatelessWidget {
 
 class _SkillChip extends StatelessWidget {
   final String skill;
-  const _SkillChip({required this.skill});
+  final String? quote;
+  const _SkillChip({required this.skill, this.quote});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: AppTheme.surfaceGray,
@@ -179,5 +182,8 @@ class _SkillChip extends StatelessWidget {
         style: const TextStyle(fontSize: 12, color: AppTheme.textPrimary),
       ),
     );
+    if (quote == null) return chip;
+    // Giữ lâu (hoặc rê chuột) để xem câu trong CV làm bằng chứng cho skill này
+    return Tooltip(message: 'Trong CV: "$quote"', child: chip);
   }
 }

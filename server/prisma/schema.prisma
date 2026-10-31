@@ -78,6 +78,9 @@ model User {
   workExperiences WorkExperience[]
   educations      Education[]
   skills          UserSkill[]
+  skillSuggestions SkillSuggestion[]
+  skillScans      SkillScan[]
+  coachUsage      CoachUsage[]
   cvs             Cv[]
   applications    Application[]
 
@@ -117,12 +120,26 @@ model StudentProfile {
   major          String?
   graduationYear Int?
   githubUrl      String?
+  coachConsentAt DateTime? // null = chưa đồng ý cho chatbot đọc dữ liệu (ADR-0008)
+  targetRole     String?   // id lộ trình, ví dụ "flutter-mobile"
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("student_profiles")
+}
+
+// Số câu đã hỏi chatbot trong một ngày theo giờ Việt Nam (ADR-0008). Không lưu nội dung câu hỏi.
+model CoachUsage {
+  userId String
+  day    String // "YYYY-MM-DD"
+  count  Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
+  @@map("coach_usage")
 }
 
 model RecruiterProfile {
@@ -177,6 +194,10 @@ model UserSkill {
   id        String   @id @default(uuid())
   userId    String
   skillName String
+  source    String   @default("self") // "self" | "github" (ADR-0005)
+  evidence  Json?    // [{ repo, url, signals, commits? }] khi skill đến từ đề xuất đã duyệt
+  confidence String  @default("self_claimed") // "self_claimed" | "evidenced" (ADR-0007)
+  confidenceReason String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -185,6 +206,44 @@ model UserSkill {
   @@unique([userId, skillName])
   @@index([userId])
   @@map("user_skills")
+}
+
+enum SuggestionStatus {
+  pending
+  accepted
+  rejected
+}
+
+// Skill trích từ GitHub bằng quy tắc, chờ người dùng duyệt (ADR-0005)
+model SkillSuggestion {
+  id        String           @id @default(uuid())
+  userId    String
+  skillName String
+  evidence  Json             // [{ repo, url, signals }], không bao giờ rỗng
+  status    SuggestionStatus @default(pending)
+  decidedAt DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillName])
+  @@index([userId, status])
+  @@map("skill_suggestions")
+}
+
+// Mỗi lần bấm "Quét GitHub". Chỉ status succeeded tính vào hạn mức tháng (ADR-0007).
+model SkillScan {
+  id         String    @id @default(uuid())
+  userId     String
+  status     String    // "running" | "succeeded" | "failed"
+  createdAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@map("skill_scans")
 }
 
 model Cv {

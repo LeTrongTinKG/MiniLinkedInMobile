@@ -10,9 +10,15 @@ const PATTERNS = SKILLS.map(([name, ...aliases]) => ({
   regexes: [name, ...aliases].map(toPattern),
 }));
 
+// Dòng đầu tiên trong CV nhắc tới kỹ năng; null nghĩa là CV không có bằng chứng.
+function quoteFor(lines, regexes) {
+  const line = lines.find((l) => regexes.some((r) => r.test(l.toLowerCase())));
+  return line ? line.trim().slice(0, 160) : null;
+}
+
 function findSkills(text) {
-  const lower = text.toLowerCase();
-  return PATTERNS.filter(({ regexes }) => regexes.some((r) => r.test(lower))).map((p) => p.name);
+  const lines = text.split(/\r?\n/);
+  return PATTERNS.filter(({ regexes }) => quoteFor(lines, regexes)).map((p) => p.name);
 }
 
 function findExperienceMonths(text) {
@@ -56,4 +62,26 @@ async function analyzePdfText(fileBuffer) {
   };
 }
 
-module.exports = { analyzePdfText };
+/**
+ * Chỉ giữ kỹ năng có câu trích trong chính file CV (ADR-0005).
+ * AI thật hay mock đều đi qua đây; PDF không đọc được thì không còn kỹ năng nào.
+ */
+async function withEvidence(fileBuffer, analysis) {
+  let lines = [];
+  try {
+    lines = (await extractPdfText(fileBuffer)).split(/\r?\n/);
+  } catch (_err) {
+    lines = [];
+  }
+  const names = [...new Set((analysis?.skills ?? []).map((s) => String(s).trim().toLowerCase()))];
+  const evidence = [];
+  for (const skill of names.filter(Boolean)) {
+    const known = PATTERNS.find((_p, i) => SKILLS[i].includes(skill));
+    const quote = quoteFor(lines, known ? known.regexes : [toPattern(skill)]);
+    if (quote) evidence.push({ skill: known ? known.name : skill, quote });
+  }
+  const unique = evidence.filter((e, i) => evidence.findIndex((x) => x.skill === e.skill) === i);
+  return { ...analysis, skills: unique.map((e) => e.skill), evidence: unique };
+}
+
+module.exports = { analyzePdfText, withEvidence };
