@@ -27,7 +27,7 @@ class StudentBottomBar extends StatelessWidget {
             border: Border.all(color: AppColors.border, width: 1),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x0F000000),
+                color: AppColors.cardShadow,
                 blurRadius: 16,
                 offset: Offset(0, 4),
               ),

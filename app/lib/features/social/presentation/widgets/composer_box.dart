@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../ui_kit/ui_kit.dart';
 import '../social_strings.dart';
 
@@ -38,7 +39,7 @@ class ComposerBox extends StatelessWidget {
           const SizedBox(width: 4),
           IconButton(
             tooltip: SocialStrings.composerPhoto,
-            icon: const Icon(Icons.photo_library_outlined, color: Color(0xFF45BD62)),
+            icon: const Icon(Icons.photo_library_outlined, color: AppColors.salary),
             onPressed: onTap,
           ),
         ],

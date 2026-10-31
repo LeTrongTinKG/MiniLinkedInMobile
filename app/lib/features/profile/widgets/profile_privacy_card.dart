@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
 import '../presentation/viewmodels/profile_edit_view_model.dart';
 
@@ -12,10 +13,10 @@ class ProfilePrivacyCard extends StatelessWidget {
     final isPriv = vm.profile.isPrivate;
     return Container(
       decoration: BoxDecoration(
-        color: isPriv ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+        color: isPriv ? AppColors.successContainer : AppColors.warningContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
         border: Border.all(
-          color: isPriv ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
+          color: isPriv ? AppColors.successBorder : AppColors.warningBorder,
         ),
       ),
       child: SwitchListTile(
@@ -24,7 +25,7 @@ class ProfilePrivacyCard extends StatelessWidget {
             Icon(
               isPriv ? Icons.lock_rounded : Icons.lock_open_rounded,
               size: 18,
-              color: isPriv ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+              color: isPriv ? AppColors.salary : AppColors.warningDark,
             ),
             const SizedBox(width: 8),
             const Text(

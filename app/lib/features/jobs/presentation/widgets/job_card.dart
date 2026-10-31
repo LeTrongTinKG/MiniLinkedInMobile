@@ -59,7 +59,7 @@ class _JobCardState extends State<JobCard> {
             border: Border.all(color: AppColors.border, width: 1),
             boxShadow: [
               BoxShadow(
-                color: const Color(0x0A000000),
+                color: AppColors.cardShadow,
                 blurRadius: _hovered ? 12 : 4,
                 offset: const Offset(0, 2),
               ),

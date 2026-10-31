@@ -28,7 +28,7 @@ class PostCard extends StatelessWidget {
         border: Border.all(color: AppColors.border, width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: AppColors.cardShadow,
             blurRadius: 6,
             offset: Offset(0, 2),
           ),

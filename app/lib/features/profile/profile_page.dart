@@ -149,13 +149,13 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.successContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
-        border: Border.all(color: const Color(0xFF86EFAC), width: 1),
+        border: Border.all(color: AppColors.successBorder, width: 1),
       ),
       child: Row(
         children: const [
-          Icon(Icons.lock, size: 16, color: Color(0xFF16A34A)),
+          Icon(Icons.lock, size: 16, color: AppColors.salary),
           SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -163,7 +163,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF15803D),
+                color: AppColors.successDark,
               ),
             ),
           ),

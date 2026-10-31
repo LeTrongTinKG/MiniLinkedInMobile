@@ -22,6 +22,16 @@ class AppColors {
   static const Color iconMuted = Color(0xFF94A3B8); // Slate 400
   static const Color cardShadow = Color(0x0A0F172A); // 4% Slate 900 soft shadow
 
+  // Success / Privacy Banner tokens
+  static const Color successContainer = Color(0xFFF0FDF4); // Emerald 50
+  static const Color successBorder = Color(0xFF86EFAC); // Emerald 300
+  static const Color successDark = Color(0xFF15803D); // Emerald 700
+
+  // Warning / Attention tokens
+  static const Color warningContainer = Color(0xFFFFFBEB); // Amber 50
+  static const Color warningBorder = Color(0xFFFDE68A); // Amber 200
+  static const Color warningDark = Color(0xFFD97706); // Amber 600
+
   // 3-Level Confidence Micro-Tokens
   static const Color verified = Color(0xFF10B981); // Emerald 500
   static const Color evidence = Color(0xFF6366F1); // Indigo 500

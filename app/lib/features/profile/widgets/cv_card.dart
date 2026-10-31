@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/features/cv/domain/entities/cv_entity.dart';
 
@@ -57,7 +58,7 @@ class CvCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8F5F0),
+                              color: AppColors.successContainer,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -141,21 +142,21 @@ class _PdfIcon extends StatelessWidget {
       width: 40,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFFDE8E0),
+        color: AppColors.accentContainer,
         borderRadius: BorderRadius.circular(4),
       ),
       alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: const [
-          Icon(Icons.picture_as_pdf, color: Color(0xFFD94F3E), size: 20),
+          Icon(Icons.picture_as_pdf, color: AppColors.accent, size: 20),
           SizedBox(height: 1),
           Text(
             'PDF',
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFD94F3E),
+              color: AppColors.accent,
             ),
           ),
         ],
