@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
@@ -87,8 +87,12 @@ class _JobListScreenState extends State<JobListScreen> {
         final rows = (itemCount / columns).ceil();
         return ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-              vertical: AppSpacing.sm, horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.bottomContentPadding,
+          ),
           itemCount: rows,
           itemBuilder: (_, row) => Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),

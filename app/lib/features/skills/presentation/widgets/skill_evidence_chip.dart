@@ -77,3 +77,4 @@ class SkillEvidenceChip extends StatelessWidget {
     );
   }
 }
+

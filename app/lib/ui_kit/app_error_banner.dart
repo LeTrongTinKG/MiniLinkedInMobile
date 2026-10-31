@@ -81,3 +81,4 @@ class AppErrorBanner extends StatelessWidget {
     );
   }
 }
+

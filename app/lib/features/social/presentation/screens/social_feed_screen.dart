@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../ui_kit/ui_kit.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/social_feed_provider.dart';
@@ -130,6 +131,6 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
         ),
       );
     }
-    return const SizedBox(height: 24);
+    return const SizedBox(height: AppSpacing.bottomContentPadding);
   }
 }

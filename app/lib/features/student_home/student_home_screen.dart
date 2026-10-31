@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/core/storage/preferences_storage.dart';
 import 'package:app/features/jobs/presentation/screens/job_list_screen.dart';
 import 'package:app/features/news/presentation/screens/news_page.dart';
@@ -80,7 +81,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => openCoachSheet(context),
-        icon: const Icon(Icons.chat_bubble_outline),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+        ),
+        icon: const Icon(Icons.auto_awesome, size: 20),
         label: const Text('Trợ lý kỹ năng'),
       ),
       bottomNavigationBar: StudentBottomBar(

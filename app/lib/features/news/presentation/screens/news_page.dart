@@ -4,6 +4,7 @@ import '../providers/news_provider.dart';
 import '../widgets/news_card.dart';
 import '../widgets/news_filter_chips.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 
 class NewsPage extends StatefulWidget {
   const NewsPage({super.key, this.embedded = false});
@@ -105,7 +106,12 @@ class _NewsPageState extends State<NewsPage> {
                 return RefreshIndicator(
                   onRefresh: () => provider.loadNews(),
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      0,
+                      8,
+                      0,
+                      AppSpacing.bottomContentPadding,
+                    ),
                     itemCount: provider.articles.length,
                     itemBuilder: (context, index) {
                       return NewsCard(article: provider.articles[index]);
