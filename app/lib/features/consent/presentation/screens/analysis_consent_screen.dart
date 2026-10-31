@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import '../viewmodels/consent_view_model.dart';
 
 /// Màn hình xin phép phân tích tự động theo chuẩn Atom (F-006, Ticket 14, ADR-0010).
@@ -13,46 +14,64 @@ class AnalysisConsentScreen extends StatelessWidget {
     final vm = context.watch<ConsentViewModel>();
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Đồng ý phân tích tự động'),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.border),
+        ),
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             const Text(
               'Hệ thống sẽ đọc những dữ liệu sau:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 10),
-            const _BulletItem(text: 'Các repository GitHub công khai bạn liên kết hoặc cung cấp'),
-            const _BulletItem(text: 'File khai báo thư viện (pubspec.yaml, package.json, requirements.txt)'),
-            const _BulletItem(text: 'Nội dung README và cấu trúc mã nguồn ở thư mục gốc'),
-            const _BulletItem(text: 'Mô tả công việc (Job Description) để đo khoảng cách kỹ năng'),
+            const _BulletItem(
+                text: 'Các repository GitHub công khai bạn liên kết hoặc cung cấp'),
+            const _BulletItem(
+                text: 'File khai báo thư viện (pubspec.yaml, package.json, requirements.txt)'),
+            const _BulletItem(
+                text: 'Nội dung README và cấu trúc mã nguồn ở thư mục gốc'),
+            const _BulletItem(
+                text: 'Mô tả công việc (Job Description) để đo khoảng cách kỹ năng'),
             const SizedBox(height: 20),
             const Text(
               'Cam kết không bao giờ đọc:',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.errorRed,
+                color: AppColors.error,
               ),
             ),
             const SizedBox(height: 10),
-            const _BulletItem(text: 'Các repository riêng tư (Private repositories)'),
+            const _BulletItem(
+                text: 'Các repository riêng tư (Private repositories)'),
             const _BulletItem(text: 'Mật khẩu, token hoặc thông tin bí mật'),
             const _BulletItem(text: 'Dữ liệu lương hoặc liên hệ cá nhân'),
             const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
+                color: AppColors.primaryContainer,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.2),
+                ),
               ),
               child: const Text(
                 'Quy tắc trích xuất chạy hoàn toàn nội bộ với chi phí 0 USD, không gửi dữ liệu ra nhà cung cấp bên thứ ba. Bạn có thể bật hoặc tắt lại bất cứ lúc nào trong Cài đặt.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
             ),
             if (vm.failure != null)
@@ -60,7 +79,8 @@ class AnalysisConsentScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   vm.failure!.message,
-                  style: const TextStyle(color: AppTheme.errorRed, fontSize: 13),
+                  style:
+                      const TextStyle(color: AppColors.error, fontSize: 13),
                 ),
               ),
             const SizedBox(height: 28),
@@ -70,7 +90,16 @@ class AnalysisConsentScreen extends StatelessWidget {
                   child: SizedBox(
                     height: 48,
                     child: OutlinedButton(
-                      onPressed: vm.busy ? null : () => _handleChoice(context, vm, false),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusPill),
+                        ),
+                        side: const BorderSide(color: AppColors.border),
+                      ),
+                      onPressed: vm.busy
+                          ? null
+                          : () => _handleChoice(context, vm, false),
                       child: const Text('Từ chối'),
                     ),
                   ),
@@ -80,8 +109,20 @@ class AnalysisConsentScreen extends StatelessWidget {
                   child: SizedBox(
                     height: 48,
                     child: FilledButton(
-                      onPressed: vm.busy ? null : () => _handleChoice(context, vm, true),
-                      child: Text(vm.busy ? 'Đang lưu...' : 'Đồng ý & tiếp tục'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusPill),
+                        ),
+                      ),
+                      onPressed: vm.busy
+                          ? null
+                          : () => _handleChoice(context, vm, true),
+                      child: Text(
+                        vm.busy ? 'Đang lưu...' : 'Đồng ý & tiếp tục',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 ),
@@ -116,11 +157,14 @@ class _BulletItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('• ',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, color: AppColors.primary)),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+              style: const TextStyle(
+                  fontSize: 14, color: AppColors.textPrimary),
             ),
           ),
         ],
