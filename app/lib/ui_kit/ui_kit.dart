@@ -10,6 +10,7 @@ export 'app_card.dart';
 export 'app_confirm_dialog.dart';
 export 'app_divider.dart';
 export 'app_empty_state.dart';
+export 'app_error_banner.dart';
 export 'app_icon_button.dart';
 export 'app_segmented_tab.dart';
 export 'app_skeleton.dart';

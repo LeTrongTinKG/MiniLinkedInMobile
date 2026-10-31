@@ -25,6 +25,7 @@ class UiTokens {
   static const double radius = 12;
   static const double radiusLarge = 16;
   static const double radiusPill = 20;
+  static const double radiusSheet = 24;
   static const double radiusDock = 28;
 
   // Kích thước trợ năng tối thiểu (A11y Baseline)

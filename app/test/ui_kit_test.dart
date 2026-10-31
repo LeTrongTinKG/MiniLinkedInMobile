@@ -156,4 +156,36 @@ void main() {
     final size = t.getSize(find.byType(AppButton));
     expect(size.height, greaterThanOrEqualTo(48.0));
   });
+
+  testWidgets('AppEmptyState hien 2 nut hanh dong giai cuu luong cut', (t) async {
+    var primaryTapped = false;
+    var secondaryTapped = false;
+    await t.pumpWidget(_app(AppEmptyState(
+      title: 'Chua co don',
+      message: 'Hay tim viec lam ngay',
+      actionLabel: 'Tim viec',
+      onAction: () => primaryTapped = true,
+      secondaryActionLabel: 'Ve trang chu',
+      onSecondaryAction: () => secondaryTapped = true,
+    )));
+    expect(find.text('Chua co don'), findsOneWidget);
+    expect(find.text('Tim viec'), findsOneWidget);
+    expect(find.text('Ve trang chu'), findsOneWidget);
+    await t.tap(find.text('Tim viec'));
+    expect(primaryTapped, isTrue);
+    await t.tap(find.text('Ve trang chu'));
+    expect(secondaryTapped, isTrue);
+  });
+
+  testWidgets('AppErrorBanner hien thong bao loi va nut thu lai', (t) async {
+    var retryCalled = false;
+    await t.pumpWidget(_app(AppErrorBanner(
+      message: 'Mat ket noi mang',
+      onRetry: () => retryCalled = true,
+    )));
+    expect(find.text('Mat ket noi mang'), findsOneWidget);
+    expect(find.text('Thử lại'), findsOneWidget);
+    await t.tap(find.text('Thử lại'));
+    expect(retryCalled, isTrue);
+  });
 }
