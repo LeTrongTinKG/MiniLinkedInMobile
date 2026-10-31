@@ -100,4 +100,74 @@ async function decideSuggestion(userId, suggestionId, accept, repo = skillReposi
   return repo.acceptSuggestion(suggestion, confidenceFromEvidence(suggestion.evidence));
 }
 
-module.exports = { scanGithub, listSuggestions, listMySkills, decideSuggestion };
+async function addSelfClaimedSkill(userId, skillName, repo = skillRepository) {
+  requireUser(userId);
+  if (!skillName || typeof skillName !== "string" || skillName.trim().length === 0) {
+    throw new ApiError(400, "INVALID_SKILL_NAME", "Tên kỹ năng không được để trống");
+  }
+  return repo.addSelfClaimed(userId, skillName.trim());
+}
+
+async function deleteSkill(userId, skillName, repo = skillRepository) {
+  requireUser(userId);
+  if (!skillName || typeof skillName !== "string" || skillName.trim().length === 0) {
+    throw new ApiError(400, "INVALID_SKILL_NAME", "Tên kỹ năng không hợp lệ");
+  }
+  return repo.deleteSkill(userId, skillName.trim());
+}
+
+async function scanCustomRepo(userId, repoUrl, repo = skillRepository, reader = createGithubReader()) {
+  requireUser(userId);
+  if (!repoUrl || typeof repoUrl !== "string") {
+    throw new ApiError(400, "INVALID_REPO_URL", "Vui lòng cung cấp link GitHub repo hợp lệ");
+  }
+  const match = repoUrl.trim().match(/(?:https?:\/\/github\.com\/)?([^/\s]+)\/([^/\s#?]+)/i);
+  if (!match) {
+    throw new ApiError(400, "INVALID_REPO_URL", "Định dạng repo không đúng (ví dụ: owner/repo hoặc https://github.com/owner/repo)");
+  }
+  const fullName = `${match[1]}/${match[2].replace(/\.git$/i, "")}`;
+  try {
+    const source = await reader.readSingleRepo(fullName);
+    const owned = await repo.listSkills(userId);
+    const decided = await repo.listSuggestions(userId, ["accepted", "rejected"]);
+    const suggestions = extractSuggestions({
+      sources: [source],
+      existingNames: [...owned, ...decided].map((item) => item.skillName),
+    });
+    for (const suggestion of suggestions) {
+      await repo.upsertPending(userId, suggestion.name, suggestion.evidence);
+    }
+    return {
+      repo: fullName,
+      suggestions: (await repo.listSuggestions(userId, ["pending"])).map(annotateSuggestion),
+    };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    if (error instanceof GithubError) throw githubFailure(error);
+    throw error;
+  }
+}
+
+async function endorseSkill(endorserId, targetUserId, skillName, repo = skillRepository) {
+  requireUser(endorserId);
+  if (endorserId === targetUserId) {
+    throw new ApiError(400, "CANNOT_ENDORSE_SELF", "Không thể tự xác nhận kỹ năng của chính mình");
+  }
+  const callerSkills = await repo.listSkills(endorserId);
+  const hasCred = callerSkills.some((s) => s.skillName.toLowerCase() === skillName.toLowerCase() && (s.confidence === "evidenced" || s.confidence === "endorsed"));
+  if (!hasCred) {
+    throw new ApiError(403, "ENDORSE_REQUIRES_EVIDENCE", "Bạn cần có kỹ năng này ở mức 'Có bằng chứng' để xác nhận cho người khác");
+  }
+  return repo.endorseSkill(endorserId, targetUserId, skillName);
+}
+
+module.exports = {
+  scanGithub,
+  listSuggestions,
+  listMySkills,
+  decideSuggestion,
+  addSelfClaimedSkill,
+  deleteSkill,
+  scanCustomRepo,
+  endorseSkill,
+};

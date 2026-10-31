@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -38,11 +37,8 @@ import 'features/cv/data/repositories/cv_repository_impl.dart';
 import 'features/cv/domain/usecases/cv_usecases.dart';
 import 'features/cv/presentation/providers/cv_provider.dart';
 
-// Applications Feature (ứng tuyển, duyệt ứng viên, độ phù hợp)
+// Applications Feature
 import 'features/applications/data/application_remote_datasource.dart';
-import 'features/applications/presentation/providers/student_applications_provider.dart';
-import 'features/jobs/data/datasources/job_match_remote_datasource.dart';
-import 'features/recruiter_home/recruiter_jobs_datasource.dart';
 
 // Interactions Feature
 import 'features/interactions/data/datasources/interaction_datasource.dart';
@@ -50,15 +46,22 @@ import 'features/interactions/data/datasources/interaction_mock_datasource.dart'
 import 'features/interactions/data/datasources/interaction_remote_datasource.dart';
 import 'features/interactions/data/repositories/interaction_repository_impl.dart';
 import 'features/interactions/domain/repositories/interaction_repository.dart';
-import 'features/interactions/presentation/providers/interaction_provider.dart';
 
 // News Feature
 import 'features/news/data/datasources/news_remote_datasource.dart';
-import 'features/news/presentation/providers/news_provider.dart';
 
 // Home Features
 import 'features/student_home/student_home_screen.dart';
 import 'features/recruiter_home/recruiter_home_screen.dart';
+
+// MVVM & New Atom Features
+import 'core/di/app_providers.dart';
+import 'core/localization/locale_view_model.dart';
+import 'l10n/app_localizations.dart';
+import 'features/skills/presentation/screens/skills_screen.dart';
+import 'features/skills/presentation/screens/repo_upload_screen.dart';
+import 'features/consent/presentation/screens/analysis_consent_screen.dart';
+import 'features/profile/edit_profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,61 +112,46 @@ void main() async {
   final InteractionRepository interactionRepository =
       InteractionRepositoryImpl(interactionDataSource);
 
-  // 6. Applications Feature
+  // 6. Applications & News Features
   final applicationDataSource = ApplicationRemoteDataSource(dioClient.dio);
-  // 7. News Feature
   final newsDataSource = NewsRemoteDataSource(dioClient.dio);
+
+  final authProvider = AuthProvider(
+    loginUseCase: loginUseCase,
+    registerUseCase: registerUseCase,
+    getMeUseCase: getMeUseCase,
+    googleLoginUseCase: googleLoginUseCase,
+    githubLoginUseCase: githubLoginUseCase,
+    logoutUseCase: logoutUseCase,
+    googleAuthService: googleAuthService,
+    githubAuthService: githubAuthService,
+  );
+
+  final jobProvider = JobProvider(
+    getJobsUseCase: getJobsUseCase,
+    getAvailableSkillsUseCase: getAvailableSkillsUseCase,
+    preferences: preferencesStorage,
+  );
+
+  final cvProvider = CvProvider(
+    getCvs: getCvsUseCase,
+    uploadCv: uploadCvUseCase,
+    setDefault: setDefaultCvUseCase,
+    deleteCv: deleteCvUseCase,
+  );
 
   runApp(
     MultiProvider(
-      providers: [
-        // Dio dùng chung (đã gắn sẵn token) cho module social tự dựng repository
-        Provider<Dio>.value(value: dioClient.dio),
-        Provider<ApplicationRemoteDataSource>.value(value: applicationDataSource),
-        Provider<JobMatchRemoteDataSource>.value(
-          value: JobMatchRemoteDataSource(dioClient.dio),
-        ),
-        Provider<RecruiterJobsDataSource>.value(
-          value: RecruiterJobsDataSource(dioClient.dio),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => StudentApplicationsProvider(applicationDataSource),
-        ),
-        Provider<InteractionRepository>.value(value: interactionRepository),
-        ChangeNotifierProvider(
-          create: (_) => InteractionProvider(interactionRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(
-            loginUseCase: loginUseCase,
-            registerUseCase: registerUseCase,
-            getMeUseCase: getMeUseCase,
-            googleLoginUseCase: googleLoginUseCase,
-            githubLoginUseCase: githubLoginUseCase,
-            logoutUseCase: logoutUseCase,
-            googleAuthService: googleAuthService,
-            githubAuthService: githubAuthService,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => JobProvider(
-            getJobsUseCase: getJobsUseCase,
-            getAvailableSkillsUseCase: getAvailableSkillsUseCase,
-            preferences: preferencesStorage,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CvProvider(
-            getCvs: getCvsUseCase,
-            uploadCv: uploadCvUseCase,
-            setDefault: setDefaultCvUseCase,
-            deleteCv: deleteCvUseCase,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => NewsProvider(newsDataSource),
-        ),
-      ],
+      providers: buildAppProviders(
+        dio: dioClient.dio,
+        applicationDataSource: applicationDataSource,
+        interactionRepository: interactionRepository,
+        authProvider: authProvider,
+        jobProvider: jobProvider,
+        cvProvider: cvProvider,
+        newsDataSource: newsDataSource,
+        preferencesStorage: preferencesStorage,
+      ),
       child: const MiniLinkedInApp(),
     ),
   );
@@ -174,14 +162,17 @@ class MiniLinkedInApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ShadApp.custom: nạp theme của ui_kit (giống bọc <ThemeProvider> trong React).
-    // MaterialApp bên trong vẫn dùng AppTheme.lightTheme nên màn hình cũ không đổi.
+    final localeVm = context.watch<LocaleViewModel>();
+
     return ShadApp.custom(
       theme: buildAppShadTheme(),
       appBuilder: (context) => MaterialApp(
         title: 'Mini LinkedIn',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        locale: localeVm.locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => ShadAppBuilder(child: child!),
         initialRoute: '/',
         routes: {
@@ -190,6 +181,10 @@ class MiniLinkedInApp extends StatelessWidget {
           '/register': (context) => const RegisterScreen(),
           '/student-home': (context) => const StudentHomeScreen(),
           '/recruiter-home': (context) => const RecruiterHomeScreen(),
+          '/skills': (context) => const SkillsScreen(),
+          '/analysis-consent': (context) => const AnalysisConsentScreen(),
+          '/repo-evidence': (context) => const RepoUploadScreen(),
+          '/edit-profile': (context) => const EditProfilePage(),
         },
       ),
     );

@@ -1,6 +1,12 @@
-from fastapi import FastAPI, UploadFile, File
+import logging
+
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+
+from extractor import analyze_pdf
+
+logger = logging.getLogger("ai-service")
 
 app = FastAPI(
     title="Mini LinkedIn AI Service",
@@ -40,30 +46,47 @@ def health_check():
 @app.post("/analyze-cv", response_model=AnalyzeCvResponse)
 async def analyze_cv(file: UploadFile = File(...)):
     """
-    Trích xuất kỹ năng, học vấn, kinh nghiệm từ file PDF CV
-    (Mock implementation phục vụ giai đoạn đầu)
+    Trích xuất kỹ năng, học vấn, kinh nghiệm từ file PDF CV.
+    Dùng pdfplumber để đọc text thật trong PDF, sau đó dò skill bằng từ điển regex
+    (cùng bộ từ điển với server Node — ADR-0004, ADR-0005).
     """
-    # TODO (AI Track): Đọc nội dung PDF bằng pdfplumber và trích xuất thực tế
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Chỉ chấp nhận file PDF")
+
+    content = await file.read()
+    if len(content) < 5:
+        raise HTTPException(status_code=400, detail="File rỗng hoặc quá nhỏ")
+    # Kiểm tra magic bytes PDF (%PDF)
+    if content[:4] != b"%PDF":
+        raise HTTPException(status_code=400, detail="File không phải định dạng PDF hợp lệ")
+
+    try:
+        result = analyze_pdf(content)
+    except Exception as exc:
+        logger.warning("Không đọc được PDF: %s", exc)
+        # PDF hỏng hoặc không trích được chữ → trả rỗng, không bịa (ADR-0005)
+        return AnalyzeCvResponse(skills=[], education=None, experience_months=0)
+
     return AnalyzeCvResponse(
-        skills=["flutter", "dart", "git", "rest api"],
-        education="CNTT Đại học",
-        experience_months=6
+        skills=result["skills"],
+        education=result["education"],
+        experience_months=result["experience_months"],
     )
 
 @app.post("/match", response_model=MatchResponse)
 def match_cv_job(request: MatchRequest):
     """
-    Chấm điểm độ phù hợp giữa kỹ năng trong CV và yêu cầu Job
+    Chấm điểm độ phù hợp giữa kỹ năng trong CV và yêu cầu Job.
     """
     cv_skills_lower = [s.strip().lower() for s in request.cv_skills]
     req_skills_lower = [s.strip().lower() for s in request.job.required_skills]
-    
+
     matched = [s for s in req_skills_lower if s in cv_skills_lower]
     missing = [s for s in req_skills_lower if s not in cv_skills_lower]
-    
+
     total_req = len(req_skills_lower)
     score = int((len(matched) / total_req * 100)) if total_req > 0 else 100
-    
+
     suggestion = None
     if missing:
         suggestion = f"Bạn nên bổ sung hoặc học thêm về: {', '.join(missing)}"
@@ -76,4 +99,3 @@ def match_cv_job(request: MatchRequest):
         missing_skills=missing,
         suggestion=suggestion
     )
-

@@ -11,6 +11,9 @@ import 'package:app/features/profile/edit_profile_page.dart';
 import 'package:app/features/skills/data/skill_remote_datasource.dart';
 import 'package:app/features/skills/presentation/github_skill_section.dart';
 import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
+import 'package:app/features/skills/presentation/screens/repo_upload_screen.dart';
+import 'package:app/features/skills/presentation/screens/skills_screen.dart';
+import '../../core/localization/widgets/language_switch_button.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -94,12 +97,31 @@ class _ProfilePageState extends State<ProfilePage> {
                           return CvSection(
                             cvs: cv.cvs,
                             onUpload: _handleUpload,
+                            onUploadRepo: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const RepoUploadScreen(),
+                                ),
+                              );
+                            },
                             onDelete: (id) => cv.deleteCv(id),
                             onSetDefault: (id) => cv.setDefault(id),
                           );
                         },
                       ),
                       if (auth.isStudent) ...[
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(Icons.stars_outlined, color: AppTheme.primaryBlue),
+                          title: const Text('Kỹ năng & Bằng chứng (3 cấp độ)', style: TextStyle(fontWeight: FontWeight.w600)),
+                          subtitle: const Text('Tự khai, có bằng chứng repo, hoặc được xác nhận', style: TextStyle(fontSize: 12)),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SkillsScreen()),
+                            );
+                          },
+                        ),
                         const Divider(height: 1),
                         ChangeNotifierProvider(
                           create: (c) => SkillSuggestionProvider(
@@ -145,6 +167,8 @@ class _ProfileAppBar extends StatelessWidget {
               ),
             ),
           ),
+          const LanguageSwitchButton(),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.settings_outlined,
                 color: AppTheme.textSecondary),

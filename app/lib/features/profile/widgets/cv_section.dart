@@ -7,6 +7,7 @@ import 'package:app/features/profile/widgets/cv_empty_state.dart';
 class CvSection extends StatelessWidget {
   final List<CvEntity> cvs;
   final VoidCallback onUpload;
+  final VoidCallback? onUploadRepo;
   final void Function(String id) onDelete;
   final void Function(String id) onSetDefault;
 
@@ -14,6 +15,7 @@ class CvSection extends StatelessWidget {
     super.key,
     required this.cvs,
     required this.onUpload,
+    this.onUploadRepo,
     required this.onDelete,
     required this.onSetDefault,
   });
@@ -21,7 +23,10 @@ class CvSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (cvs.isEmpty) {
-      return CvEmptyState(onUpload: onUpload);
+      return CvEmptyState(
+        onUpload: onUpload,
+        onUploadRepo: onUploadRepo,
+      );
     }
 
     return Column(
@@ -66,10 +71,22 @@ class CvSection extends StatelessWidget {
         const SizedBox(height: 4),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: OutlinedButton.icon(
-            onPressed: onUpload,
-            icon: const Icon(Icons.upload_outlined, size: 18),
-            label: const Text('Tải CV lên (PDF, tối đa 5 MB)'),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onUpload,
+                icon: const Icon(Icons.upload_outlined, size: 18),
+                label: const Text('Tải CV lên (PDF)'),
+              ),
+              if (onUploadRepo != null)
+                FilledButton.tonalIcon(
+                  onPressed: onUploadRepo,
+                  icon: const Icon(Icons.code, size: 18),
+                  label: const Text('Up Repo thay vì CV'),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 6),

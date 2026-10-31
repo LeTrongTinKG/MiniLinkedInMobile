@@ -97,7 +97,16 @@ function createGithubReader({ fetchImpl = fetch, token = process.env.GITHUB_READ
     return sources;
   }
 
-  return { readOwnRepos, loginFor: loginForId };
+  async function readSingleRepo(fullName) {
+    const encoded = fullName.split("/").map(encodeURIComponent).join("/");
+    const repoInfo = await get(`/repos/${encoded}`);
+    if (!repoInfo || typeof repoInfo.full_name !== "string") {
+      throw new GithubError("NOT_FOUND");
+    }
+    return readRepo(repoInfo);
+  }
+
+  return { readOwnRepos, loginFor: loginForId, readSingleRepo };
 }
 
 module.exports = { createGithubReader, GithubError, MAX_REPOS };
