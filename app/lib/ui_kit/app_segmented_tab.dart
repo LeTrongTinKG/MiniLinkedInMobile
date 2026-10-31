@@ -99,3 +99,4 @@ class AppSegmentedTab extends StatelessWidget {
     );
   }
 }
+
