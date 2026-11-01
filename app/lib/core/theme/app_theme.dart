@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'app_dark_theme.dart';
 
 class AppTheme {
   AppTheme._();
@@ -18,6 +19,8 @@ class AppTheme {
   static const Color divider = AppColors.border;
   static const Color errorRed = AppColors.error;
   static const Color successGreen = AppColors.salary;
+
+  static ThemeData get darkTheme => buildAppDarkTheme();
 
   static ThemeData get lightTheme {
     final base = GoogleFonts.beVietnamProTextTheme();

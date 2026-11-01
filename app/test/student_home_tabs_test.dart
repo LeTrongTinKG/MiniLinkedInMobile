@@ -91,7 +91,7 @@ Widget _buildHome() {
       theme: buildAppShadTheme(),
       appBuilder: (context) => MaterialApp(
         builder: (context, child) => ShadAppBuilder(child: child!),
-        home: const StudentHomeScreen(),
+        home: const StudentHomeScreen(useDock: false),
       ),
     ),
   );

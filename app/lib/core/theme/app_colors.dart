@@ -37,6 +37,16 @@ class AppColors {
   static const Color evidence = Color(0xFF6366F1); // Indigo 500
   static const Color selfClaimed = Color(0xFF64748B); // Slate 500
 
+  // Dark Mode Tokens
+  static const Color darkBackground = Color(0xFF0F172A); // Slate 900
+  static const Color darkSurface = Color(0xFF1E293B); // Slate 800
+  static const Color darkSurfaceSubtle = Color(0xFF334155); // Slate 700
+  static const Color darkBorder = Color(0xFF334155); // Slate 700
+  static const Color darkTextPrimary = Color(0xFFF8FAFC); // Slate 50
+  static const Color darkTextSecondary = Color(0xFFCBD5E1); // Slate 300
+  static const Color darkTextMuted = Color(0xFF94A3B8); // Slate 400
+  static const Color darkCardShadow = Color(0x33000000);
+
   // 8 stable logo colors: [background, foreground]
   static const List<List<Color>> _logoPalette = [
     [Color(0xFFDCE4F7), Color(0xFF1E3E9E)], // blue

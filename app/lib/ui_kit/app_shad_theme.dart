@@ -21,3 +21,19 @@ ShadThemeData buildAppShadTheme() {
     radius: const BorderRadius.all(Radius.circular(UiTokens.radius)),
   );
 }
+
+/// Cấu hình theme dark mode cho shadcn_ui
+ShadThemeData buildAppShadDarkTheme() {
+  return ShadThemeData(
+    brightness: Brightness.dark,
+    colorScheme: const ShadSlateColorScheme.dark(
+      primary: Color(0xFF60A5FA),
+      primaryForeground: Color(0xFF0F172A),
+      destructive: UiTokens.destructive,
+      ring: Color(0xFF60A5FA),
+      border: Color(0xFF334155),
+      input: Color(0xFF334155),
+    ),
+    radius: const BorderRadius.all(Radius.circular(UiTokens.radius)),
+  );
+}

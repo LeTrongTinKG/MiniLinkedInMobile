@@ -16,8 +16,9 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      color: AppColors.surface,
+      color: theme.colorScheme.surface,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -32,10 +33,10 @@ class AppHeader extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const Spacer(),

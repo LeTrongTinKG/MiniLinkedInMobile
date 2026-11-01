@@ -26,6 +26,7 @@ import '../../features/skills/presentation/viewmodels/repo_upload_view_model.dar
 import '../../features/skills/presentation/viewmodels/skills_view_model.dart';
 import '../localization/locale_view_model.dart';
 import '../storage/preferences_storage.dart';
+import '../theme/theme_view_model.dart';
 
 List<SingleChildWidget> buildAppProviders({
   required Dio dio,
@@ -66,5 +67,6 @@ List<SingleChildWidget> buildAppProviders({
     ChangeNotifierProvider(create: (c) => SkillSuggestionProvider(c.read<SkillRemoteDataSource>())),
     ChangeNotifierProvider(create: (c) => ProfileEditViewModel(c.read<ProfileRepository>())),
     ChangeNotifierProvider(create: (_) => LocaleViewModel(preferencesStorage)..loadLocale()),
+    ChangeNotifierProvider(create: (_) => ThemeViewModel(preferencesStorage)..loadThemeMode()),
   ];
 }
