@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,7 +9,6 @@ import 'package:app/features/profile/widgets/profile_app_bar.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
 import 'package:app/features/profile/widgets/cv_section.dart';
 import 'package:app/features/profile/edit_profile_page.dart';
-import 'package:app/features/skills/data/skill_remote_datasource.dart';
 import 'package:app/features/skills/presentation/github_skill_section.dart';
 import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
 import 'package:app/features/skills/presentation/screens/repo_upload_screen.dart';
@@ -28,7 +26,9 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<CvProvider>().loadCvs();
+      context.read<SkillSuggestionProvider>().load();
     });
   }
 
@@ -129,12 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             },
                           ),
                           const Divider(height: 24),
-                          ChangeNotifierProvider(
-                            create: (c) => SkillSuggestionProvider(
-                              SkillRemoteDataSource(c.read<Dio>()),
-                            )..load(),
-                            child: const GithubSkillSection(),
-                          ),
+                          const GithubSkillSection(),
                         ],
                       ],
                     ),

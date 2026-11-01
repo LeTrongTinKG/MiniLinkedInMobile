@@ -17,6 +17,8 @@ import 'package:app/core/services/google_auth_service.dart';
 import 'package:app/core/localization/locale_view_model.dart';
 import 'package:app/core/storage/preferences_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:app/features/skills/data/skill_remote_datasource.dart';
+import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
 
 class _FakeAuthRepo implements AuthRepository {
   final user = UserEntity(
@@ -98,6 +100,7 @@ void main() {
           ChangeNotifierProvider.value(value: authProvider),
           ChangeNotifierProvider.value(value: cvProvider),
           ChangeNotifierProvider.value(value: localeVm),
+          ChangeNotifierProvider(create: (_) => SkillSuggestionProvider(SkillRemoteDataSource(Dio()))),
           Provider<Dio>(create: (_) => Dio()),
         ],
         child: ShadApp.custom(
