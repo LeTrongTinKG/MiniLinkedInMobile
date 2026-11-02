@@ -13,25 +13,28 @@ class JobFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentMode = provider.filter.workMode;
     final currentLevel = provider.filter.level;
+    final skills = provider.filter.selectedSkills;
+    final isAll = currentMode == null && currentLevel == null && skills.isEmpty;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
         children: [
-          _chip(context, 'Tất cả', currentMode == null && currentLevel == null, () {
-            provider.setWorkMode(null);
-            provider.setLevel(null);
-          }),
+          _chip(context, 'Tất cả', isAll, () => provider.resetFilter()),
+          _chip(context, 'Flutter', skills.contains('Flutter'), () => provider.toggleSkill('Flutter')),
+          _chip(context, 'React', skills.contains('React'), () => provider.toggleSkill('React')),
+          _chip(context, 'AI / Python', skills.contains('Python'), () => provider.toggleSkill('Python')),
           _chip(context, 'Intern', currentLevel == JobLevel.intern,
-              () => provider.setLevel(JobLevel.intern)),
+              () => provider.setLevel(currentLevel == JobLevel.intern ? null : JobLevel.intern)),
           _chip(context, 'Fresher', currentLevel == JobLevel.fresher,
-              () => provider.setLevel(JobLevel.fresher)),
+              () => provider.setLevel(currentLevel == JobLevel.fresher ? null : JobLevel.fresher)),
           _chip(context, 'Remote', currentMode == WorkMode.remote,
-              () => provider.setWorkMode(WorkMode.remote)),
+              () => provider.setWorkMode(currentMode == WorkMode.remote ? null : WorkMode.remote)),
           _chip(context, 'Hybrid', currentMode == WorkMode.hybrid,
-              () => provider.setWorkMode(WorkMode.hybrid)),
+              () => provider.setWorkMode(currentMode == WorkMode.hybrid ? null : WorkMode.hybrid)),
           _chip(context, 'Tại VP', currentMode == WorkMode.onsite,
-              () => provider.setWorkMode(WorkMode.onsite)),
+              () => provider.setWorkMode(currentMode == WorkMode.onsite ? null : WorkMode.onsite)),
           const SizedBox(width: AppSpacing.lg),
         ],
       ),

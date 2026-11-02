@@ -114,7 +114,9 @@ if (require.main === module) {
       await prisma.$connect();
       console.log("✅ Đã kết nối cơ sở dữ liệu Supabase thành công!");
       const { startNewsCron } = require("./services/news/news-cron");
+      const { startJobCron } = require("./services/job-cron");
       startNewsCron();
+      startJobCron();
       require("./services/coach.service").warmUp();
     } catch (error) {
       console.error("❌ Lỗi kết nối Supabase:", error);
