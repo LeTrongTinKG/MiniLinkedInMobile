@@ -22,3 +22,7 @@ server/scripts/social/*.local.txt
 
 # Ghi chú cá nhân ở thư mục gốc (không đẩy lên git)
 /*.local.md
+
+# OS
+.DS_Store
+*/.DS_Store

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/coach_models.dart';
 import '../coach_provider.dart';
 import 'chat_suggestions.dart';
+import 'coach_answer_card.dart';
 
 class CoachChatView extends StatelessWidget {
   final CoachProvider provider;
@@ -29,7 +31,11 @@ class CoachChatView extends StatelessWidget {
           children: [
             const Text(
               'Trợ lý kỹ năng',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -37,7 +43,7 @@ class CoachChatView extends StatelessWidget {
                 color: s.remaining > 0
                     ? AppColors.primaryContainer
                     : AppColors.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
               ),
               child: Text(
                 'còn ${s.remaining}/${s.limit} câu hôm nay',
@@ -57,7 +63,8 @@ class CoachChatView extends StatelessWidget {
           header: const ChatSuggestionsHeader(
             icon: Icon(Icons.auto_awesome, size: 16, color: AppColors.primary),
             title: 'Gợi ý câu hỏi',
-            description: 'Chạm vào câu hỏi để trợ lý phân tích kỹ năng & lộ trình:',
+            description:
+                'Chạm vào câu hỏi để trợ lý phân tích kỹ năng & lộ trình:',
           ),
           content: ChatSuggestionsContent(
             children: [
@@ -70,7 +77,7 @@ class CoachChatView extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 16),
+        const Divider(height: 16, color: AppColors.border),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -89,83 +96,58 @@ class CoachChatView extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.error.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusChip),
                       border: Border.all(
                         color: AppColors.error.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
                       provider.errorMessage!,
-                      style: const TextStyle(color: AppTheme.errorRed, fontSize: 13),
+                      style: const TextStyle(
+                          color: AppTheme.errorRed, fontSize: 13),
                     ),
                   ),
-                if (out != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          out.answer,
-                          style: const TextStyle(fontSize: 14, height: 1.45),
-                        ),
-                        if (out.sources.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            children: [
-                              for (final src in out.sources)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryContainer,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    'Căn cứ: $src',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.onPrimaryContainer,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
+                if (out != null) CoachAnswerCard(answer: out),
               ],
             ),
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          maxLength: 300,
-          enabled: !provider.asking && s.remaining > 0,
-          decoration: InputDecoration(
-            hintText: s.remaining == 0
-                ? 'Hết lượt hôm nay, hỏi lại ngày mai'
-                : 'Hỏi ngắn về skill hoặc lộ trình',
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: provider.asking || s.remaining == 0 ? null : onAsk,
-            ),
-          ),
-          onSubmitted: (_) => onAsk(),
-        ),
+        _buildInputField(s),
       ],
+    );
+  }
+
+  Widget _buildInputField(CoachSettings s) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+      borderSide: const BorderSide(color: AppColors.border),
+    );
+    return TextField(
+      controller: controller,
+      maxLength: 300,
+      enabled: !provider.asking && s.remaining > 0,
+      decoration: InputDecoration(
+        hintText: s.remaining == 0
+            ? 'Hết lượt hôm nay, hỏi lại ngày mai'
+            : 'Hỏi ngắn về skill hoặc lộ trình',
+        hintStyle: const TextStyle(fontSize: 14, color: AppColors.textMuted),
+        filled: true,
+        fillColor: AppColors.background,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        border: border,
+        enabledBorder: border,
+        focusedBorder: border.copyWith(
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.send_rounded, color: AppColors.primary),
+          onPressed: provider.asking || s.remaining == 0 ? null : onAsk,
+        ),
+      ),
+      onSubmitted: (_) => onAsk(),
     );
   }
 }

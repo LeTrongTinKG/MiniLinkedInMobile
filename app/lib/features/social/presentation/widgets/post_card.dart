@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../ui_kit/ui_kit.dart';
 import '../../domain/entities/post.dart';
 import 'post_action_bar.dart';
@@ -20,13 +21,26 @@ class PostCard extends StatelessWidget {
     final shared = post.sharedPost;
 
     return Container(
-      color: Colors.white,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 4, 8),
+            padding: const EdgeInsets.fromLTRB(14, 14, 6, 8),
             child: PostHeader(
               post: post,
               onEdit: () => openEditPost(context, post),
@@ -37,14 +51,14 @@ class PostCard extends StatelessWidget {
           // 2. Chữ
           if (post.content.trim().isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
               child: PostText(content: post.content),
             ),
 
           // 3. Bài gốc được chia sẻ (nếu là bài chia sẻ)
           if (shared != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
               child: SharedPostBox(
                 original: shared,
                 onOpenImage: (i) => openImageViewer(context, shared.media, i),
@@ -65,7 +79,10 @@ class PostCard extends StatelessWidget {
           ),
 
           // 6. Ba nút
-          const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: AppDivider()),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14),
+            child: AppDivider(),
+          ),
           PostActionBar(
             post: post,
             onReact: (kind) => reactToPost(context, post, kind),

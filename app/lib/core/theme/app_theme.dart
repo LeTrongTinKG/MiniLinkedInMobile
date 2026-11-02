@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'app_dark_theme.dart';
 
 class AppTheme {
   AppTheme._();
@@ -19,6 +20,8 @@ class AppTheme {
   static const Color errorRed = AppColors.error;
   static const Color successGreen = AppColors.salary;
 
+  static ThemeData get darkTheme => buildAppDarkTheme();
+
   static ThemeData get lightTheme {
     final base = GoogleFonts.beVietnamProTextTheme();
     return ThemeData(
@@ -35,6 +38,7 @@ class AppTheme {
         error: AppColors.error,
         onError: AppColors.surface,
         outline: AppColors.border,
+        surfaceContainerHighest: AppColors.surfaceSubtle,
       ),
       scaffoldBackgroundColor: AppColors.background,
       textTheme: base.copyWith(
@@ -68,7 +72,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.surface,
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusButton),
           ),
@@ -81,7 +85,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(64, 48),
           side: const BorderSide(color: AppColors.primary, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusButton),

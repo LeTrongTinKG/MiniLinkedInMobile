@@ -207,6 +207,12 @@ async function googleLogin({ idToken }) {
     }
   }
 
+  // Tài khoản chưa có ảnh (đăng ký email trước rồi mới bấm Google) thì lấy ảnh từ Google.
+  // Đã có ảnh thì giữ nguyên, không ghi đè ảnh người dùng tự chọn.
+  if (payload.picture && !user.avatarUrl) {
+    user = await userRepository.updateUser(user.id, { avatarUrl: payload.picture });
+  }
+
   const tokens = await createSession(user);
   return { user, ...tokens, isNewUser };
 }

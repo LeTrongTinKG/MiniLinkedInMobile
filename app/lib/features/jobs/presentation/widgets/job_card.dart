@@ -55,18 +55,19 @@ class _JobCardState extends State<JobCard> {
           transform: Matrix4.translationValues(0, _hovered ? -2 : 0, 0),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
+            border: Border.all(color: AppColors.border, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: _hovered ? 0.16 : 0.10),
-                blurRadius: _hovered ? 6 : 2,
-                offset: const Offset(0, 1),
+                color: AppColors.cardShadow,
+                blurRadius: _hovered ? 12 : 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
             clipBehavior: Clip.antiAlias,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

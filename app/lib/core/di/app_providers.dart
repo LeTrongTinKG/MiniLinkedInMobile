@@ -21,10 +21,12 @@ import '../../features/recruiter_home/recruiter_jobs_datasource.dart';
 import '../../features/skills/data/skill_remote_datasource.dart';
 import '../../features/skills/data/skill_repository_impl.dart';
 import '../../features/skills/domain/repositories/skill_repository.dart';
+import '../../features/skills/presentation/skill_suggestion_provider.dart';
 import '../../features/skills/presentation/viewmodels/repo_upload_view_model.dart';
 import '../../features/skills/presentation/viewmodels/skills_view_model.dart';
 import '../localization/locale_view_model.dart';
 import '../storage/preferences_storage.dart';
+import '../theme/theme_view_model.dart';
 
 List<SingleChildWidget> buildAppProviders({
   required Dio dio,
@@ -62,7 +64,9 @@ List<SingleChildWidget> buildAppProviders({
     ChangeNotifierProvider(create: (c) => SkillsViewModel(c.read<SkillRepository>())..load()),
     ChangeNotifierProvider(create: (c) => ConsentViewModel(c.read<ConsentRemoteDataSource>())..load()),
     ChangeNotifierProvider(create: (c) => RepoUploadViewModel(c.read<SkillRepository>())),
+    ChangeNotifierProvider(create: (c) => SkillSuggestionProvider(c.read<SkillRemoteDataSource>())),
     ChangeNotifierProvider(create: (c) => ProfileEditViewModel(c.read<ProfileRepository>())),
     ChangeNotifierProvider(create: (_) => LocaleViewModel(preferencesStorage)..loadLocale()),
+    ChangeNotifierProvider(create: (_) => ThemeViewModel(preferencesStorage)..loadThemeMode()),
   ];
 }

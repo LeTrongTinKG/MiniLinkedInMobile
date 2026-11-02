@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'ui_tokens.dart';
 
 // Các kiểu nút. Ví với React: <Button variant="outline" size="sm" />
 enum AppButtonVariant { primary, secondary, outline, ghost, destructive }
@@ -59,28 +60,57 @@ class AppButton extends StatelessWidget {
     final shadSize = _toShadSize(size);
     final width = fullWidth ? double.infinity : null;
 
-    // 4) Chọn kiểu nút theo variant
+    Widget btn;
     switch (variant) {
       case AppButtonVariant.secondary:
-        return ShadButton.secondary(
-            onPressed: handler, size: shadSize, width: width,
-            leading: leading, child: child);
+        btn = ShadButton.secondary(
+          onPressed: handler,
+          size: shadSize,
+          width: width,
+          leading: leading,
+          child: child,
+        );
       case AppButtonVariant.outline:
-        return ShadButton.outline(
-            onPressed: handler, size: shadSize, width: width,
-            leading: leading, child: child);
+        btn = ShadButton.outline(
+          onPressed: handler,
+          size: shadSize,
+          width: width,
+          leading: leading,
+          child: child,
+        );
       case AppButtonVariant.ghost:
-        return ShadButton.ghost(
-            onPressed: handler, size: shadSize, width: width,
-            leading: leading, child: child);
+        btn = ShadButton.ghost(
+          onPressed: handler,
+          size: shadSize,
+          width: width,
+          leading: leading,
+          child: child,
+        );
       case AppButtonVariant.destructive:
-        return ShadButton.destructive(
-            onPressed: handler, size: shadSize, width: width,
-            leading: leading, child: child);
+        btn = ShadButton.destructive(
+          onPressed: handler,
+          size: shadSize,
+          width: width,
+          leading: leading,
+          child: child,
+        );
       case AppButtonVariant.primary:
-        return ShadButton(
-            onPressed: handler, size: shadSize, width: width,
-            leading: leading, child: child);
+        btn = ShadButton(
+          onPressed: handler,
+          size: shadSize,
+          width: width,
+          leading: leading,
+          child: child,
+        );
     }
+
+    // Đảm bảo vùng chạm đạt chuẩn A11y (>= 48dp)
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minHeight: UiTokens.minTouchTarget,
+        minWidth: fullWidth ? double.infinity : UiTokens.minTouchTarget,
+      ),
+      child: btn,
+    );
   }
 }

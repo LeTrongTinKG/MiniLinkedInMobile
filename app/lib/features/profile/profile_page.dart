@@ -1,19 +1,18 @@
-import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/cv/presentation/providers/cv_provider.dart';
+import 'package:app/features/profile/widgets/profile_app_bar.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
 import 'package:app/features/profile/widgets/cv_section.dart';
 import 'package:app/features/profile/edit_profile_page.dart';
-import 'package:app/features/skills/data/skill_remote_datasource.dart';
 import 'package:app/features/skills/presentation/github_skill_section.dart';
 import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
 import 'package:app/features/skills/presentation/screens/repo_upload_screen.dart';
 import 'package:app/features/skills/presentation/screens/skills_screen.dart';
-import '../../core/localization/widgets/language_switch_button.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -27,12 +26,13 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<CvProvider>().loadCvs();
+      context.read<SkillSuggestionProvider>().load();
     });
   }
 
   Future<void> _handleUpload() async {
-    // file_picker v12+: FilePicker.pickFiles() returns List<PlatformFile>
     final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
@@ -59,120 +59,112 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          final user = auth.currentUser;
-          return Column(
-            children: [
-              _ProfileAppBar(onSettings: () {}),
-              const Divider(height: 1),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ProfileHeader(
-                        name: user?.displayName ?? 'Người dùng',
-                        headline: 'Sinh viên CNTT năm 4 · tìm thực tập Flutter',
-                        location: 'TP. Hồ Chí Minh',
-                        onEditProfile: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const EditProfilePage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      Consumer<CvProvider>(
-                        builder: (context, cv, _) {
-                          if (cv.isLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 48),
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-                          return CvSection(
-                            cvs: cv.cvs,
-                            onUpload: _handleUpload,
-                            onUploadRepo: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const RepoUploadScreen(),
-                                ),
-                              );
-                            },
-                            onDelete: (id) => cv.deleteCv(id),
-                            onSetDefault: (id) => cv.setDefault(id),
-                          );
-                        },
-                      ),
-                      if (auth.isStudent) ...[
-                        const Divider(height: 1),
-                        ListTile(
-                          leading: const Icon(Icons.stars_outlined, color: AppTheme.primaryBlue),
-                          title: const Text('Kỹ năng & Bằng chứng (3 cấp độ)', style: TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: const Text('Tự khai, có bằng chứng repo, hoặc được xác nhận', style: TextStyle(fontSize: 12)),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        bottom: false,
+        child: Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            final user = auth.currentUser;
+            return Column(
+              children: [
+                ProfileAppBar(onSettings: () {}),
+                const Divider(height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, AppSpacing.bottomContentPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildPrivacyBanner(),
+                        const SizedBox(height: 12),
+                        ProfileHeader(
+                          name: user?.displayName ?? 'Người dùng',
+                          avatarUrl: user?.avatarUrl,
+                          headline: 'Sinh viên CNTT · tìm thực tập Flutter',
+                          location: 'TP. Hồ Chí Minh',
+                          onEditProfile: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const SkillsScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfilePage(),
+                              ),
                             );
                           },
                         ),
-                        const Divider(height: 1),
-                        ChangeNotifierProvider(
-                          create: (c) => SkillSuggestionProvider(
-                            SkillRemoteDataSource(c.read<Dio>()),
-                          )..load(),
-                          child: const GithubSkillSection(),
+                        const Divider(height: 24),
+                        Consumer<CvProvider>(
+                          builder: (context, cv, _) {
+                            if (cv.isLoading) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 48),
+                                child: Center(child: CircularProgressIndicator()),
+                              );
+                            }
+                            return CvSection(
+                              cvs: cv.cvs,
+                              onUpload: _handleUpload,
+                              onUploadRepo: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const RepoUploadScreen(),
+                                  ),
+                                );
+                              },
+                              onDelete: (id) => cv.deleteCv(id),
+                              onSetDefault: (id) => cv.setDefault(id),
+                            );
+                          },
                         ),
+                        if (auth.isStudent) ...[
+                          const Divider(height: 24),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.stars_outlined, color: AppColors.primary),
+                            title: const Text('Kỹ năng & Bằng chứng (3 cấp độ)', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Tự khai, có bằng chứng repo, hoặc được xác nhận', style: TextStyle(fontSize: 12)),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const SkillsScreen()),
+                              );
+                            },
+                          ),
+                          const Divider(height: 24),
+                          const GithubSkillSection(),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
-}
 
-class _ProfileAppBar extends StatelessWidget {
-  final VoidCallback? onSettings;
-  const _ProfileAppBar({this.onSettings});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildPrivacyBanner() {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.successContainer,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+        border: Border.all(color: AppColors.successBorder, width: 1),
+      ),
       child: Row(
-        children: [
-          const BackButton(),
-          const Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Text(
-                'Hồ sơ',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
+        children: const [
+          Icon(Icons.lock, size: 16, color: AppColors.salary),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Hồ sơ bảo vệ riêng tư mặc định (Chuẩn Atom)',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.successDark,
               ),
             ),
-          ),
-          const LanguageSwitchButton(),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined,
-                color: AppTheme.textSecondary),
-            onPressed: onSettings,
           ),
         ],
       ),

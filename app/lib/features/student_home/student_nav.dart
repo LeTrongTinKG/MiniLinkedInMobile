@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/ui_kit/app_avatar.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:app/features/profile/profile_page.dart';
@@ -31,14 +32,13 @@ class StudentDrawer extends StatelessWidget {
   void _openPage(BuildContext context, Widget page) {
     final nav = Navigator.of(context);
     nav.pop();
-    nav.push(MaterialPageRoute(builder: (_) => Scaffold(body: page)));
+    nav.push(MaterialPageRoute(builder: (_) => page));
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final name = auth.currentUser?.displayName ?? '';
-    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
     return Drawer(
       backgroundColor: AppColors.surface,
@@ -50,15 +50,7 @@ class StudentDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.primaryContainer,
-                    child: Text(initial,
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.onPrimaryContainer)),
-                  ),
+                  AppAvatar(imageUrl: auth.currentUser?.avatarUrl, name: name, size: 48),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

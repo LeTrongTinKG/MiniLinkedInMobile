@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import '../../domain/entities/job_entity.dart';
 import '../providers/job_provider.dart';
 import 'job_filter_parts.dart';
@@ -59,14 +60,16 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusSheet),
+        ),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Center(
             child: Container(
-              width: 40,
+              width: 48,
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.border,
@@ -79,16 +82,23 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Bộ lọc công việc',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary)),
+                const Text(
+                  'Bộ lọc công việc',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 TextButton(
                   onPressed: _reset,
-                  child: const Text('Đặt lại',
-                      style: TextStyle(
-                          color: AppColors.primary, fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'Đặt lại',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -96,9 +106,9 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
           const Divider(height: 1),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
-                FilterSectionTitle('Cấp bậc công việc'),
+                const FilterSectionTitle('Cấp bậc công việc'),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -106,11 +116,12 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
                     FilterChoiceChip('Tất cả cấp bậc', _level == null,
                         () => setState(() => _level = null)),
                     ...JobLevel.values.map((lvl) => FilterChoiceChip(
-                        lvl.label, _level == lvl, () => setState(() => _level = lvl))),
+                        lvl.label, _level == lvl,
+                        () => setState(() => _level = lvl))),
                   ],
                 ),
                 const SizedBox(height: 24),
-                FilterSectionTitle('Hình thức làm việc'),
+                const FilterSectionTitle('Hình thức làm việc'),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -118,16 +129,18 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
                     FilterChoiceChip('Tất cả hình thức', _workMode == null,
                         () => setState(() => _workMode = null)),
                     ...WorkMode.values.map((m) => FilterChoiceChip(
-                        m.label, _workMode == m, () => setState(() => _workMode = m))),
+                        m.label, _workMode == m,
+                        () => setState(() => _workMode = m))),
                   ],
                 ),
                 const SizedBox(height: 24),
-                FilterSectionTitle('Kỹ năng chuyên môn IT'),
+                const FilterSectionTitle('Kỹ năng chuyên môn IT'),
                 if (availableSkills.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Text('Đang nạp danh sách kỹ năng…',
-                        style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                        style: TextStyle(
+                            color: AppColors.textMuted, fontSize: 13)),
                   )
                 else
                   Wrap(
@@ -138,20 +151,25 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
                       return FilterChip(
                         label: Text(skill),
                         selected: sel,
-                        onSelected: (v) => setState(
-                            () => v ? _selectedSkills.add(skill) : _selectedSkills.remove(skill)),
+                        onSelected: (v) => setState(() => v
+                            ? _selectedSkills.add(skill)
+                            : _selectedSkills.remove(skill)),
                         selectedColor: AppColors.primaryContainer,
                         checkmarkColor: AppColors.primary,
                         labelStyle: TextStyle(
-                          color: sel ? AppColors.primary : AppColors.textPrimary,
-                          fontWeight: sel ? FontWeight.w600 : FontWeight.normal,
+                          color:
+                              sel ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight:
+                              sel ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 13,
                         ),
                         backgroundColor: AppColors.background,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusPill),
                           side: BorderSide(
-                              color: sel ? AppColors.primary : Colors.transparent),
+                            color: sel ? AppColors.primary : AppColors.border,
+                          ),
                         ),
                       );
                     }).toList(),
@@ -159,25 +177,7 @@ class _JobFilterSheetState extends State<JobFilterSheet> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.border)),
-            ),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _apply,
-                  child: const Text('Áp dụng bộ lọc',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ),
-          ),
+          FilterApplyFooter(onApply: _apply),
         ],
       ),
     );

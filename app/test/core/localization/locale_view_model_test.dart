@@ -24,6 +24,10 @@ class FakePreferences implements IAppPreferences {
   Future<void> saveJobFilterJson(String jsonStr) async {}
   @override
   Future<void> saveSelectedTab(int index) async {}
+  @override
+  Future<void> saveThemeMode(String mode) async {}
+  @override
+  Future<String?> getThemeMode() async => null;
 }
 
 void main() {

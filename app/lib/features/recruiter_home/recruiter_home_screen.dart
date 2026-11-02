@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:app/core/theme/app_theme.dart';
+import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/ui_kit/app_avatar.dart';
+import 'package:app/ui_kit/app_button.dart';
+import 'package:app/ui_kit/app_empty_state.dart';
 import 'recruiter_applications_page.dart';
 import 'recruiter_jobs_page.dart';
 
@@ -23,123 +27,94 @@ class _RecruiterHomeScreenState extends State<RecruiterHomeScreen> {
     _pages = [
       const RecruiterJobsPage(),
       const RecruiterApplicationsPage(),
-      _buildPlaceholderPage(
-        icon: Icons.add_circle_outline,
-        title: 'Đăng việc',
-        subtitle: 'Đăng tin tuyển dụng mới',
+      const AppEmptyState(
+        icon: Icons.post_add_outlined,
+        title: 'Đăng tin tuyển dụng',
+        message:
+            'Tạo bài đăng tuyển dụng mới để tiếp cận hàng ngàn ứng viên tiềm năng.',
+        actionLabel: 'Tạo tin mới',
       ),
-      _buildPlaceholderPage(
-        icon: Icons.notifications_none,
-        title: 'Thông báo',
-        subtitle: 'Chưa có thông báo mới',
+      const AppEmptyState(
+        icon: Icons.notifications_none_rounded,
+        title: 'Chưa có thông báo',
+        message:
+            'Các hoạt động ứng tuyển và tương tác mới sẽ xuất hiện tại đây.',
       ),
-      const _RecruiterProfilePage(),
+      const _RecruiterProfileView(),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Chỉ dựng tab đang xem để danh sách việc/ứng viên luôn tải mới khi quay lại
+      backgroundColor: AppColors.background,
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.primaryBlue,
-        unselectedItemColor: AppTheme.textSecondary,
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Việc đăng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Ứng viên',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline),
-            label: 'Đăng việc',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_none),
-            label: 'Thông báo',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Hồ sơ',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderPage({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 72, color: AppTheme.primaryBlue),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.border)),
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: AppColors.surface,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textMuted,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          elevation: 0,
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt_rounded),
+              label: 'Việc đăng',
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline_rounded),
+              label: 'Ứng viên',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.add_circle_outline_rounded),
+              label: 'Đăng việc',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications_none_rounded),
+              label: 'Thông báo',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              label: 'Hồ sơ',
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _RecruiterProfilePage extends StatelessWidget {
-  const _RecruiterProfilePage();
+class _RecruiterProfileView extends StatelessWidget {
+  const _RecruiterProfileView();
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         final user = auth.currentUser;
-        final initial = (user?.displayName ?? '?')[0].toUpperCase();
 
         return Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppTheme.primaryBlue,
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                AppAvatar(imageUrl: user?.avatarUrl, name: user?.displayName ?? '', size: 80),
                 const SizedBox(height: 16),
                 Text(
-                  user?.displayName ?? 'Người dùng',
+                  user?.displayName ?? 'Nhà tuyển dụng',
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -147,30 +122,39 @@ class _RecruiterProfilePage extends StatelessWidget {
                 Text(
                   user?.email ?? '',
                   style: const TextStyle(
-                      fontSize: 14, color: AppTheme.textSecondary),
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                const Chip(
-                  label: Text(
+                Chip(
+                  label: const Text(
                     'Nhà tuyển dụng',
                     style: TextStyle(
-                      color: AppTheme.primaryBlue,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  backgroundColor: Color(0xFFE8F0FE),
-                  side: BorderSide(color: AppTheme.primaryBlue),
+                  backgroundColor: AppColors.primaryContainer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                  ),
+                  side: BorderSide.none,
                 ),
                 const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () async {
-                    await auth.logout();
-                    if (context.mounted) {
-                      Navigator.pushReplacementNamed(context, '/login');
-                    }
-                  },
-                  child: const Text('Đăng xuất'),
+                SizedBox(
+                  width: 200,
+                  child: AppButton(
+                    label: 'Đăng xuất',
+                    variant: AppButtonVariant.outline,
+                    onPressed: () async {
+                      await auth.logout();
+                      if (context.mounted) {
+                        Navigator.pushReplacementNamed(context, '/login');
+                      }
+                    },
+                  ),
                 ),
               ],
             ),

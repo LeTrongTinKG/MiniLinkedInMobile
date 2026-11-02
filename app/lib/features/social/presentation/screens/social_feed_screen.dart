@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../ui_kit/ui_kit.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/social_feed_provider.dart';
@@ -19,7 +21,7 @@ class SocialFeedScreen extends StatefulWidget {
 }
 
 class _SocialFeedScreenState extends State<SocialFeedScreen> {
-  static const _pageBg = Color(0xFFF0F2F5); // nền xám nhạt giống Facebook
+  static const _pageBg = AppColors.background;
   final _scroll = ScrollController();
 
   @override
@@ -130,6 +132,6 @@ class _SocialFeedScreenState extends State<SocialFeedScreen> {
         ),
       );
     }
-    return const SizedBox(height: 24);
+    return const SizedBox(height: AppSpacing.bottomContentPadding);
   }
 }

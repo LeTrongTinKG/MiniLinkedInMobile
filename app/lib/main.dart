@@ -14,6 +14,7 @@ import 'core/services/github_auth_service.dart';
 import 'core/storage/preferences_storage.dart';
 import 'core/storage/secure_storage.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_view_model.dart';
 
 // Auth Feature
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
@@ -163,13 +164,18 @@ class MiniLinkedInApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localeVm = context.watch<LocaleViewModel>();
+    final themeVm = context.watch<ThemeViewModel>();
 
     return ShadApp.custom(
       theme: buildAppShadTheme(),
+      darkTheme: buildAppShadDarkTheme(),
+      themeMode: themeVm.themeMode,
       appBuilder: (context) => MaterialApp(
         title: 'Mini LinkedIn',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeVm.themeMode,
         locale: localeVm.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

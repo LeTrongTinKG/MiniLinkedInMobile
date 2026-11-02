@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:app/core/theme/app_colors.dart';
+import 'package:app/core/theme/app_spacing.dart';
 import 'domain/repositories/profile_repository.dart';
 import 'presentation/viewmodels/profile_edit_view_model.dart';
 import 'domain/models/profile_data.dart';
+import 'widgets/profile_privacy_card.dart';
 import '../auth/presentation/providers/auth_provider.dart';
 
 class EditProfilePage extends StatelessWidget {
@@ -99,24 +101,35 @@ class _EditProfileFormState extends State<_EditProfileForm> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Chỉnh sửa hồ sơ'),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
         actions: [
           TextButton(
             onPressed: vm.saving ? null : () => _save(vm),
             child: vm.saving
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Lưu',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
           const SizedBox(width: 8),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.border),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPrivacyCard(vm),
+              ProfilePrivacyCard(vm: vm),
               const SizedBox(height: 16),
               _buildSectionTitle('Thông tin cơ bản'),
               _buildTextField('Họ và tên', _nameCtrl, isRequired: true),
@@ -136,44 +149,22 @@ class _EditProfileFormState extends State<_EditProfileForm> {
     );
   }
 
-  Widget _buildPrivacyCard(ProfileEditViewModel vm) {
-    return Card(
-      elevation: 0,
-      color: vm.profile.isPrivate ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: vm.profile.isPrivate ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A)),
-      ),
-      child: SwitchListTile(
-        title: Row(
-          children: [
-            Icon(
-              vm.profile.isPrivate ? Icons.lock : Icons.lock_open,
-              size: 18,
-              color: vm.profile.isPrivate ? const Color(0xFF16A34A) : const Color(0xFFD97706),
-            ),
-            const SizedBox(width: 8),
-            const Text('Hồ sơ riêng tư (Mặc định)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          ],
-        ),
-        subtitle: const Text(
-          'Khi bật, hồ sơ được bảo vệ riêng tư theo chuẩn Atom. Nhà tuyển dụng cần bạn đồng ý trước khi xem chi tiết.',
-          style: TextStyle(fontSize: 12),
-        ),
-        value: vm.profile.isPrivate,
-        onChanged: (val) => vm.updateField(isPrivate: val),
-      ),
-    );
-  }
+  Widget _buildSectionTitle(String title) => Padding(
+        padding: const EdgeInsets.only(bottom: 8, top: 4),
+        child: Text(title,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+      );
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+  Widget _buildTextField(
+    String label,
+    TextEditingController ctrl, {
+    bool isRequired = false,
+    int maxLines = 1,
+  }) {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusInput),
+      borderSide: const BorderSide(color: AppColors.border),
     );
-  }
-
-  Widget _buildTextField(String label, TextEditingController ctrl, {bool isRequired = false, int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
@@ -183,9 +174,17 @@ class _EditProfileFormState extends State<_EditProfileForm> {
           labelText: label,
           filled: true,
           fillColor: AppColors.surface,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          border: border,
+          enabledBorder: border,
+          focusedBorder: border.copyWith(
+            borderSide: const BorderSide(color: AppColors.primary),
+          ),
         ),
-        validator: isRequired ? (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng không để trống' : null : null,
+        validator: isRequired
+            ? (v) => (v == null || v.trim().isEmpty)
+                ? 'Vui lòng không để trống'
+                : null
+            : null,
       ),
     );
   }
