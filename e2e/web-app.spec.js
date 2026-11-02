@@ -29,3 +29,4 @@ test.describe("MiniLinkedIn E2E & Browser Automation Tests", () => {
     expect(body.meta.total).toBeGreaterThanOrEqual(100);
   });
 });
+
