@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const dotenv = require("dotenv");
 const { prisma } = require("./lib/prisma");
 const aiClient = require("./services/ai/aiClient");
@@ -21,7 +22,24 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middlewares
-app.use(cors());
+app.disable("x-powered-by");
+app.use(helmet({
+  hidePoweredBy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+const defaultOrigins = ["http://localhost:3000", "http://localhost:5001", "http://127.0.0.1:3000"];
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : defaultOrigins;
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
