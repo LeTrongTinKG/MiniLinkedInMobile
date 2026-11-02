@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:app/ui_kit/curved_drawer_item.dart';
 import 'package:app/ui_kit/curved_drawer_painter.dart';
 import 'package:app/ui_kit/curved_menu_button.dart';
 import 'package:app/ui_kit/curved_nav_item.dart';
+
 /// CurvedDrawer - Menu trượt cạnh phải với viền cong Bezier động chuẩn 21st.dev.
 class CurvedDrawer extends StatefulWidget {
   final List<CurvedNavItem> items;
   final Widget? footer;
+
   const CurvedDrawer({super.key, required this.items, this.footer});
+
   static Future<void> show(
     BuildContext context, {
     required List<CurvedNavItem> items,
@@ -21,14 +25,17 @@ class CurvedDrawer extends StatefulWidget {
       pageBuilder: (_, __, ___) => CurvedDrawer(items: items, footer: footer),
     );
   }
+
   @override
   State<CurvedDrawer> createState() => _CurvedDrawerState();
 }
+
 class _CurvedDrawerState extends State<CurvedDrawer>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _slideAnim;
   late final Animation<double> _curveAnim;
+
   @override
   void initState() {
     super.initState();
@@ -43,21 +50,25 @@ class _CurvedDrawerState extends State<CurvedDrawer>
     _curveAnim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     _ctrl.forward();
   }
+
   @override
   void dispose() {
     _ctrl.dispose();
     super.dispose();
   }
+
   Future<void> _close() async {
     await _ctrl.reverse();
     if (mounted) Navigator.of(context).pop();
   }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF1E293B) : Colors.white;
     final fgColor = isDark ? Colors.white : Colors.black;
     final width = (MediaQuery.of(context).size.width * 0.88).clamp(300.0, 480.0);
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -111,6 +122,7 @@ class _CurvedDrawerState extends State<CurvedDrawer>
       ),
     );
   }
+
   Widget _buildHeader(Color fg) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -133,46 +145,22 @@ class _CurvedDrawerState extends State<CurvedDrawer>
           Divider(color: fg.withValues(alpha: 0.15), height: 1, thickness: 1),
         ],
       );
+
   Widget _buildItemList(Color fg) => ListView.separated(
         itemCount: widget.items.length,
         separatorBuilder: (_, __) =>
             Divider(color: fg.withValues(alpha: 0.15), height: 1, thickness: 1),
         itemBuilder: (ctx, i) {
           final item = widget.items[i];
-          return InkWell(
+          return CurvedDrawerItem(
+            item: item,
+            index: i,
+            fgColor: fg,
             onTap: () => _close().then((_) => item.onTap()),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Row(
-                children: [
-                  Text(
-                    '${i + 1}.',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w200,
-                      color: fg.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      item.title.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: 1.0,
-                        color: fg,
-                      ),
-                    ),
-                  ),
-                  if (item.icon != null)
-                    Icon(item.icon, size: 20, color: fg.withValues(alpha: 0.3)),
-                ],
-              ),
-            ),
           );
         },
       );
+
   Widget _buildFooter(Color fg) => Column(
         children: [
           Divider(color: fg.withValues(alpha: 0.15), height: 1, thickness: 1),
@@ -188,6 +176,7 @@ class _CurvedDrawerState extends State<CurvedDrawer>
           ),
         ],
       );
+
   Widget _foot(IconData icon, Color color) => IconButton(
         icon: Icon(icon, color: color.withValues(alpha: 0.7), size: 22),
         onPressed: () {},
