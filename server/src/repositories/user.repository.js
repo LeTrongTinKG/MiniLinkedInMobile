@@ -1,6 +1,6 @@
 const { prisma } = require("../lib/prisma");
 
-// Danh sách trường trả ra ngoài cho Client (KHÔNG chứa loginAttempts, loginLockedUntil, passwordHash, googleId, tokenVersion)
+// Danh sách trường trả ra ngoài cho Client (KHÔNG chứa loginAttempts, loginLockedUntil, passwordHash, googleId, githubId, tokenVersion)
 const clientUserSelect = {
   id: true,
   email: true,
@@ -15,7 +15,7 @@ const internalUserSelect = {
   ...clientUserSelect,
   passwordHash: true,
   googleId: true,
-  tokenVersion: true,
+  githubId: true,
   loginAttempts: true,
   loginLockedUntil: true,
 };
@@ -41,6 +41,13 @@ async function findById(id, db = prisma) {
 async function findByGoogleId(googleId, db = prisma) {
   return db.user.findUnique({
     where: { googleId },
+    select: clientUserSelect,
+  });
+}
+
+async function findByGitHubId(githubId, db = prisma) {
+  return db.user.findUnique({
+    where: { githubId },
     select: clientUserSelect,
   });
 }
@@ -106,36 +113,15 @@ async function resetLoginAttempts(id, db = prisma) {
   });
 }
 
-async function findTokenVersion(id, db = prisma) {
-  return db.user.findUnique({
-    where: { id },
-    select: { tokenVersion: true },
-  });
-}
-
-async function incrementTokenVersion(id, db = prisma) {
-  return db.user.update({
-    where: { id },
-    data: {
-      tokenVersion: { increment: 1 },
-    },
-    select: {
-      id: true,
-      tokenVersion: true,
-    },
-  });
-}
-
 module.exports = {
   findByEmail,
   findById,
   findByGoogleId,
+  findByGitHubId,
   createUser,
   updateUser,
   incrementLoginAttempts,
   resetLoginAttempts,
-  findTokenVersion,
-  incrementTokenVersion,
   clientUserSelect,
   internalUserSelect,
 };

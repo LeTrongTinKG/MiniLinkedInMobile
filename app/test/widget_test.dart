@@ -1,30 +1,54 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:app/main.dart';
+import 'package:app/features/auth/domain/entities/user_entity.dart';
+import 'package:app/features/auth/data/models/user_model.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('UserEntity & UserModel Tests', () {
+    test('UserEntity should correctly identify student and recruiter', () {
+      final student = UserEntity(
+        id: '1',
+        email: 'student@example.com',
+        fullName: 'Nguyen Van A',
+        role: 'student',
+        createdAt: DateTime.now(),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      final recruiter = UserEntity(
+        id: '2',
+        email: 'recruiter@example.com',
+        fullName: 'Tran Van B',
+        role: 'recruiter',
+        createdAt: DateTime.now(),
+      );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(student.isStudent, true);
+      expect(student.isRecruiter, false);
+      expect(student.displayName, 'Nguyen Van A');
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      expect(recruiter.isStudent, false);
+      expect(recruiter.isRecruiter, true);
+      expect(recruiter.displayName, 'Tran Van B');
+    });
+
+    test('UserModel.fromJson converts accurately to UserEntity', () {
+      final json = {
+        'id': 'uuid-123',
+        'email': 'test@gmail.com',
+        'fullName': 'Test User',
+        'role': 'student',
+        'avatarUrl': 'https://example.com/avatar.png',
+        'createdAt': '2026-10-19T00:00:00.000Z',
+      };
+
+      final model = UserModel.fromJson(json);
+      final entity = model.toEntity();
+
+      expect(entity.id, 'uuid-123');
+      expect(entity.email, 'test@gmail.com');
+      expect(entity.fullName, 'Test User');
+      expect(entity.role, 'student');
+      expect(entity.avatarUrl, 'https://example.com/avatar.png');
+      expect(entity.isStudent, true);
+    });
   });
 }

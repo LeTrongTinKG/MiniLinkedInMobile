@@ -17,6 +17,11 @@ const googleLogin = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 200);
 });
 
+const githubLogin = asyncHandler(async (req, res) => {
+  const result = await authService.githubLogin(req.body || {});
+  return sendSuccess(res, result, 200);
+});
+
 const refresh = asyncHandler(async (req, res) => {
   const result = await authService.refresh(req.body || {});
   return sendSuccess(res, result, 200);
@@ -36,6 +41,7 @@ module.exports = {
   register,
   login,
   googleLogin,
+  githubLogin,
   refresh,
   logout,
   getMe,

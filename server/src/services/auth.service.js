@@ -207,6 +207,160 @@ async function googleLogin({ idToken }) {
     }
   }
 
+  // Tài khoản chưa có ảnh (đăng ký email trước rồi mới bấm Google) thì lấy ảnh từ Google.
+  // Đã có ảnh thì giữ nguyên, không ghi đè ảnh người dùng tự chọn.
+  if (payload.picture && !user.avatarUrl) {
+    user = await userRepository.updateUser(user.id, { avatarUrl: payload.picture });
+  }
+
+  const tokens = await createSession(user);
+  return { user, ...tokens, isNewUser };
+}
+
+async function githubLogin({ code }) {
+  if (typeof code !== "string" || code.trim().length === 0) {
+    throw new ApiError(400, "VALIDATION_ERROR", "GitHub code là bắt buộc");
+  }
+
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    throw new ApiError(
+      500,
+      "CONFIG_ERROR",
+      "GITHUB_CLIENT_ID hoặc GITHUB_CLIENT_SECRET chưa được cấu hình"
+    );
+  }
+
+  // 1. Trao đổi authorization code lấy access_token từ GitHub
+  let tokenData;
+  try {
+    const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code.trim(),
+      }),
+    });
+    tokenData = await tokenResponse.json();
+  } catch (error) {
+    throw new ApiError(502, "GITHUB_API_ERROR", "Không thể kết nối đến máy chủ GitHub");
+  }
+
+  if (!tokenData || tokenData.error || !tokenData.access_token) {
+    throw new ApiError(
+      401,
+      "INVALID_GITHUB_CODE",
+      tokenData?.error_description || "Mã xác thực GitHub không hợp lệ hoặc đã hết hạn"
+    );
+  }
+
+  const accessToken = tokenData.access_token;
+
+  // 2. Lấy thông tin user profile từ GitHub
+  let githubUser;
+  try {
+    const userResponse = await fetch("https://api.github.com/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "User-Agent": "MiniLinkedInMobile-App",
+        Accept: "application/json",
+      },
+    });
+    githubUser = await userResponse.json();
+  } catch (error) {
+    throw new ApiError(502, "GITHUB_API_ERROR", "Không thể lấy thông tin người dùng từ GitHub");
+  }
+
+  if (!githubUser || !githubUser.id) {
+    throw new ApiError(401, "INVALID_GITHUB_USER", "Không thể xác định danh tính tài khoản GitHub");
+  }
+
+  const githubId = String(githubUser.id);
+
+  // 3. Lấy danh sách email và bắt buộc kiểm tra verified Gmail
+  let emails = [];
+  try {
+    const emailsResponse = await fetch("https://api.github.com/user/emails", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "User-Agent": "MiniLinkedInMobile-App",
+        Accept: "application/json",
+      },
+    });
+    emails = await emailsResponse.json();
+  } catch (error) {
+    throw new ApiError(502, "GITHUB_API_ERROR", "Không thể lấy danh sách email từ GitHub");
+  }
+
+  if (!Array.isArray(emails) || emails.length === 0) {
+    throw new ApiError(
+      400,
+      "GITHUB_GMAIL_REQUIRED",
+      "Tài khoản GitHub của bạn cần có ít nhất một địa chỉ Gmail (@gmail.com) đã được xác thực"
+    );
+  }
+
+  // Lọc tìm các email @gmail.com đã xác thực (verified: true)
+  const verifiedGmails = emails.filter(
+    (e) =>
+      e &&
+      e.verified === true &&
+      typeof e.email === "string" &&
+      e.email.trim().toLowerCase().endsWith("@gmail.com")
+  );
+
+  if (verifiedGmails.length === 0) {
+    throw new ApiError(
+      400,
+      "GITHUB_GMAIL_REQUIRED",
+      "Tài khoản GitHub của bạn cần có ít nhất một địa chỉ Gmail (@gmail.com) đã được xác thực"
+    );
+  }
+
+  // Ưu tiên email primary nếu là verified gmail, nếu không lấy email gmail verified đầu tiên
+  const primaryGmail = verifiedGmails.find((e) => e.primary === true);
+  const targetEmail = (primaryGmail ? primaryGmail.email : verifiedGmails[0].email)
+    .trim()
+    .toLowerCase();
+
+  // 4. Tìm kiếm hoặc liên kết tài khoản
+  let user = await userRepository.findByGitHubId(githubId);
+  let isNewUser = false;
+
+  if (!user) {
+    const emailUser = await userRepository.findByEmail(targetEmail, true);
+
+    if (emailUser?.githubId && emailUser.githubId !== githubId) {
+      throw new ApiError(
+        409,
+        "EMAIL_LINKED_ANOTHER_GITHUB",
+        "Email này đã được liên kết với một tài khoản GitHub khác"
+      );
+    }
+
+    if (emailUser) {
+      // Auto-link: Cập nhật githubId vào tài khoản sẵn có
+      user = await userRepository.updateUser(emailUser.id, { githubId });
+    } else {
+      // Tạo mới tài khoản sinh viên
+      user = await userRepository.createUser({
+        email: targetEmail,
+        githubId,
+        fullName: githubUser.name?.trim() || githubUser.login || targetEmail.split("@")[0],
+        avatarUrl: githubUser.avatar_url || null,
+        role: "student",
+        studentProfile: { create: {} },
+      });
+      isNewUser = true;
+    }
+  }
+
   const tokens = await createSession(user);
   return { user, ...tokens, isNewUser };
 }
@@ -259,10 +413,7 @@ async function logout({ refreshToken }) {
 
   const tokenRecord = await tokenRepository.findRefreshToken(refreshToken);
   if (tokenRecord) {
-    await prisma.$transaction(async (tx) => {
-      await tokenRepository.deleteRefreshToken(refreshToken, tx);
-      await userRepository.incrementTokenVersion(tokenRecord.userId, tx);
-    });
+    await tokenRepository.deleteRefreshToken(refreshToken);
   }
   return { message: "Đăng xuất thành công" };
 }
@@ -279,6 +430,7 @@ module.exports = {
   register,
   login,
   googleLogin,
+  githubLogin,
   refresh,
   logout,
   getMe,

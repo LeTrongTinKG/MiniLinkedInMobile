@@ -1,8 +1,28 @@
 node_modules/
+graphify-out/
 .env
+# Spec nội bộ chứa key/secret thật — không bao giờ commit
+server/JOB_AGGREGATOR_SPEC.md
 build/
 .dart_tool/
 .packages
 .pub-cache/
 .pub/
 __pycache__/
+# Log chạy local
+.flutter-*.log
+.server-dev.log
+
+# IDE
+app/android/.settings/
+server/.cache/
+
+# File thông tin đăng nhập demo (nội bộ)
+server/scripts/social/*.local.txt
+
+# Ghi chú cá nhân ở thư mục gốc (không đẩy lên git)
+/*.local.md
+
+# OS
+.DS_Store
+*/.DS_Store
