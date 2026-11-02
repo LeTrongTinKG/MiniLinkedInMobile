@@ -102,3 +102,4 @@ class _CurvedAnimatedTitleState extends State<CurvedAnimatedTitle>
     );
   }
 }
+

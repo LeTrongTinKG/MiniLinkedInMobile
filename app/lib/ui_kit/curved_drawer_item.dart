@@ -86,3 +86,4 @@ class _CurvedDrawerItemState extends State<CurvedDrawerItem> {
     );
   }
 }
+

@@ -4,6 +4,7 @@ import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/features/coach/presentation/coach_sheet.dart';
 import 'package:app/features/news/presentation/screens/news_page.dart';
 import 'package:app/features/profile/profile_page.dart';
 import 'package:app/features/student_home/logout_action.dart';
@@ -152,6 +153,11 @@ class _CurvedMenuTrigger extends StatelessWidget {
         CurvedDrawer.show(
           context,
           items: [
+            CurvedNavItem(
+              title: 'Trợ lý kỹ năng AI',
+              icon: Icons.auto_awesome_rounded,
+              onTap: () => openCoachSheet(context),
+            ),
             CurvedNavItem(
               title: 'Tin tức & AI',
               icon: Icons.article_outlined,
