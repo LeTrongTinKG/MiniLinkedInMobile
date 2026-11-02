@@ -12,7 +12,7 @@ class AppConfig {
     }
 
     // Mặc định kết nối tới backend local:
-    return 'http://localhost:5001/api/v1';
+    return 'http://localhost:5000/api/v1';
   }
 
   // Timeout kết nối (milliseconds)
