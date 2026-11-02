@@ -46,3 +46,4 @@ void main() {
     expect(vm.isDarkMode, true);
   });
 }
+
