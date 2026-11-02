@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
+import 'package:app/features/applications/applications_page.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/features/news/presentation/screens/news_page.dart';
+import 'package:app/features/profile/profile_page.dart';
 import 'package:app/features/student_home/logout_action.dart';
 import 'package:app/features/student_home/student_nav.dart';
 import 'package:app/ui_kit/ui_kit.dart';
@@ -40,6 +43,8 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              const _CurvedMenuTrigger(),
+              const SizedBox(width: AppSpacing.xs),
               const _UserAvatar(),
             ],
           ),
@@ -135,3 +140,45 @@ class _UserAvatar extends StatelessWidget {
 }
 
 const _logoutValue = 'logout';
+
+class _CurvedMenuTrigger extends StatelessWidget {
+  const _CurvedMenuTrigger();
+
+  @override
+  Widget build(BuildContext context) {
+    return CurvedMenuButton(
+      isActive: false,
+      onTap: () {
+        CurvedDrawer.show(
+          context,
+          items: [
+            CurvedNavItem(
+              title: 'Tin tức & AI',
+              icon: Icons.article_outlined,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NewsPage()),
+              ),
+            ),
+            CurvedNavItem(
+              title: 'Đã ứng tuyển',
+              icon: Icons.assignment_outlined,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ApplicationsPage()),
+              ),
+            ),
+            CurvedNavItem(
+              title: 'Hồ sơ & CV',
+              icon: Icons.person_outline,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
