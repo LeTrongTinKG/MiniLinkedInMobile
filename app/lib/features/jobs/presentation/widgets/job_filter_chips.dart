@@ -18,19 +18,19 @@ class JobFilterChips extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
         children: [
-          _chip('Tất cả', currentMode == null && currentLevel == null, () {
+          _chip(context, 'Tất cả', currentMode == null && currentLevel == null, () {
             provider.setWorkMode(null);
             provider.setLevel(null);
           }),
-          _chip('Intern', currentLevel == JobLevel.intern,
+          _chip(context, 'Intern', currentLevel == JobLevel.intern,
               () => provider.setLevel(JobLevel.intern)),
-          _chip('Fresher', currentLevel == JobLevel.fresher,
+          _chip(context, 'Fresher', currentLevel == JobLevel.fresher,
               () => provider.setLevel(JobLevel.fresher)),
-          _chip('Remote', currentMode == WorkMode.remote,
+          _chip(context, 'Remote', currentMode == WorkMode.remote,
               () => provider.setWorkMode(WorkMode.remote)),
-          _chip('Hybrid', currentMode == WorkMode.hybrid,
+          _chip(context, 'Hybrid', currentMode == WorkMode.hybrid,
               () => provider.setWorkMode(WorkMode.hybrid)),
-          _chip('Tại VP', currentMode == WorkMode.onsite,
+          _chip(context, 'Tại VP', currentMode == WorkMode.onsite,
               () => provider.setWorkMode(WorkMode.onsite)),
           const SizedBox(width: AppSpacing.lg),
         ],
@@ -38,34 +38,43 @@ class JobFilterChips extends StatelessWidget {
     );
   }
 
-  Widget _chip(String label, bool isSelected, VoidCallback onTap) {
+  Widget _chip(BuildContext context, String label, bool isSelected, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isSelected
+        ? (isDark ? Colors.white : const Color(0xFF0F172A))
+        : (isDark ? const Color(0xFF1E293B) : Colors.white);
+    final fg = isSelected
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? Colors.white70 : const Color(0xFF64748B));
+    final borderColor = isSelected
+        ? Colors.transparent
+        : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08));
+
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryContainer : AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
-            ),
+            color: bg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (isSelected) ...[
-                const Icon(Icons.check, size: 12, color: AppColors.onPrimaryContainer),
+                Icon(Icons.check, size: 12, color: fg),
                 const SizedBox(width: 4),
               ],
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppColors.onPrimaryContainer : AppColors.textSecondary,
+                  color: fg,
                 ),
               ),
             ],

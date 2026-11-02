@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/news_provider.dart';
+import '../widgets/daily_byte_hero.dart';
 import '../widgets/news_card.dart';
 import '../widgets/news_filter_chips.dart';
 import 'package:app/core/theme/app_colors.dart';
@@ -101,13 +102,18 @@ class _NewsPageState extends State<NewsPage> {
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(
                       0,
-                      8,
+                      4,
                       0,
                       AppSpacing.bottomContentPadding,
                     ),
-                    itemCount: provider.articles.length,
+                    itemCount: provider.articles.length + 1,
                     itemBuilder: (context, index) {
-                      return NewsCard(article: provider.articles[index]);
+                      if (index == 0) {
+                        return DailyByteHero(
+                          featuredArticle: provider.articles.isNotEmpty ? provider.articles.first : null,
+                        );
+                      }
+                      return NewsCard(article: provider.articles[index - 1]);
                     },
                   ),
                 );

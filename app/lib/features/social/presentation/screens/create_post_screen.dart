@@ -8,31 +8,27 @@ import '../../domain/entities/uploaded_media.dart';
 import '../providers/social_feed_provider.dart';
 import '../social_strings.dart';
 import '../utils/pick_images.dart';
+import '../widgets/code_snippet_box.dart';
 import '../widgets/max_width_box.dart';
 import '../widgets/picked_images_grid.dart';
 
-/// Màn soạn bài. Truyền `editing` thì là chế độ SỬA (chỉ sửa chữ), không thì là TẠO MỚI.
+/// Màn soạn bài theo thiết kế v0 hỗ trợ tải ảnh và chèn Code Snippet IDE.
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({
-    super.key,
-    required this.userName,
-    this.userAvatar,
-    this.editing,
-  });
+  const CreatePostScreen({super.key, required this.userName, this.userAvatar, this.editing});
 
   final String userName;
   final String? userAvatar;
-  final Post? editing; // null = tạo mới
+  final Post? editing;
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  late final _controller =
-      TextEditingController(text: widget.editing?.content ?? '');
-  final List<PickedImage> _images = []; // ảnh đã chọn, chưa tải lên
-  bool _saving = false; // chỉ dùng cho chế độ sửa
+  late final _controller = TextEditingController(text: widget.editing?.content ?? '');
+  final List<PickedImage> _images = [];
+  bool _saving = false;
+  bool _showCode = false;
 
   bool get _isEdit => widget.editing != null;
 
@@ -66,10 +62,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       showAppError(context, error);
       return;
     }
-    showAppSuccess(
-      context,
-      _isEdit ? SocialStrings.editedOk : SocialStrings.createdOk,
-    );
+    showAppSuccess(context, _isEdit ? SocialStrings.editedOk : SocialStrings.createdOk);
     Navigator.of(context).pop();
   }
 
@@ -78,8 +71,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     final feed = context.watch<SocialFeedProvider>();
     final busy = _saving || feed.creating;
     final hasText = _controller.text.trim().isNotEmpty;
-    final hasMedia =
-        _isEdit ? widget.editing!.media.isNotEmpty : _images.isNotEmpty;
+    final hasMedia = _isEdit ? widget.editing!.media.isNotEmpty : _images.isNotEmpty;
     final canPost = !busy && (hasText || hasMedia);
 
     return Scaffold(
@@ -91,10 +83,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ),
         backgroundColor: AppColors.surface,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -119,19 +108,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                AppAvatar(
-                  imageUrl: widget.userAvatar,
-                  name: widget.userName,
-                  size: 44,
-                ),
+                AppAvatar(imageUrl: widget.userAvatar, name: widget.userName, size: 44),
                 const SizedBox(width: 10),
                 Text(
                   widget.userName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: AppColors.textPrimary,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppColors.textPrimary),
                 ),
               ]),
               const SizedBox(height: 12),
@@ -140,16 +121,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 placeholder: SocialStrings.createHint,
                 enabled: !busy,
                 minHeight: 140,
-                maxHeight: 320,
+                maxHeight: 300,
                 onChanged: (_) => setState(() {}),
               ),
               if (!_isEdit && feed.createError != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: AppErrorBanner(
-                    message: feed.createError!,
-                    onRetry: canPost ? _submit : null,
-                  ),
+                  child: AppErrorBanner(message: feed.createError!, onRetry: canPost ? _submit : null),
                 ),
               if (!_isEdit) ...[
                 const SizedBox(height: 12),
@@ -160,16 +138,38 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     canRemove: !busy,
                     onRemove: (i) => setState(() => _images.removeAt(i)),
                   ),
-                const SizedBox(height: 12),
-                AppButton(
-                  label:
-                      '${SocialStrings.addPhotos} (${_images.length}/$maxImagesPerPost)',
-                  icon: Icons.photo_library_outlined,
-                  variant: AppButtonVariant.outline,
-                  onPressed: busy || _images.length >= maxImagesPerPost
-                      ? null
-                      : _pick,
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        label: '${SocialStrings.addPhotos} (${_images.length}/$maxImagesPerPost)',
+                        icon: Icons.photo_library_outlined,
+                        variant: AppButtonVariant.outline,
+                        onPressed: busy || _images.length >= maxImagesPerPost ? null : _pick,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.outlined(
+                      icon: Icon(_showCode ? Icons.code_off_rounded : Icons.code_rounded),
+                      tooltip: 'Đoạn mã code snippet',
+                      onPressed: () => setState(() => _showCode = !_showCode),
+                    ),
+                  ],
                 ),
+                if (_showCode) ...[
+                  const SizedBox(height: 10),
+                  CodeSnippetBox(
+                    onInsert: () {
+                      const snippet = '```dart\nclass MiniLinkedInApp extends StatelessWidget {\n  const MiniLinkedInApp({super.key});\n}\n```';
+                      setState(() {
+                        _controller.text = _controller.text.isEmpty ? snippet : '${_controller.text}\n\n$snippet';
+                        _showCode = false;
+                      });
+                    },
+                    onClose: () => setState(() => _showCode = false),
+                  ),
+                ],
               ],
             ],
           ),

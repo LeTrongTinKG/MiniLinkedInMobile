@@ -71,36 +71,37 @@ class JobListEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.search_off_rounded, size: 88, color: AppColors.iconMuted),
-            const SizedBox(height: 20),
+            const Icon(Icons.search_off_rounded, size: 64, color: AppColors.iconMuted),
+            const SizedBox(height: 14),
             const Text(
               'Không tìm thấy việc phù hợp',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
               'Thử bỏ bớt bộ lọc hoặc tìm từ khoá khác',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.textMuted, height: 1.5),
+              style: TextStyle(fontSize: 13, color: AppColors.textMuted, height: 1.4),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 18),
             OutlinedButton.icon(
               onPressed: onClearFilter,
               icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
               label: const Text('Xoá bộ lọc'),
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size(0, 44),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
             ),
           ],
