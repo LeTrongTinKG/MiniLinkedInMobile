@@ -80,6 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 12),
                         ProfileHeader(
                           name: user?.displayName ?? 'Người dùng',
+                          avatarUrl: user?.avatarUrl,
                           headline: 'Sinh viên CNTT · tìm thực tập Flutter',
                           location: 'TP. Hồ Chí Minh',
                           onEditProfile: () {

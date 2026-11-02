@@ -334,6 +334,40 @@ test("Google login verifies audience and creates a student account", async () =>
   assert.ok(users[0].studentProfile);
 });
 
+test("Google login lấy ảnh Google cho tài khoản email có sẵn chưa có ảnh", async () => {
+  await dispatch(authController.register, { body: registerBody() });
+  assert.equal(users[0].avatarUrl, null);
+  googlePayload = {
+    sub: "google-user-avatar",
+    email: "student@example.com",
+    email_verified: true,
+    name: "Student",
+    picture: "https://lh3.googleusercontent.com/a/avatar-1",
+  };
+  const res = await dispatch(authController.googleLogin, {
+    body: { idToken: "mock-google-id-token" },
+  });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.data.isNewUser, false);
+  assert.equal(res.body.data.user.avatarUrl, "https://lh3.googleusercontent.com/a/avatar-1");
+});
+
+test("Google login không ghi đè ảnh đã có của tài khoản", async () => {
+  await dispatch(authController.register, { body: registerBody() });
+  users[0].avatarUrl = "https://example.com/my-own-avatar.png";
+  googlePayload = {
+    sub: "google-user-keep-avatar",
+    email: "student@example.com",
+    email_verified: true,
+    name: "Student",
+    picture: "https://lh3.googleusercontent.com/a/other",
+  };
+  const res = await dispatch(authController.googleLogin, {
+    body: { idToken: "mock-google-id-token" },
+  });
+  assert.equal(res.body.data.user.avatarUrl, "https://example.com/my-own-avatar.png");
+});
+
 test("Google login rejects an unverified email", async () => {
   googlePayload = {
     sub: "google-user-unverified",

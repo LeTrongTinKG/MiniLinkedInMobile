@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:app/core/theme/app_theme.dart';
+import 'package:app/ui_kit/app_avatar.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -17,14 +18,6 @@ class ProfileHeader extends StatelessWidget {
     this.onEditProfile,
   });
 
-  String get _initials {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-    }
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -35,25 +28,7 @@ class ProfileHeader extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: const Color(0xFFCFDAF7),
-                // Ảnh nằm ĐÈ lên chữ cái đầu: tải được thì thấy ảnh, lỗi (vd Google trả 429 vì
-                // tải quá nhiều) thì chữ cái đầu hiện ra và không in lỗi đỏ ra console.
-                foregroundImage: avatarUrl != null
-                    ? NetworkImage(avatarUrl!,
-                        webHtmlElementStrategy: WebHtmlElementStrategy.prefer)
-                    : null,
-                onForegroundImageError: avatarUrl != null ? (_, __) {} : null,
-                child: Text(
-                  _initials,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlue,
-                  ),
-                ),
-              ),
+              AppAvatar(imageUrl: avatarUrl, name: name, size: 64),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

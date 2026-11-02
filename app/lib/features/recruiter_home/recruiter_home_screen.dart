@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
 import 'package:app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:app/ui_kit/app_avatar.dart';
 import 'package:app/ui_kit/app_button.dart';
 import 'package:app/ui_kit/app_empty_state.dart';
 import 'recruiter_applications_page.dart';
@@ -99,7 +100,6 @@ class _RecruiterProfileView extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         final user = auth.currentUser;
-        final initial = (user?.displayName ?? '?')[0].toUpperCase();
 
         return Center(
           child: Padding(
@@ -107,18 +107,7 @@ class _RecruiterProfileView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                AppAvatar(imageUrl: user?.avatarUrl, name: user?.displayName ?? '', size: 80),
                 const SizedBox(height: 16),
                 Text(
                   user?.displayName ?? 'Nhà tuyển dụng',
