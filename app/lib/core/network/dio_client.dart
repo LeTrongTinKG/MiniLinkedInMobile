@@ -106,7 +106,8 @@ class DioClient {
     return path.contains('/auth/login') ||
         path.contains('/auth/register') ||
         path.contains('/auth/refresh') ||
-        path.contains('/auth/google');
+        path.contains('/auth/google') ||
+        path.contains('/auth/github');
   }
 
   /// Chuyển DioException thành AppException để Presentation layer xử lý
