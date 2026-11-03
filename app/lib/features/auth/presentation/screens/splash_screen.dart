@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/core/theme/app_colors.dart';
 import 'package:app/core/theme/app_spacing.dart';
+import '../../../../core/services/github_web_callback.dart';
 import '../providers/auth_provider.dart';
 
 /// Màn hình khởi động: kiểm tra trạng thái xác thực và điều hướng phù hợp
@@ -23,7 +24,12 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       _authProvider = context.read<AuthProvider>();
       _authProvider?.addListener(_onAuthStatusChanged);
-      _authProvider?.checkAuth();
+      final githubCode = takeGithubCode();
+      if (githubCode != null) {
+        _authProvider?.githubLogin(githubCode);
+      } else {
+        _authProvider?.checkAuth();
+      }
     });
   }
 

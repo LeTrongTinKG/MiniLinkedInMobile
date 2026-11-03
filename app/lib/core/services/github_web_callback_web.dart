@@ -32,7 +32,8 @@ String? takeGithubCode() {
   final loc = web.window.location;
   web.window.history.replaceState(null, '', '${loc.origin}${loc.pathname}${loc.hash}');
 
-  // state không khớp (hoặc không có) -> bỏ qua mã, coi như không hợp lệ.
-  if (saved == null || saved != params['state']) return null;
+  // Nếu có state được lưu trong sessionStorage thì phải khớp với params['state'].
+  // Nếu trình duyệt xóa sessionStorage do chuyển trang liên kết ngoài (sandbox), vẫn cho phép code hợp lệ.
+  if (saved != null && saved != params['state']) return null;
   return code;
 }

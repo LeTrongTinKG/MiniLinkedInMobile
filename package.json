@@ -4,7 +4,7 @@
   "description": "Atom Mobile Monorepo",
   "scripts": {
     "start:server": "cd server && npm run dev",
-    "start:ai": "cd ai && python -m uvicorn main:app --reload --port 8000",
+    "start:ai": "cd ai && python3 -m uvicorn main:app --reload --port 8000",
     "start:app": "node scripts/watch-flutter.js",
     "test:e2e": "playwright test",
     "build:web": "bash scripts/build-vercel.sh",
