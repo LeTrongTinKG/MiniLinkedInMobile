@@ -25,6 +25,7 @@ server/scripts/social/*.local.txt
 
 # Playwright Test Artifacts
 playwright-report/
+.playwright-mcp/
 test-results/
 
 # OS

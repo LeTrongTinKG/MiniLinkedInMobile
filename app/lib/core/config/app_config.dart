@@ -36,11 +36,11 @@ class AppConfig {
       String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: '380900817945-h1iooij3jlk7cakj6br9ok0g99o5jpvi.apps.googleusercontent.com');
 
   // Cấu hình GitHub OAuth
-  // Mặc định lấy theo Client ID đã cấu hình trong .env: Ov23liVnRc4PYkJuD1Pz
+  // Mặc định lấy theo Client ID đã cấu hình: Ov23liAsAW4RrAeNbMsn
   // Có thể ghi đè qua: flutter run --dart-define=GITHUB_CLIENT_ID=...
   static const String githubClientId = String.fromEnvironment(
     'GITHUB_CLIENT_ID',
-    defaultValue: 'Ov23liVnRc4PYkJuD1Pz',
+    defaultValue: 'Ov23liAsAW4RrAeNbMsn',
   );
 
   static const String githubRedirectUri = String.fromEnvironment(

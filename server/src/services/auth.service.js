@@ -222,8 +222,8 @@ async function githubLogin({ code }) {
     throw new ApiError(400, "VALIDATION_ERROR", "GitHub code là bắt buộc");
   }
 
-  const clientId = process.env.GITHUB_CLIENT_ID;
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const clientId = process.env.GITHUB_CLIENT_ID || "Ov23liAsAW4RrAeNbMsn";
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET || "c6a4fbe8b02d60120c6625ec176c05ba721ecabb";
   if (!clientId || !clientSecret) {
     throw new ApiError(
       500,
