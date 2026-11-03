@@ -12,7 +12,8 @@
     "tunnel:api": "cloudflared tunnel --url http://localhost:5001",
     "tunnel:web": "cloudflared tunnel --url http://localhost:3000",
     "video:dev": "cd video && npm run dev",
-    "video:render": "cd video && npx remotion render AtomDemo out/atom-demo.mp4",
+    "video:render": "cd video && npx remotion render AtomDemo out/atom-demo-enhanced.mp4",
+    "video:render:motion": "cd video && npx remotion render AtomMotionGraphics out/atom-demo-motion.mp4",
     "video:render:portrait": "cd video && npx remotion render AtomDemoPortrait out/atom-demo-portrait.mp4",
     "video:still": "cd video && npx remotion still AtomThumbnail out/atom-thumbnail.png"
   },
