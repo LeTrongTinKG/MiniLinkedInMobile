@@ -20,9 +20,11 @@ fi
 # 2. Tắt telemetry
 flutter config --no-analytics >/dev/null 2>&1 || true
 
-# 3. Chuẩn bị biến môi trường Backend API URL
+# 3. Chuẩn bị biến môi trường
 API_URL="${API_URL:-https://minilinkedinmobile.onrender.com/api/v1}"
+GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:-Ov23liAsAW4RrAeNbMsn}"
 echo "🌐 Backend API URL: $API_URL"
+echo "🔑 GitHub Client ID: $GITHUB_CLIENT_ID"
 
 # 4. Di chuyển vào thư mục app và tiến hành build
 cd app
@@ -30,7 +32,7 @@ echo "📥 Đang tải dependencies (flutter pub get)..."
 flutter pub get
 
 echo "🔨 Đang biên dịch Flutter Web release..."
-flutter build web --release --dart-define=API_URL="$API_URL"
+flutter build web --release --dart-define=API_URL="$API_URL" --dart-define=GITHUB_CLIENT_ID="$GITHUB_CLIENT_ID"
 
 # 5. Đảm bảo file cấu hình SPA vercel.json có mặt trong output
 if [ -f "web/vercel.json" ]; then
