@@ -9,8 +9,8 @@ from extractor import analyze_pdf
 logger = logging.getLogger("ai-service")
 
 app = FastAPI(
-    title="Mini LinkedIn AI Service",
-    description="AI Service phân tích CV và chấm điểm độ phù hợp Job",
+    title="Atom AI Service",
+    description="AI Service phân tích CV và chấm điểm độ phù hợp Job - Atom",
     version="1.0.0"
 )
 
@@ -37,7 +37,7 @@ class MatchResponse(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message": "Mini LinkedIn AI Service is running"}
+    return {"message": "Atom AI Service is running"}
 
 @app.get("/health")
 def health_check():
@@ -45,11 +45,6 @@ def health_check():
 
 @app.post("/analyze-cv", response_model=AnalyzeCvResponse)
 async def analyze_cv(file: UploadFile = File(...)):
-    """
-    Trích xuất kỹ năng, học vấn, kinh nghiệm từ file PDF CV.
-    Dùng pdfplumber để đọc text thật trong PDF, sau đó dò skill bằng từ điển regex
-    (cùng bộ từ điển với server Node — ADR-0004, ADR-0005).
-    """
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Chỉ chấp nhận file PDF")
 
@@ -64,7 +59,6 @@ async def analyze_cv(file: UploadFile = File(...)):
         result = analyze_pdf(content)
     except Exception as exc:
         logger.warning("Không đọc được PDF: %s", exc)
-        # PDF hỏng hoặc không trích được chữ → trả rỗng, không bịa (ADR-0005)
         return AnalyzeCvResponse(skills=[], education=None, experience_months=0)
 
     return AnalyzeCvResponse(
@@ -75,9 +69,7 @@ async def analyze_cv(file: UploadFile = File(...)):
 
 @app.post("/match", response_model=MatchResponse)
 def match_cv_job(request: MatchRequest):
-    """
-    Chấm điểm độ phù hợp giữa kỹ năng trong CV và yêu cầu Job.
-    """
+
     cv_skills_lower = [s.strip().lower() for s in request.cv_skills]
     req_skills_lower = [s.strip().lower() for s in request.job.required_skills]
 

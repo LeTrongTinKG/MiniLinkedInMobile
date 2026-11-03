@@ -41,7 +41,7 @@ test("GET / trả về thông tin API và danh sách endpoints", async () => {
   const res = await mockRequest(app, { method: "GET", url: "/" });
 
   assert.equal(res.statusCode, 200);
-  assert.equal(res.body.message, "Welcome to Mini LinkedIn REST API");
+  assert.equal(res.body.message, "Welcome to Atom REST API");
   assert.equal(res.body.version, "1.0.0");
   assert.ok(res.body.endpoints);
   assert.equal(res.body.endpoints.health, "/health");

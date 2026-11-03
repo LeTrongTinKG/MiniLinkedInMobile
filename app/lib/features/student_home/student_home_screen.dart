@@ -116,6 +116,39 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ],
           ),
           Positioned(
+            right: 16,
+            bottom: 82,
+            child: Material(
+              color: AppColors.primary,
+              elevation: 4,
+              borderRadius: BorderRadius.circular(24),
+              shadowColor: AppColors.primary.withValues(alpha: 0.35),
+              child: InkWell(
+                onTap: () => openCoachSheet(context),
+                borderRadius: BorderRadius.circular(24),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.chat_bubble_outline_rounded,
+                          color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Trợ lý kỹ năng',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,

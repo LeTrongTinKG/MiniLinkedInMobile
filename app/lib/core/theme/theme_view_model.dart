@@ -44,3 +44,4 @@ class ThemeViewModel extends ChangeNotifier {
     } catch (_) {}
   }
 }
+

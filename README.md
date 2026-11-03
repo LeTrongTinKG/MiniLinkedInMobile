@@ -1,4 +1,4 @@
-# 💼 Mini LinkedIn Mobile - Nền Tảng Tìm Việc IT Cho Sinh Viên
+# ⚛️ Atom - Nền Tảng Tìm Việc IT & Phát Triển Kỹ Năng Cho Sinh Viên
 
 Dự án ứng dụng di động hỗ trợ sinh viên ngành Công nghệ Thông tin tìm kiếm cơ hội thực tập và việc làm Fresher. Hệ thống tích hợp AI để phân tích CV, tự động so khớp kỹ năng và chấm điểm độ phù hợp (%) với tin tuyển dụng, đồng thời chỉ ra các kỹ năng còn thiếu để sinh viên trau dồi.
 
