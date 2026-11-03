@@ -143,7 +143,16 @@ async function scanCustomRepo(userId, repoUrl, repo = skillRepository, reader = 
     };
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    if (error instanceof GithubError) throw githubFailure(error);
+    if (error instanceof GithubError) {
+      if (error.code === "NOT_FOUND") {
+        throw new ApiError(
+          404,
+          "REPO_NOT_FOUND",
+          "Không tìm thấy repository này. Vui lòng đảm bảo link chính xác và repository đang ở chế độ Công khai (Public)."
+        );
+      }
+      throw githubFailure(error);
+    }
     throw error;
   }
 }
