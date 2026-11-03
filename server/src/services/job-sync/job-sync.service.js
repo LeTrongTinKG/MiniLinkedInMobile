@@ -11,7 +11,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function capRemotive(jobs, maxShare) {
   const others = jobs.filter((j) => j.source !== "remotive");
   const remotive = jobs.filter((j) => j.source === "remotive");
-  const maxRemotive = Math.floor((others.length * maxShare) / (1 - maxShare));
+  const maxRemotive = others.length === 0 ? 25 : Math.floor((others.length * maxShare) / (1 - maxShare));
   const sorted = [...remotive].sort((a, b) => (b.postedAt || 0) - (a.postedAt || 0));
   return { jobs: [...others, ...sorted.slice(0, maxRemotive)], dropped: remotive.length - Math.min(remotive.length, maxRemotive) };
 }

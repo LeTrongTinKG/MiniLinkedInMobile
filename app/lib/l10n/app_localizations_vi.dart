@@ -9,7 +9,7 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get appTitle => 'Mini LinkedIn';
+  String get appTitle => 'Atom';
 
   @override
   String get save => 'Lưu';
@@ -45,7 +45,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get password => 'Mật khẩu';
 
   @override
-  String get loginTitle => 'Đăng nhập vào Mini LinkedIn';
+  String get loginTitle => 'Đăng nhập vào Atom';
 
   @override
   String get registerTitle => 'Đăng ký tài khoản';

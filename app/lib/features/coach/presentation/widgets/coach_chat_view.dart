@@ -6,6 +6,7 @@ import '../../data/coach_models.dart';
 import '../coach_provider.dart';
 import 'chat_suggestions.dart';
 import 'coach_answer_card.dart';
+import 'coach_milestone_card.dart';
 
 class CoachChatView extends StatelessWidget {
   final CoachProvider provider;
@@ -108,7 +109,18 @@ class CoachChatView extends StatelessWidget {
                           color: AppTheme.errorRed, fontSize: 13),
                     ),
                   ),
-                if (out != null) CoachAnswerCard(answer: out),
+                if (out != null) ...[
+                  CoachAnswerCard(answer: out),
+                  const SizedBox(height: 12),
+                  CoachMilestoneCard(
+                    onTap: () => provider.ask(question: 'Làm thế nào để hoàn thành Milestone 01: Build a test suite?'),
+                  ),
+                ] else if (!provider.asking) ...[
+                  const SizedBox(height: 8),
+                  CoachMilestoneCard(
+                    onTap: () => provider.ask(question: 'Làm thế nào để hoàn thành Milestone 01: Build a test suite?'),
+                  ),
+                ],
               ],
             ),
           ),

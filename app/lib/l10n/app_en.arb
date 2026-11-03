@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Mini LinkedIn",
+  "appTitle": "Atom",
   "save": "Save",
   "cancel": "Cancel",
   "loading": "Loading...",
@@ -12,7 +12,7 @@
   "signOut": "Sign Out",
   "email": "Email",
   "password": "Password",
-  "loginTitle": "Sign In to Mini LinkedIn",
+  "loginTitle": "Sign In to Atom",
   "registerTitle": "Register Account",
   "profileTitle": "Profile",
   "editProfile": "Edit Profile",

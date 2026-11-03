@@ -13,59 +13,71 @@ class JobFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentMode = provider.filter.workMode;
     final currentLevel = provider.filter.level;
+    final skills = provider.filter.selectedSkills;
+    final isAll = currentMode == null && currentLevel == null && skills.isEmpty;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Row(
         children: [
-          _chip('Tất cả', currentMode == null && currentLevel == null, () {
-            provider.setWorkMode(null);
-            provider.setLevel(null);
-          }),
-          _chip('Intern', currentLevel == JobLevel.intern,
-              () => provider.setLevel(JobLevel.intern)),
-          _chip('Fresher', currentLevel == JobLevel.fresher,
-              () => provider.setLevel(JobLevel.fresher)),
-          _chip('Remote', currentMode == WorkMode.remote,
-              () => provider.setWorkMode(WorkMode.remote)),
-          _chip('Hybrid', currentMode == WorkMode.hybrid,
-              () => provider.setWorkMode(WorkMode.hybrid)),
-          _chip('Tại VP', currentMode == WorkMode.onsite,
-              () => provider.setWorkMode(WorkMode.onsite)),
+          _chip(context, 'Tất cả', isAll, () => provider.resetFilter()),
+          _chip(context, 'Flutter', skills.contains('Flutter'), () => provider.toggleSkill('Flutter')),
+          _chip(context, 'React', skills.contains('React'), () => provider.toggleSkill('React')),
+          _chip(context, 'AI / Python', skills.contains('Python'), () => provider.toggleSkill('Python')),
+          _chip(context, 'Intern', currentLevel == JobLevel.intern,
+              () => provider.setLevel(currentLevel == JobLevel.intern ? null : JobLevel.intern)),
+          _chip(context, 'Fresher', currentLevel == JobLevel.fresher,
+              () => provider.setLevel(currentLevel == JobLevel.fresher ? null : JobLevel.fresher)),
+          _chip(context, 'Remote', currentMode == WorkMode.remote,
+              () => provider.setWorkMode(currentMode == WorkMode.remote ? null : WorkMode.remote)),
+          _chip(context, 'Hybrid', currentMode == WorkMode.hybrid,
+              () => provider.setWorkMode(currentMode == WorkMode.hybrid ? null : WorkMode.hybrid)),
+          _chip(context, 'Tại VP', currentMode == WorkMode.onsite,
+              () => provider.setWorkMode(currentMode == WorkMode.onsite ? null : WorkMode.onsite)),
           const SizedBox(width: AppSpacing.lg),
         ],
       ),
     );
   }
 
-  Widget _chip(String label, bool isSelected, VoidCallback onTap) {
+  Widget _chip(BuildContext context, String label, bool isSelected, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isSelected
+        ? (isDark ? Colors.white : const Color(0xFF0F172A))
+        : (isDark ? const Color(0xFF1E293B) : Colors.white);
+    final fg = isSelected
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? Colors.white70 : const Color(0xFF64748B));
+    final borderColor = isSelected
+        ? Colors.transparent
+        : (isDark ? Colors.white12 : Colors.black.withValues(alpha: 0.08));
+
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryContainer : AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusChip),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
-            ),
+            color: bg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (isSelected) ...[
-                const Icon(Icons.check, size: 12, color: AppColors.onPrimaryContainer),
+                Icon(Icons.check, size: 12, color: fg),
                 const SizedBox(width: 4),
               ],
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppColors.onPrimaryContainer : AppColors.textSecondary,
+                  color: fg,
                 ),
               ),
             ],

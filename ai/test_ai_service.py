@@ -119,7 +119,7 @@ class TestApiEndpoints:
     def test_root_endpoint(self):
         res = client.get("/")
         assert res.status_code == 200
-        assert "Mini LinkedIn AI Service is running" in res.json().get("message", "")
+        assert "Atom AI Service is running" in res.json().get("message", "")
 
     def test_health_check(self):
         res = client.get("/health")

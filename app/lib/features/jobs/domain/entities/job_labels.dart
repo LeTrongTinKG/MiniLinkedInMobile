@@ -2,7 +2,7 @@
 
 /// Nguồn job -> tên hiển thị. Ưu tiên đoán theo host của link, không đoán được thì theo source.
 String sourceLabel(String source, String? applyUrl) {
-  if (source == 'internal') return 'MiniLinkedIn';
+  if (source == 'internal') return 'Atom';
   const hosts = {
     'linkedin.com': 'LinkedIn',
     'topcv.vn': 'TopCV',

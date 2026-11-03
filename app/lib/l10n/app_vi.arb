@@ -1,6 +1,6 @@
 {
   "@@locale": "vi",
-  "appTitle": "Mini LinkedIn",
+  "appTitle": "Atom",
   "save": "Lưu",
   "cancel": "Hủy",
   "loading": "Đang tải...",
@@ -12,7 +12,7 @@
   "signOut": "Đăng xuất",
   "email": "Email",
   "password": "Mật khẩu",
-  "loginTitle": "Đăng nhập vào Mini LinkedIn",
+  "loginTitle": "Đăng nhập vào Atom",
   "registerTitle": "Đăng ký tài khoản",
   "profileTitle": "Hồ sơ cá nhân",
   "editProfile": "Chỉnh sửa hồ sơ",

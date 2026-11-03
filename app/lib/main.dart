@@ -171,7 +171,7 @@ class MiniLinkedInApp extends StatelessWidget {
       darkTheme: buildAppShadDarkTheme(),
       themeMode: themeVm.themeMode,
       appBuilder: (context) => MaterialApp(
-        title: 'Mini LinkedIn',
+        title: 'Atom',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,

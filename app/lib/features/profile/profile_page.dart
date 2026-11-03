@@ -8,6 +8,8 @@ import 'package:app/features/cv/presentation/providers/cv_provider.dart';
 import 'package:app/features/profile/widgets/profile_app_bar.dart';
 import 'package:app/features/profile/widgets/profile_header.dart';
 import 'package:app/features/profile/widgets/cv_section.dart';
+import 'package:app/features/profile/widgets/proof_of_work_card.dart';
+import 'package:app/features/profile/widgets/skill_evidence_section.dart';
 import 'package:app/features/profile/edit_profile_page.dart';
 import 'package:app/features/skills/presentation/github_skill_section.dart';
 import 'package:app/features/skills/presentation/skill_suggestion_provider.dart';
@@ -91,6 +93,10 @@ class _ProfilePageState extends State<ProfilePage> {
                             );
                           },
                         ),
+                        const SizedBox(height: 12),
+                        const ProofOfWorkCard(),
+                        const SizedBox(height: 16),
+                        const SkillEvidenceSection(),
                         const Divider(height: 24),
                         Consumer<CvProvider>(
                           builder: (context, cv, _) {
