@@ -7,6 +7,8 @@
     "start:ai": "cd ai && python -m uvicorn main:app --reload --port 8000",
     "start:app": "node scripts/watch-flutter.js",
     "test:e2e": "playwright test",
+    "build:web": "bash scripts/build-vercel.sh",
+    "deploy:vercel": "bash scripts/build-vercel.sh && cd app/build/web && vercel --prod",
     "tunnel:api": "cloudflared tunnel --url http://localhost:5001",
     "tunnel:web": "cloudflared tunnel --url http://localhost:3000"
   },

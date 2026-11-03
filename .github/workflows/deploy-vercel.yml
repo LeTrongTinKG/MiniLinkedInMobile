@@ -1,0 +1,59 @@
+name: Deploy Frontend to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'scripts/build-vercel.sh'
+      - 'vercel.json'
+      - '.github/workflows/deploy-vercel.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy Flutter Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:'
+
+      - name: 📦 Install Flutter Dependencies
+        run: |
+          cd app
+          flutter pub get
+
+      - name: 🧪 Run Automated Tests
+        run: |
+          cd app
+          flutter test $(find test -name "*test.dart" ! -name "interactions_e2e_test.dart")
+
+      - name: 🔨 Build Flutter Web Release
+        env:
+          API_URL: ${{ secrets.API_URL || 'https://minilinkedinmobile.onrender.com/api/v1' }}
+        run: |
+          cd app
+          flutter build web --release --dart-define=API_URL="$API_URL"
+          cp web/vercel.json build/web/vercel.json
+
+      - name: 🚀 Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        if: ${{ env.VERCEL_TOKEN != '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: app/build/web
