@@ -1,3 +1,4 @@
+import '../../../../core/error/app_exception.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -34,6 +35,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> getMe() async {
+    final accessToken = await _tokenStorage.getAccessToken();
+    final refreshToken = await _tokenStorage.getRefreshToken();
+    if (accessToken == null && refreshToken == null) {
+      throw const UnauthorizedException();
+    }
     final model = await _dataSource.getMe();
     return model.toEntity();
   }

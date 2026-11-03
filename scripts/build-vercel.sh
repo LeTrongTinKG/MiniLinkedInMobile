@@ -32,7 +32,7 @@ echo "📥 Đang tải dependencies (flutter pub get)..."
 flutter pub get
 
 echo "🔨 Đang biên dịch Flutter Web release..."
-flutter build web --release --dart-define=API_URL="$API_URL" --dart-define=GITHUB_CLIENT_ID="$GITHUB_CLIENT_ID"
+flutter build web --release --pwa-strategy=none --dart-define=API_URL="$API_URL" --dart-define=GITHUB_CLIENT_ID="$GITHUB_CLIENT_ID"
 
 # 5. Đảm bảo file cấu hình SPA vercel.json có mặt trong output
 if [ -f "web/vercel.json" ]; then

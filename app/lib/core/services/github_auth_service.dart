@@ -33,12 +33,16 @@ class GitHubAuthService implements IGitHubAuthService {
       'scope': 'read:user user:email',
     };
 
-    // Web: GitHub trả người dùng về chính trang web này (vd http://localhost:3000).
-    // Địa chỉ này phải trùng "Authorization callback URL" của GitHub OAuth App.
+    // Web: GitHub trả người dùng về chính trang web này.
+    // Khi chạy local: truyền redirect_uri để trỏ về đúng localhost.
+    // Khi production: bỏ trống redirect_uri để GitHub tự động điều hướng về đúng
+    // "Authorization callback URL" đã cấu hình trong OAuth App, tránh lỗi mismatch đường dẫn.
     // Mobile: trả về theo địa chỉ riêng của app (minilinkedin://oauth-callback).
     if (kIsWeb) {
       final origin = currentWebOrigin();
-      if (origin != null) queryParams['redirect_uri'] = origin;
+      if (origin != null && origin.contains('localhost')) {
+        queryParams['redirect_uri'] = origin;
+      }
       final state = newGithubState();
       if (state != null) queryParams['state'] = state;
     } else if (AppConfig.githubRedirectUri.isNotEmpty) {

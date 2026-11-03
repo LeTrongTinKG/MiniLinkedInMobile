@@ -15,9 +15,9 @@ class AppConfig {
     return 'https://minilinkedinmobile.onrender.com/api/v1';
   }
 
-  // Timeout kết nối (milliseconds)
-  static const int connectTimeoutMs = 15000;
-  static const int receiveTimeoutMs = 15000;
+  // Timeout kết nối (milliseconds) - 45s dự phòng cho backend Render cold-start
+  static const int connectTimeoutMs = 45000;
+  static const int receiveTimeoutMs = 45000;
 
   // Tên key lưu token trong SecureStorage
   static const String keyAccessToken = 'access_token';
