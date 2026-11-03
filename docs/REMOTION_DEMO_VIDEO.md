@@ -13,12 +13,14 @@ video/
 ├── remotion.config.ts        # Cấu hình Rspack & TailwindCSS v4
 ├── package.json              # Remotion v4.0.540, React 19, Lucide Icons
 ├── public/                   # Thư mục chứa tài nguyên tĩnh (video quay thật, ảnh)
-│   └── demo-screen.mp4       # Video quay màn hình thực tế (nếu có)
+│   ├── screen_launch_jobs.mp4 # Video quay thật: Launch App, Login, Việc làm & Thảo luận
+│   └── screen_coach_ai.mp4   # Video quay thật: Trợ lý AI Career Coach Q&A
 ├── src/
 │   ├── Root.tsx              # Đăng ký các Composition & Still
 │   ├── index.ts              # Entry point Remotion Studio
 │   └── AtomDemo/
-│       ├── AtomDemo.tsx      # Timeline tổng hợp 5 phân cảnh (30s)
+│       ├── AtomDemoMaster.tsx # Master Composition: Kết hợp Video Quay Thật + Chuyển Cảnh (36s)
+│       ├── LiveScreenScene.tsx # Khung Mockup MacBook lồng video thật + Floating Highlight Badges
 │       ├── IntroScene.tsx    # Phân cảnh 1: Giới thiệu thương hiệu Atom & Logo phát sáng
 │       ├── SkillExtractionScene.tsx # Phân cảnh 2: AI Scan CV & 3-Tier Git Verification
 │       ├── CareerCoachScene.tsx     # Phân cảnh 3: Chatbot AI Coach (Qwen 2B & Guardrails)
@@ -28,6 +30,7 @@ video/
 │       ├── AtomThumbnail.tsx # Ảnh bìa Thumbnail chất lượng cao 1920x1080
 │       └── types.ts          # Bảng màu Atom Clay Minimalist (#2563EB)
 └── out/                      # Nơi xuất video và ảnh đã render
+    ├── atom-demo-enhanced.mp4 # Video demo nâng cao (kết hợp video thật + chuyển cảnh)
     ├── atom-demo.mp4         # Video demo hoàn chỉnh
     └── atom-thumbnail.png    # Ảnh bìa sắc nét
 ```
