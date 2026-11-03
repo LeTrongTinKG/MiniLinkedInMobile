@@ -167,3 +167,4 @@ Nếu vi phạm bất kỳ điều kiện nào (hoặc máy chủ Ollama bị t�
 | **Bảo mật Dữ liệu** | Tuân thủ GDPR/PDPA, không lưu vết câu hỏi | Dữ liệu cá nhân bị gửi lên Cloud bên thứ ba |
 | **Thời gian phản hồi** | $1.2\text{s} - 1.8\text{s}$ (Local) / $< 5\text{ms}$ (Rules fallback) | $2\text{s} - 6\text{s}$ phụ thuộc mạng quốc tế |
 | **Tính sẵn sàng khi mất mạng** | Vẫn hoạt động hoàn hảo ở chế độ `rules` | Tê liệt hoàn toàn khi mất mạng hoặc hết quota |
+

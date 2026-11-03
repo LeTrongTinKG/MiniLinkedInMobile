@@ -179,3 +179,4 @@ $$\text{EVIDENCE\_BAR} = \begin{cases}
 - **Độ chính xác (Precision)**: Đạt $98.5\%$ trên tập kiểm thử 50 mẫu CV IT chuẩn.
 - **Chi phí vận hành**: **0 USD**, không phụ thuộc dịch vụ AI đám mây bên thứ ba.
 - **Tính minh bạch**: Mọi điểm số và kỹ năng đều trích dẫn chính xác dòng text hoặc mã commit làm bằng chứng.
+
