@@ -51,6 +51,15 @@ test("Bảo mật: CORS chấp nhận origin localhost:3000", async () => {
   assert.equal(res.headers["access-control-allow-origin"], "http://localhost:3000");
 });
 
+test("Bảo mật: CORS chấp nhận origin *.vercel.app", async () => {
+  const res = await mockRequest(app, {
+    method: "GET",
+    url: "/",
+    headers: { origin: "https://atom-web-ten.vercel.app" },
+  });
+  assert.equal(res.headers["access-control-allow-origin"], "https://atom-web-ten.vercel.app");
+});
+
 test("Bảo mật: CORS từ chối origin độc hại lạ", async () => {
   const res = await mockRequest(app, {
     method: "GET",

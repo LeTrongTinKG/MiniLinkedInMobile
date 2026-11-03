@@ -37,7 +37,8 @@ app.use(cors({
       !origin ||
       allowedOrigins.includes(origin) ||
       allowedOrigins.includes("*") ||
-      origin.endsWith(".trycloudflare.com")
+      origin.endsWith(".trycloudflare.com") ||
+      origin.endsWith(".vercel.app")
     ) {
       return callback(null, true);
     }
