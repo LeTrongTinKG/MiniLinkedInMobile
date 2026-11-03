@@ -16,3 +16,4 @@ if ! command -v cloudflared &> /dev/null; then
 fi
 
 cloudflared tunnel --url "http://localhost:${PORT}"
+

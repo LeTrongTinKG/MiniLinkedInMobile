@@ -33,7 +33,12 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : defaultOrigins;
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes("*") ||
+      origin.endsWith(".trycloudflare.com")
+    ) {
       return callback(null, true);
     }
     return callback(null, false);

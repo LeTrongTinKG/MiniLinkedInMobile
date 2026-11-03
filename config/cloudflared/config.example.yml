@@ -31,3 +31,4 @@ ingress:
 
   # Quy tắc bắt buộc cuối cùng: 404 cho mọi hostname khác
   - service: http_status:404
+
