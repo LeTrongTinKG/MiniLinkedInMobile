@@ -99,7 +99,7 @@ void main() {
       expect(sourceLabel('serpapi', 'https://topcv.vn/x'), 'TopCV');
       expect(sourceLabel('jsearch', 'https://abc.com/x'), 'Google Jobs');
       expect(sourceLabel('remotive', null), 'Remotive');
-      expect(sourceLabel('internal', null), 'MiniLinkedIn');
+      expect(sourceLabel('internal', null), 'Atom');
     });
 
     test('salaryLabel theo đơn vị tiền', () {

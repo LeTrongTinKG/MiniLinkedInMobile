@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Mini LinkedIn'**
+  /// **'Atom'**
   String get appTitle;
 
   /// No description provided for @save.
@@ -173,7 +173,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign In to Mini LinkedIn'**
+  /// **'Sign In to Atom'**
   String get loginTitle;
 
   /// No description provided for @registerTitle.

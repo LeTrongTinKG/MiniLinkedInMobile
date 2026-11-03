@@ -80,7 +80,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                     alignment: Alignment.center,
                     child: const Text(
-                      'in',
+                      'A',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 34,
@@ -90,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Mini LinkedIn',
+                    'Atom',
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 24,

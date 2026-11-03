@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Mini LinkedIn';
+  String get appTitle => 'Atom';
 
   @override
   String get save => 'Save';
@@ -45,7 +45,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get password => 'Password';
 
   @override
-  String get loginTitle => 'Sign In to Mini LinkedIn';
+  String get loginTitle => 'Sign In to Atom';
 
   @override
   String get registerTitle => 'Register Account';

@@ -34,7 +34,7 @@ class AppHeader extends StatelessWidget {
                   _logoBadge(),
                   const SizedBox(width: 8),
                   Text(
-                    'MiniLinkedIn',
+                    'Atom',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -81,7 +81,7 @@ class AppHeader extends StatelessWidget {
       height: 28,
       decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
       alignment: Alignment.center,
-      child: const Text('ML', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+      child: const Text('A', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
     );
   }
 }

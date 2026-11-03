@@ -11,7 +11,7 @@ const EVIDENCE_BAR = "ít nhất 5 commit, 200 dòng thêm, trải 14 ngày, t�
 
 function refusal(roadmap) {
   const role = roadmap ? roadmap.title : "Mobile (Flutter)";
-  return `Mình chỉ trả lời về kỹ năng và lộ trình học của bạn trên MiniLinkedIn. Bạn thử hỏi: "Tôi còn thiếu skill gì để theo hướng ${role}?"`;
+  return `Mình chỉ trả lời về kỹ năng và lộ trình học của bạn trên Atom. Bạn thử hỏi: "Tôi còn thiếu skill gì để theo hướng ${role}?"`;
 }
 
 function roleList() {

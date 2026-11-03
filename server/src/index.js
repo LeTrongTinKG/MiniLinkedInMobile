@@ -89,7 +89,7 @@ app.get("/health", async (_req, res) => {
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
-    message: "Welcome to Mini LinkedIn REST API",
+    message: "Welcome to Atom REST API",
     version: "1.0.0",
     docs: "/api/v1/docs",
     endpoints: {
@@ -109,7 +109,7 @@ app.get("/", (_req, res) => {
 // Root API endpoint
 app.get("/api/v1", (_req, res) => {
   res.json({
-    message: "Welcome to Mini LinkedIn REST API v1",
+    message: "Welcome to Atom REST API v1",
     version: "1.0.0",
     docs: "/api/v1/docs",
   });
