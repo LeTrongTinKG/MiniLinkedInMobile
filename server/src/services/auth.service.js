@@ -222,8 +222,13 @@ async function githubLogin({ code }) {
     throw new ApiError(400, "VALIDATION_ERROR", "GitHub code là bắt buộc");
   }
 
-  const clientId = process.env.GITHUB_CLIENT_ID || "Ov23liAsAW4RrAeNbMsn";
-  const clientSecret = process.env.GITHUB_CLIENT_SECRET || "c6a4fbe8b02d60120c6625ec176c05ba721ecabb";
+  let clientId = process.env.GITHUB_CLIENT_ID || "Ov23liAsAW4RrAeNbMsn";
+  let clientSecret = process.env.GITHUB_CLIENT_SECRET || "c6a4fbe8b02d60120c6625ec176c05ba721ecabb";
+  // Đảm bảo khớp cặp key OAuth App mới của Atom trên Vercel production
+  if (clientId === "Ov23liVnRc4PYkJuD1Pz" || clientId === "Ov23liAsAW4RrAeNbMsn" || !process.env.GITHUB_CLIENT_SECRET) {
+    clientId = "Ov23liAsAW4RrAeNbMsn";
+    clientSecret = "c6a4fbe8b02d60120c6625ec176c05ba721ecabb";
+  }
   if (!clientId || !clientSecret) {
     throw new ApiError(
       500,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 
-/// Header thương hiệu MiniLinkedIn cho các màn hình xác thực Auth.
+/// Header thương hiệu Atom cho các màn hình xác thực Auth.
 class AuthBrandHeader extends StatelessWidget {
   const AuthBrandHeader({
     super.key,
@@ -30,7 +30,7 @@ class AuthBrandHeader extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: const Text(
-              'ML',
+              'A',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
