@@ -10,7 +10,11 @@
     "build:web": "bash scripts/build-vercel.sh",
     "deploy:vercel": "bash scripts/build-vercel.sh && cd app/build/web && vercel --prod",
     "tunnel:api": "cloudflared tunnel --url http://localhost:5001",
-    "tunnel:web": "cloudflared tunnel --url http://localhost:3000"
+    "tunnel:web": "cloudflared tunnel --url http://localhost:3000",
+    "video:dev": "cd video && npm run dev",
+    "video:render": "cd video && npx remotion render AtomDemo out/atom-demo.mp4",
+    "video:render:portrait": "cd video && npx remotion render AtomDemoPortrait out/atom-demo-portrait.mp4",
+    "video:still": "cd video && npx remotion still AtomThumbnail out/atom-thumbnail.png"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1"
